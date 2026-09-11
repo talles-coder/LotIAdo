@@ -5,14 +5,13 @@ from sqlalchemy import pool
 from alembic import context
 import asyncio
 import os
-import sys
-from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
+# `app` is importable without a manual sys.path hack because alembic.ini sets
+# `prepend_sys_path = .`, which Alembic prepends to sys.path using the
+# directory it's invoked from (backend/, where alembic.ini lives).
 from app.common.models import Base
 
 config = context.config
