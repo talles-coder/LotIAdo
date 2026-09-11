@@ -23,7 +23,7 @@ def event_loop():
 @pytest.fixture
 async def async_engine():
     """Create a test database engine."""
-    test_db_url = os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://lotiado:lotiado@localhost:5432/lotiado")
+    test_db_url = os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://lotiado:lotiado@localhost:5432/lotiado_test")
     engine = create_async_engine(
         test_db_url,
         echo=False,
