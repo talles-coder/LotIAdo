@@ -5,9 +5,15 @@ from sqlalchemy import pool
 from alembic import context
 import asyncio
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from app.common.models import Base
 
 config = context.config
 
@@ -16,7 +22,7 @@ if config.config_file_name is not None:
 
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", ""))
 
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
