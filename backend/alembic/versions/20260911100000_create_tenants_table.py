@@ -1,6 +1,6 @@
 """Create tenants table.
 
-Revision ID: 001
+Revision ID: 20260911100000
 Revises:
 Create Date: 2026-09-11 10:00:00.000000
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = '001'
+revision = '20260911100000'
 down_revision = None
 branch_labels = None
 depends_on = None
