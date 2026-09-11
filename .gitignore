@@ -1,3 +1,4 @@
 docs/*
 !docs/03-decisoes-tecnicas.md
 estudos
+.env
