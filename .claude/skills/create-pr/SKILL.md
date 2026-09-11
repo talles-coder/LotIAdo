@@ -33,6 +33,8 @@ Invoke com `/create-pr` quando a branch estiver pronta para code review. Esta Sk
 - ✅ Secrets em código
 - ✅ Logs/debug temporários
 - ✅ Mudanças não relacionadas
+- ✅ Versões de pacotes inválidas (requirements.txt, package.json, etc)
+- ✅ Encoding corrompido na descrição do PR (UTF-8 válido)
 
 ## Validações Automáticas
 
@@ -41,6 +43,11 @@ Tenta executar (se disponível):
 - `ruff check` — lint ok?
 - `black --check` — formato ok?
 - `mypy` / `pyright` — type check ok?
+
+**Validações Obrigatórias:**
+- ⚠️ **requirements.txt / package.json**: Verificar que TODAS as versões de pacotes existem (não inventadas). Validar com `pip check` ou equivalente.
+- ⚠️ **Encoding da descrição do PR**: UTF-8 válido, sem caracteres corrompidos (ç,ã,é preservados corretamente)
+- ⚠️ **Descrição do PR**: Sem caracteres especiais corrompidos, sem `\n` literais em lugar de quebras reais
 
 ## Quando invocar
 
@@ -98,6 +105,7 @@ Segue template em `.claude/skills/create-pr/template.md`:
 
 ## Checklist — Antes de Chamar /create-pr
 
+**Código:**
 - [ ] Branch criada de `main` (ou base correta)
 - [ ] Testes passam localmente
 - [ ] Lint/format/type check ok
@@ -106,3 +114,14 @@ Segue template em `.claude/skills/create-pr/template.md`:
 - [ ] Documentação atualizada (se necessário)
 - [ ] Handoff é claro (outro dev sem contexto entende)
 - [ ] Riscos/impactos mencionados (se houver)
+
+**Dependências & Integridade:**
+- [ ] `requirements.txt` / `package.json`: Todas as versões são VÁLIDAS e existem em PyPI / npm
+  - Testar: `pip install -r requirements.txt --dry-run` ou `npm install --dry-run`
+- [ ] Nenhuma versão inventada ou typo em nome de pacote
+- [ ] Se alterar dependências, validar compatibilidade
+
+**PR Body:**
+- [ ] Descrição sem caracteres corrompidos (ç, ã, é aparecem corretamente)
+- [ ] Encoding UTF-8 válido (sem `\n` literal em lugar de quebra real)
+- [ ] Texto legível: verificar no browser antes de criar
