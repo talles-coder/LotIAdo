@@ -10,4 +10,4 @@ class Tenant(BaseModel):
 
     name = Column(String(255), nullable=False)
     slug = Column(String(100), nullable=False, unique=True)
-    config = Column(JSON, nullable=True, default={})
+    config = Column(JSON, nullable=True, default=dict)
