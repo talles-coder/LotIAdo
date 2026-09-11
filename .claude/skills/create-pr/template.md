@@ -4,6 +4,8 @@
 
 **Tarefa:** [Link para task no backlog / Jira se houver]
 
+**Número da Task (para título do PR):** SCRUM-XX (ex: SCRUM-45, SCRUM-123)
+
 **Problema/Contexto:**
 Explique brevemente o problema que resolve ou funcionalidade que adiciona.
 

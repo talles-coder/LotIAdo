@@ -86,6 +86,8 @@ Segue template em `.claude/skills/create-pr/template.md`:
 - Riscos/impactos
 - Checklist de handoff
 
+**Título do PR:** Deve começar com o número da task, ex: `SCRUM-45: feat(backend): create FastAPI skeleton with modular structure`
+
 ## Após PR criado
 
 - URL do PR exibida

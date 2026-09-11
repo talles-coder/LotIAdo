@@ -22,10 +22,14 @@ Invoke com `/commit` quando estiver pronto para commitar mudanças. Esta Skill:
 
 ## Conventional Commits
 
-Formato (linha única):
+⚠️ **FORMATO OBRIGATÓRIO: APENAS UMA LINHA, SEM DESCRIÇÃO ADICIONAL**
+
 ```
 <type>(<scope>): <subject>
 ```
+
+- **Sem co-author** — não adicionar linhas extras
+- **Sem múltiplas linhas** — descreva tudo em uma frase concisa
 
 **Types:**
 - `feat` — Nova funcionalidade
@@ -37,17 +41,21 @@ Formato (linha única):
 - `perf` — Melhoria de performance
 - `ci` — Mudança em CI/CD
 
-**Exemplos válidos:**
+**Exemplos válidos (UMA LINHA SÓ):**
 - `feat(auth): add JWT token generation`
 - `fix(tenancy): ensure tenant_id filter in all queries`
 - `test(reserva): add regression test for concurrent reservation`
 - `docs(CLAUDE.md): update context navigation section`
+- `chore(backend): add alembic configuration`
+- `feat(backend): create fastapi skeleton with modular structure`
 
 **Exemplos inválidos:**
 - `fix stuff` — vago
 - `updates` — qual mudança?
 - `ajustes` — não descreve problema/solução
 - `WIP` — não commita assim
+- Commits com múltiplas linhas de descrição
+- Commit message com co-author adicional
 
 ## Validações
 
