@@ -76,7 +76,29 @@ $ /create-pr
 # Você ajusta. Depois Claude cria PR com gh.
 ```
 
+## Branch por Task — OBRIGATÓRIO
+
+⚠️ **Cada task = branch nova, NUNCA reutilize branches de outras tasks**
+
+Padrão de nome:
+```
+feat/SCRUM-XX-descrição-curta
+fix/SCRUM-XX-descrição-curta
+chore/SCRUM-XX-descrição-curta
+```
+
+Exemplos:
+- `feat/SCRUM-45-backend-skeleton`
+- `feat/SCRUM-50-tenancy-module`
+- `fix/SCRUM-48-tenant-isolation`
+
 ## Formato do PR
+
+**Título:** Deve começar com número da task
+```
+SCRUM-45: feat(backend): create FastAPI skeleton
+SCRUM-50: feat(tenancy): implement multi-tenant isolation
+```
 
 Segue template em `.claude/skills/create-pr/template.md`:
 - Resumo (problema, solução)
@@ -96,11 +118,20 @@ Segue template em `.claude/skills/create-pr/template.md`:
 
 ## Checklist — Antes de Chamar /create-pr
 
-- [ ] Branch criada de `main` (ou base correta)
+**Branch & Task:**
+- [ ] Branch dedicada para esta task (nunca reutilize de outra task)
+- [ ] Nome da branch segue padrão: `feat/SCRUM-XX-descrição` ou `fix/SCRUM-XX-descrição`
+- [ ] Branch criada de `master` (não de outra feature branch)
+- [ ] Número da task está correto no nome da branch
+
+**Código & Testes:**
 - [ ] Testes passam localmente
 - [ ] Lint/format/type check ok
 - [ ] Nenhum commit WIP ou fixup pendente
 - [ ] Escopo é exatamente o que a task pede (não mais)
 - [ ] Documentação atualizada (se necessário)
+
+**PR & Handoff:**
 - [ ] Handoff é claro (outro dev sem contexto entende)
 - [ ] Riscos/impactos mencionados (se houver)
+- [ ] Título do PR começa com número da task (SCRUM-XX: ...)
