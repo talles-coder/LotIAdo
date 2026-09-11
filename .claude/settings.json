@@ -1,0 +1,22 @@
+{
+  "skills": {
+    "python-fastapi": {
+      "path": "skills/python-fastapi/SKILL.md",
+      "enabled": true
+    },
+    "testing": {
+      "path": "skills/testing/SKILL.md",
+      "enabled": true
+    },
+    "commit": {
+      "path": "skills/commit/SKILL.md",
+      "enabled": true,
+      "manual": true
+    },
+    "create-pr": {
+      "path": "skills/create-pr/SKILL.md",
+      "enabled": true,
+      "manual": true
+    }
+  }
+}
