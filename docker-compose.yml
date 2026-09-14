@@ -51,7 +51,7 @@ services:
       start_period: 30s
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: lotiado-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -71,7 +71,7 @@ services:
       start_period: 15s
 
   minio-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: lotiado-minio-init
     depends_on:
       minio:

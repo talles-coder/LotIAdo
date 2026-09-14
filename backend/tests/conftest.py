@@ -3,6 +3,7 @@ import asyncio
 import os
 from typing import AsyncGenerator
 import pytest
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_engine():
     """Create a test database engine."""
     test_db_url = os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://lotiado:lotiado@localhost:5432/lotiado_test")
@@ -41,7 +42,7 @@ async def async_engine():
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create a test database session."""
     async_session = sessionmaker(

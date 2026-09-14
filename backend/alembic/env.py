@@ -1,7 +1,7 @@
 """Alembic environment script for async migrations."""
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 import asyncio
 import os
@@ -51,7 +51,7 @@ async def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = os.getenv("DATABASE_URL", "")
 
-    connectable = engine_from_config(
+    connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
