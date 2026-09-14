@@ -1,13 +1,18 @@
 """Alembic environment script for async migrations."""
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 import asyncio
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# `app` is importable without a manual sys.path hack because alembic.ini sets
+# `prepend_sys_path = .`, which Alembic prepends to sys.path using the
+# directory it's invoked from (backend/, where alembic.ini lives).
+from app.common.models import Base
 
 config = context.config
 
@@ -16,7 +21,7 @@ if config.config_file_name is not None:
 
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", ""))
 
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
@@ -46,7 +51,7 @@ async def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = os.getenv("DATABASE_URL", "")
 
-    connectable = engine_from_config(
+    connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,

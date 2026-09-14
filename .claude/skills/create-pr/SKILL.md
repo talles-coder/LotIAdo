@@ -94,13 +94,15 @@ Exemplos:
 
 ## Formato do PR
 
+**Idioma:** A descrição do PR (body) é **sempre em pt-BR**, mesmo que título, nomes de código, tipos de Conventional Commits e trechos de código permaneçam em inglês. Nunca gere o body em inglês.
+
 **Título:** Deve começar com número da task
 ```
 SCRUM-45: feat(backend): create FastAPI skeleton
 SCRUM-50: feat(tenancy): implement multi-tenant isolation
 ```
 
-Segue template em `.claude/skills/create-pr/template.md`:
+**Corpo do PR:** use `.claude/skills/create-pr/template.md` como base **literal** — copie a estrutura de seções do arquivo e preencha cada uma (não parafraseie/resuma livremente em outro formato). Seções sem conteúdo relevante podem ser removidas (ver nota final do template), mas a ordem e os títulos das seções mantidas devem bater com o template:
 - Resumo (problema, solução)
 - Alterações principais
 - Como testar

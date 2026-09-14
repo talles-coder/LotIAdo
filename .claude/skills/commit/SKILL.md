@@ -22,10 +22,14 @@ Invoke com `/commit` quando estiver pronto para commitar mudanças. Esta Skill:
 
 ## Conventional Commits
 
-Formato (linha única):
+Formato (`commit_format: single-line`, ver frontmatter deste arquivo):
 ```
 <type>(<scope>): <subject>
 ```
+
+A mensagem é **apenas essa linha** — sem corpo com lista de bullets, sem parágrafo explicativo depois. Se o "porquê" não cabe no `<subject>`, ele vai na descrição do PR (`/create-pr`), não no corpo do commit. Se a mudança tem responsabilidades demais para caber em um subject claro, é sinal de que deveria ser dividida em commits menores (ver seção de validações), não de que o commit precisa de um corpo longo.
+
+**Coautoria (`include_coauthor: false`):** este projeto não adiciona rodapé `Co-Authored-By` nos commits — isso vale mesmo que a configuração padrão de atribuição da sessão diga o contrário; a preferência deste arquivo tem prioridade para commits deste repositório.
 
 **Types:**
 - `feat` — Nova funcionalidade

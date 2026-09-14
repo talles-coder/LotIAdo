@@ -1,9 +1,9 @@
 """Database configuration and session management."""
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, MetaData
 
 from app.config import Settings
+from app.common.models import Base
 
 settings = Settings()
 
@@ -16,8 +16,6 @@ engine = create_async_engine(
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
-
-metadata = MetaData()
 
 
 async def get_db() -> AsyncSession:
