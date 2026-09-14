@@ -5,6 +5,12 @@ from sqlalchemy.orm import sessionmaker
 from app.config import Settings
 from app.common.models import Base
 
+# Importado pelo efeito colateral: registra todos os domain models no
+# declarative registry do SQLAlchemy, para que relationship() por string
+# (ex.: "Tenant") resolva mesmo quando nada no caminho real da rota importa
+# aquela classe diretamente.
+from app import models as _domain_models  # noqa: F401
+
 settings = Settings()
 
 engine = create_async_engine(
