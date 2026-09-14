@@ -1,7 +1,8 @@
 """Ações sensíveis auditáveis, compartilhadas entre módulos.
 
 Padronizar os nomes aqui evita que cada módulo invente sua própria string
-para a mesma ação ao chamar `registrar_auditoria`.
+para a mesma ação ao declarar `campos_sensiveis` em
+`app.audit.infrastructure.tracking.rastrear_auditoria`.
 """
 from enum import StrEnum
 

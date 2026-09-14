@@ -5,6 +5,11 @@ from sqlalchemy.orm import sessionmaker
 from app.config import Settings
 from app.common.models import Base
 
+# Importado pelo efeito colateral: registra o listener de auditoria
+# automática (`before_flush`) em toda Session da aplicação. Ver
+# app.audit.infrastructure.tracking.rastrear_auditoria.
+from app.audit.infrastructure import tracking as _audit_tracking  # noqa: F401
+
 settings = Settings()
 
 engine = create_async_engine(

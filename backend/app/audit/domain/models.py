@@ -10,10 +10,10 @@ from app.common.models import Base
 class AuditLog(Base):
     """Entrada imutável de auditoria de uma ação sensível.
 
-    Append-only por convenção: o módulo audit não expõe nenhuma função de
-    update/delete (ver `app.audit.infrastructure.repository`), então não há
-    como uma entrada já persistida ser alterada ou removida pela aplicação.
-    Por isso o modelo não herda de `BaseModel` (que traz `updated_at`).
+    Append-only por convenção: só é gravado pelo listener de auditoria
+    automática (ver `app.audit.infrastructure.tracking`), que só chama
+    `session.add`, nunca update/delete. Por isso o modelo não herda de
+    `BaseModel` (que traz `updated_at`).
     """
 
     __tablename__ = "audit_log"

@@ -134,6 +134,14 @@ Nova decisão, consequência direta de D2 (Expo for Web): `react-native-maps`, u
 
 Conforme as fases avançarem e decisões como D6 forem resolvidas empiricamente, o resultado deve ser adicionado como uma nova entrada neste documento (ex. "D6 — decidido: Ollama nomic-embed-text, ver task FASE7-EST-03").
 
+### Auditoria (FASE1-IMPL-04) — decidido: rastreamento declarativo automático, não helper manual
+
+A descrição original da task previa um helper (`registrar_auditoria(...)`) chamado manualmente pelos services ao final de cada ação sensível. Trocado por rastreamento automático: `app.audit.infrastructure.tracking.rastrear_auditoria(...)` é um decorator aplicado **uma única vez** em cima do model (ex.: futuramente `Lote`, `ReservaVenda`), mapeando quais colunas são sensíveis para qual `AcaoAuditoria`. Um listener de `before_flush` do SQLAlchemy, registrado globalmente (importado em `app.database`), gera a entrada de `audit_log` sozinho sempre que um campo rastreado muda ou uma entidade marcada com `acao_criacao` é criada — nenhum service ou rota chama nada. Quem está autenticado na request chega até o listener via `contextvars`, populados pelo `AuditContextMiddleware` (registrado uma vez em `app.main`, não por rota). Se mais de um campo sensível mudar no mesmo flush e resolver para a mesma ação, vira uma única entrada com payload combinando os campos — nunca uma linha por campo.
+
+**Por quê:** o objetivo é auditoria que não dependa de nenhum dev lembrar de chamar algo — um `git grep` por chamadas de auditoria nunca deveria ser necessário para saber se uma ação sensível está coberta. Não existe (deliberadamente) uma via de escape manual: hoje toda ação sensível listada na task (transição de status, criação/cancelamento de reserva, venda, alteração de preço, alteração de responsável) é expressável como "um ou mais campos de um model mudaram"; um helper manual paralelo seria código sem uso real. Se isso deixar de ser verdade (ex.: precisar registrar um motivo digitado pelo usuário, que não é uma coluna), a via de escape deve ser adicionada então — não antes.
+
+**Impacto para o Dev 1 (FASE1-IMPL-01/03):** ao criar `Lote` e `ReservaVenda`, decorar com `@rastrear_auditoria(entidade=..., acao_criacao=..., campos_sensiveis={...})` em vez de chamar uma função ao final do service. Ver exemplos em `app/audit/infrastructure/tracking.py` e `backend/tests/test_audit_tracking.py`.
+
 ### Nomenclatura de migrations Alembic — decidido: revision ID com timestamp
 
 A primeira migration (FASE0-IMPL-04) usava numeração sequencial manual (`001_create_tenants_table.py`). Com dois devs criando migrations em branches paralelas, numeração sequencial colide facilmente (dois devs criam `002` ao mesmo tempo em branches diferentes).
