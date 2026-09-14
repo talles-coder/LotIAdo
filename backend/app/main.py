@@ -2,6 +2,8 @@
 from fastapi import FastAPI
 from app.audit.interface.middleware import AuditContextMiddleware
 from app.config import Settings
+from app.clientes.interface.routers import router as clientes_router
+from app.corretores.interface.routers import router as corretores_router
 from app.identity.interface.routers import router as identity_router
 
 settings = Settings()
@@ -18,6 +20,8 @@ app = FastAPI(
 app.add_middleware(AuditContextMiddleware)
 
 app.include_router(identity_router)
+app.include_router(clientes_router)
+app.include_router(corretores_router)
 
 
 @app.get("/health")

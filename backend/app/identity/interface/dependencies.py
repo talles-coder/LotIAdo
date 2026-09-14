@@ -52,3 +52,34 @@ async def get_current_user(
         raise unauthorized
 
     return user
+
+
+async def get_current_tenant_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    settings: Settings = Depends(get_settings),
+) -> UUID:
+    """Resolve the tenant id scoping the authenticated request's bearer token."""
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if credentials is None:
+        raise unauthorized
+
+    try:
+        payload = decode_access_token(credentials.credentials, settings)
+    except jwt.PyJWTError:
+        raise unauthorized
+
+    raw_tenant_id = payload.get("tenant_id")
+    if raw_tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no associated tenant",
+        )
+
+    try:
+        return UUID(raw_tenant_id)
+    except ValueError:
+        raise unauthorized
