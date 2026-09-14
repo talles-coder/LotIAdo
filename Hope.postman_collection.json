@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login",
+		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- loteamento_id / lote_id: preenchidos automaticamente pelos requests de criação correspondentes",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -11,6 +11,14 @@
 		},
 		{
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "loteamento_id",
+			"value": ""
+		},
+		{
+			"key": "lote_id",
 			"value": ""
 		}
 	],
@@ -69,7 +77,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "login"]
 						},
-						"description": "Autentica com email/senha e retorna um JWT (access_token). O token é salvo automaticamente na variável de coleção `access_token` para uso em `GET /auth/me`."
+						"description": "Autentica com email/senha e retorna um JWT (access_token). O token é salvo automaticamente na variável de coleção `access_token` para uso nos demais requests."
 					},
 					"response": []
 				},
@@ -94,6 +102,457 @@
 							"path": ["auth", "me"]
 						},
 						"description": "Retorna o usuário autenticado e seu tenant atual. Requer rodar 'Login' antes (ou definir manualmente a variável access_token)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clientes",
+			"item": [
+				{
+					"name": "Criar Cliente",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João da Silva\",\n  \"documento\": \"123.456.789-00\",\n  \"contato\": \"joao@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["clientes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Clientes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["clientes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Cliente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/:cliente_id",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", ":cliente_id"],
+							"variable": [{"key": "cliente_id", "value": ""}]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Cliente",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"contato\": \"novo-contato@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/:cliente_id",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", ":cliente_id"],
+							"variable": [{"key": "cliente_id", "value": ""}]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Cliente",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/:cliente_id",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", ":cliente_id"],
+							"variable": [{"key": "cliente_id", "value": ""}]
+						},
+						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Corretores",
+			"item": [
+				{
+					"name": "Criar Corretor",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Maria Corretora\",\n  \"contato\": \"maria@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores",
+							"host": ["{{base_url}}"],
+							"path": ["corretores"]
+						},
+						"description": "`usuario_id` (UUID de um User existente) é opcional."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Corretores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores",
+							"host": ["{{base_url}}"],
+							"path": ["corretores"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Corretor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/:corretor_id",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", ":corretor_id"],
+							"variable": [{"key": "corretor_id", "value": ""}]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Corretor",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"contato\": \"novo-contato@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/:corretor_id",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", ":corretor_id"],
+							"variable": [{"key": "corretor_id", "value": ""}]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Corretor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/:corretor_id",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", ":corretor_id"],
+							"variable": [{"key": "corretor_id", "value": ""}]
+						},
+						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Loteamentos e Lotes",
+			"item": [
+				{
+					"name": "Criar Loteamento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('loteamento_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Residencial Sol Nascente\",\n  \"descricao\": \"Fase 1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos"]
+						},
+						"description": "O id criado é salvo automaticamente na variável `loteamento_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Loteamentos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Loteamento",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Loteamento",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"descricao\": \"Fase 1 - atualizado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Loteamento",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						},
+						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Lote",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('lote_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identificacao\": \"Lote 01\",\n  \"quadra\": \"A\",\n  \"area_m2\": \"300.00\",\n  \"preco\": \"120000.00\",\n  \"caracteristicas\": {\"esquina\": true}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
+						},
+						"description": "Nasce sempre com status \"disponivel\". O id criado é salvo automaticamente na variável `lote_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Lotes do Loteamento",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Lote",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Lote",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"preco\": \"135000.00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						},
+						"description": "Atualiza campos gerais do lote. O status NÃO é editável por aqui — use 'Transicionar Status do Lote'."
+					},
+					"response": []
+				},
+				{
+					"name": "Transicionar Status do Lote",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"reservado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}", "status"]
+						},
+						"description": "Valores possíveis: disponivel, reservado, vendido, indisponivel. Transições permitidas: DISPONIVEL -> RESERVADO/INDISPONIVEL; RESERVADO -> VENDIDO/DISPONIVEL; INDISPONIVEL -> DISPONIVEL; VENDIDO é terminal. Uma transição fora dessa tabela retorna 409 com mensagem explicando o motivo."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Lote",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						},
+						"description": "Remoção lógica (soft-delete) — não é hard-delete."
 					},
 					"response": []
 				}
