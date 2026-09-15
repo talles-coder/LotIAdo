@@ -12,6 +12,14 @@
 		{
 			"key": "access_token",
 			"value": ""
+		},
+		{
+			"key": "cliente_id",
+			"value": ""
+		},
+		{
+			"key": "corretor_id",
+			"value": ""
 		}
 	],
 	"item": [
@@ -94,6 +102,320 @@
 							"path": ["auth", "me"]
 						},
 						"description": "Retorna o usuário autenticado e seu tenant atual. Requer rodar 'Login' antes (ou definir manualmente a variável access_token)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clientes",
+			"item": [
+				{
+					"name": "Criar Cliente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('cliente_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João da Silva\",\n  \"documento\": \"12345678900\",\n  \"contato\": \"joao@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["clientes"]
+						},
+						"description": "Cadastra um novo cliente para o tenant autenticado. Salva o id criado na variável de coleção `cliente_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Clientes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["clientes"]
+						},
+						"description": "Lista os clientes ativos do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Cliente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", "{{cliente_id}}"]
+						},
+						"description": "Retorna um cliente ativo do tenant autenticado. Requer rodar 'Criar Cliente' antes (ou definir manualmente a variável cliente_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Cliente",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João da Silva Atualizado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", "{{cliente_id}}"]
+						},
+						"description": "Atualiza os campos informados de um cliente ativo do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Cliente",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["clientes", "{{cliente_id}}"]
+						},
+						"description": "Remove logicamente (soft-delete) um cliente do tenant autenticado."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Corretores",
+			"item": [
+				{
+					"name": "Criar Corretor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('corretor_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Maria Corretora\",\n  \"contato\": \"maria@email.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores",
+							"host": ["{{base_url}}"],
+							"path": ["corretores"]
+						},
+						"description": "Cadastra um novo corretor para o tenant autenticado (`usuario_id` é opcional). Salva o id criado na variável de coleção `corretor_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Corretores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores",
+							"host": ["{{base_url}}"],
+							"path": ["corretores"]
+						},
+						"description": "Lista os corretores ativos do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Corretor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", "{{corretor_id}}"]
+						},
+						"description": "Retorna um corretor ativo do tenant autenticado. Requer rodar 'Criar Corretor' antes (ou definir manualmente a variável corretor_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Corretor",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Maria Corretora Atualizada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", "{{corretor_id}}"]
+						},
+						"description": "Atualiza os campos informados de um corretor ativo do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Corretor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["corretores", "{{corretor_id}}"]
+						},
+						"description": "Remove logicamente (soft-delete) um corretor do tenant autenticado."
 					},
 					"response": []
 				}

@@ -65,6 +65,7 @@ Esta Skill valida:
 - ✅ Nenhuma senha ou token em código
 - ✅ Mudanças relacionadas agrupadas (ou sugerir split)
 - ✅ Mensagem clara e significativa
+- ✅ Rota adicionada/alterada/removida em `app/*/interface/routers.py`? `Hope.postman_collection.json` (raiz do repo) precisa estar atualizado no mesmo commit — adicione/edite/remova o request correspondente antes de commitar (ver nota no próprio arquivo)
 
 ## Quando invocar
 
@@ -105,3 +106,4 @@ $ /commit
 - [ ] Nenhum `TODO` solto
 - [ ] Nenhum arquivo acidental (`.env`, `__pycache__`, `.pyc`)
 - [ ] Mensagem vai descrever claramente a mudança
+- [ ] Se o diff adiciona/altera/remove uma rota, `Hope.postman_collection.json` foi atualizado junto
