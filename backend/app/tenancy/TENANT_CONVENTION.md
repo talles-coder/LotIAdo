@@ -2,7 +2,24 @@
 
 ## Objetivo
 
-Garantir o isolamento de dados entre tenants em todas as tabelas de domínio, preparando a infraestrutura para RLS (Row-Level Security) na Fase 2.
+Garantir o isolamento de dados entre tenants em todas as tabelas de domínio.
+
+**Fase 2 (FASE2-IMPL-01):** RLS está ativa em `clientes`, `corretores`,
+`loteamentos`, `lotes` e `audit_log` — ver migration
+`20260915160000_enable_rls_on_domain_tables.py`. Toda rota que acessa essas
+tabelas deve usar `Depends(get_tenant_scoped_db)`
+(`app/tenancy/interface/dependencies.py`) no lugar de `Depends(get_db)`, que
+seta `app.tenant_id` na sessão a partir do JWT antes de qualquer query — sem
+isso a policy derruba a query pra zero linhas (fail-closed), inclusive para
+o dono legítimo dos dados. `user_tenant_membership`, `users` e `tenants`
+ficam de fora da RLS de propósito (são as tabelas usadas para *resolver* o
+tenant no login, antes de haver um `app.tenant_id` de sessão).
+
+Atenção: `app.tenant_id` só vale para a transação corrente (`SET LOCAL`,
+via `set_config(..., true)`). Um `db.commit()` no meio da request encerra
+essa transação — qualquer query feita depois (ex.: `db.refresh()`) roda sem
+tenant setado e falha fechada. Por isso os repositórios não chamam
+`db.refresh()` após `commit()` (a sessão já tem `expire_on_commit=False`).
 
 ## Padrão
 

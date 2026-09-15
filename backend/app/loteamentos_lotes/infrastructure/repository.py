@@ -33,17 +33,23 @@ async def list_loteamentos_by_tenant(db: AsyncSession, tenant_id: UUID) -> list[
 
 
 async def create_loteamento(db: AsyncSession, loteamento: Loteamento) -> Loteamento:
-    """Persist a new loteamento."""
+    """Persist a new loteamento.
+
+    Sem `db.refresh()` de propósito: a sessão tem `expire_on_commit=False`
+    (ver app/database.py) e o INSERT já traz os defaults gerados pelo server
+    (`created_at`/`updated_at`) via `RETURNING`, então o objeto já está
+    completo após o commit. Um `refresh()` abriria uma *nova* transação sem
+    `app.tenant_id` setado — a policy de RLS derrubaria a query pra zero
+    linhas (ver app/tenancy/interface/dependencies.py).
+    """
     db.add(loteamento)
     await db.commit()
-    await db.refresh(loteamento)
     return loteamento
 
 
 async def save_loteamento(db: AsyncSession, loteamento: Loteamento) -> Loteamento:
-    """Persist changes made to an existing loteamento."""
+    """Persist changes made to an existing loteamento. Ver nota em `create_loteamento()`."""
     await db.commit()
-    await db.refresh(loteamento)
     return loteamento
 
 
@@ -74,15 +80,13 @@ async def list_lotes_by_loteamento(
 
 
 async def create_lote(db: AsyncSession, lote: Lote) -> Lote:
-    """Persist a new lote."""
+    """Persist a new lote. Ver nota em `create_loteamento()` sobre não usar `db.refresh()`."""
     db.add(lote)
     await db.commit()
-    await db.refresh(lote)
     return lote
 
 
 async def save_lote(db: AsyncSession, lote: Lote) -> Lote:
-    """Persist changes made to an existing lote."""
+    """Persist changes made to an existing lote. Ver nota em `create_loteamento()`."""
     await db.commit()
-    await db.refresh(lote)
     return lote

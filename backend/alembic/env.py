@@ -19,7 +19,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", ""))
+# Migrations rodam com um papel dono das tabelas (precisa poder ALTER TABLE
+# ... ENABLE/FORCE ROW LEVEL SECURITY e CREATE POLICY) — diferente do papel
+# restrito que a aplicação usa em runtime (`DATABASE_URL`), para que a RLS
+# ativada em FASE2-IMPL-01 realmente seja aplicada. Cai de volta pra
+# `DATABASE_URL` se `MIGRATIONS_DATABASE_URL` não estiver setada.
+_migrations_url = os.getenv("MIGRATIONS_DATABASE_URL") or os.getenv("DATABASE_URL", "")
+config.set_main_option("sqlalchemy.url", _migrations_url)
 
 target_metadata = Base.metadata
 
@@ -49,7 +55,7 @@ def do_run_migrations(connection):
 async def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = os.getenv("DATABASE_URL", "")
+    configuration["sqlalchemy.url"] = os.getenv("MIGRATIONS_DATABASE_URL") or os.getenv("DATABASE_URL", "")
 
     connectable = async_engine_from_config(
         configuration,
