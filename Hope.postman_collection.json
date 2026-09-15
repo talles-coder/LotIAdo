@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- loteamento_id / lote_id: preenchidos automaticamente pelos requests de criação correspondentes",
+		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id: preenchidos automaticamente pelos requests de criação correspondentes",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -11,6 +11,14 @@
 		},
 		{
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "cliente_id",
+			"value": ""
+		},
+		{
+			"key": "corretor_id",
 			"value": ""
 		},
 		{
@@ -77,7 +85,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "login"]
 						},
-						"description": "Autentica com email/senha e retorna um JWT (access_token). O token é salvo automaticamente na variável de coleção `access_token` para uso nos demais requests."
+						"description": "Autentica com email/senha e retorna um JWT (access_token). O token é salvo automaticamente na variável de coleção `access_token` para uso em `GET /auth/me`."
 					},
 					"response": []
 				},
@@ -112,22 +120,48 @@
 			"item": [
 				{
 					"name": "Criar Cliente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('cliente_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"nome\": \"João da Silva\",\n  \"documento\": \"123.456.789-00\",\n  \"contato\": \"joao@email.com\"\n}"
+							"raw": "{\n  \"nome\": \"João da Silva\",\n  \"documento\": \"12345678900\",\n  \"contato\": \"joao@email.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/clientes",
 							"host": ["{{base_url}}"],
 							"path": ["clientes"]
-						}
+						},
+						"description": "Cadastra um novo cliente para o tenant autenticado. Salva o id criado na variável de coleção `cliente_id`."
 					},
 					"response": []
 				},
@@ -138,13 +172,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/clientes",
 							"host": ["{{base_url}}"],
 							"path": ["clientes"]
-						}
+						},
+						"description": "Lista os clientes ativos do tenant autenticado."
 					},
 					"response": []
 				},
@@ -155,14 +196,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{base_url}}/clientes/:cliente_id",
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["clientes", ":cliente_id"],
-							"variable": [{"key": "cliente_id", "value": ""}]
-						}
+							"path": ["clientes", "{{cliente_id}}"]
+						},
+						"description": "Retorna um cliente ativo do tenant autenticado. Requer rodar 'Criar Cliente' antes (ou definir manualmente a variável cliente_id)."
 					},
 					"response": []
 				},
@@ -170,21 +217,32 @@
 					"name": "Atualizar Cliente",
 					"request": {
 						"method": "PATCH",
-						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"contato\": \"novo-contato@email.com\"\n}"
+							"raw": "{\n  \"nome\": \"João da Silva Atualizado\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/clientes/:cliente_id",
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["clientes", ":cliente_id"],
-							"variable": [{"key": "cliente_id", "value": ""}]
-						}
+							"path": ["clientes", "{{cliente_id}}"]
+						},
+						"description": "Atualiza os campos informados de um cliente ativo do tenant autenticado."
 					},
 					"response": []
 				},
@@ -195,15 +253,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{base_url}}/clientes/:cliente_id",
+							"raw": "{{base_url}}/clientes/{{cliente_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["clientes", ":cliente_id"],
-							"variable": [{"key": "cliente_id", "value": ""}]
+							"path": ["clientes", "{{cliente_id}}"]
 						},
-						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+						"description": "Remove logicamente (soft-delete) um cliente do tenant autenticado."
 					},
 					"response": []
 				}
@@ -214,12 +277,37 @@
 			"item": [
 				{
 					"name": "Criar Corretor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('corretor_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"body": {
 							"mode": "raw",
@@ -230,7 +318,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["corretores"]
 						},
-						"description": "`usuario_id` (UUID de um User existente) é opcional."
+						"description": "Cadastra um novo corretor para o tenant autenticado (`usuario_id` é opcional). Salva o id criado na variável de coleção `corretor_id`."
 					},
 					"response": []
 				},
@@ -241,13 +329,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/corretores",
 							"host": ["{{base_url}}"],
 							"path": ["corretores"]
-						}
+						},
+						"description": "Lista os corretores ativos do tenant autenticado."
 					},
 					"response": []
 				},
@@ -258,14 +353,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{base_url}}/corretores/:corretor_id",
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["corretores", ":corretor_id"],
-							"variable": [{"key": "corretor_id", "value": ""}]
-						}
+							"path": ["corretores", "{{corretor_id}}"]
+						},
+						"description": "Retorna um corretor ativo do tenant autenticado. Requer rodar 'Criar Corretor' antes (ou definir manualmente a variável corretor_id)."
 					},
 					"response": []
 				},
@@ -273,21 +374,32 @@
 					"name": "Atualizar Corretor",
 					"request": {
 						"method": "PATCH",
-						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"contato\": \"novo-contato@email.com\"\n}"
+							"raw": "{\n  \"nome\": \"Maria Corretora Atualizada\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/corretores/:corretor_id",
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["corretores", ":corretor_id"],
-							"variable": [{"key": "corretor_id", "value": ""}]
-						}
+							"path": ["corretores", "{{corretor_id}}"]
+						},
+						"description": "Atualiza os campos informados de um corretor ativo do tenant autenticado."
 					},
 					"response": []
 				},
@@ -298,15 +410,20 @@
 						"header": [],
 						"auth": {
 							"type": "bearer",
-							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{base_url}}/corretores/:corretor_id",
+							"raw": "{{base_url}}/corretores/{{corretor_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["corretores", ":corretor_id"],
-							"variable": [{"key": "corretor_id", "value": ""}]
+							"path": ["corretores", "{{corretor_id}}"]
 						},
-						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+						"description": "Remove logicamente (soft-delete) um corretor do tenant autenticado."
 					},
 					"response": []
 				}
@@ -347,7 +464,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos"]
 						},
-						"description": "O id criado é salvo automaticamente na variável `loteamento_id`."
+						"description": "Cadastra um novo loteamento para o tenant autenticado. Salva o id criado na variável de coleção `loteamento_id`."
 					},
 					"response": []
 				},
@@ -364,7 +481,8 @@
 							"raw": "{{base_url}}/loteamentos",
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos"]
-						}
+						},
+						"description": "Lista os loteamentos ativos do tenant autenticado."
 					},
 					"response": []
 				},
@@ -381,7 +499,8 @@
 							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos", "{{loteamento_id}}"]
-						}
+						},
+						"description": "Retorna um loteamento ativo do tenant autenticado. Requer rodar 'Criar Loteamento' antes (ou definir manualmente a variável loteamento_id)."
 					},
 					"response": []
 				},
@@ -402,7 +521,8 @@
 							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos", "{{loteamento_id}}"]
-						}
+						},
+						"description": "Atualiza os campos informados de um loteamento ativo do tenant autenticado."
 					},
 					"response": []
 				},
@@ -420,7 +540,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos", "{{loteamento_id}}"]
 						},
-						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+						"description": "Remove logicamente (soft-delete) um loteamento do tenant autenticado."
 					},
 					"response": []
 				},
@@ -456,7 +576,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
 						},
-						"description": "Nasce sempre com status \"disponivel\". O id criado é salvo automaticamente na variável `lote_id`."
+						"description": "Cadastra um novo lote em um loteamento do tenant autenticado (nasce sempre com status \"disponivel\"). Salva o id criado na variável de coleção `lote_id`."
 					},
 					"response": []
 				},
@@ -473,7 +593,8 @@
 							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes",
 							"host": ["{{base_url}}"],
 							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
-						}
+						},
+						"description": "Lista os lotes ativos de um loteamento do tenant autenticado."
 					},
 					"response": []
 				},
@@ -490,7 +611,8 @@
 							"raw": "{{base_url}}/lotes/{{lote_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["lotes", "{{lote_id}}"]
-						}
+						},
+						"description": "Retorna um lote ativo do tenant autenticado. Requer rodar 'Criar Lote' antes (ou definir manualmente a variável lote_id)."
 					},
 					"response": []
 				},
@@ -534,7 +656,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["lotes", "{{lote_id}}", "status"]
 						},
-						"description": "Valores possíveis: disponivel, reservado, vendido, indisponivel. Transições permitidas: DISPONIVEL -> RESERVADO/INDISPONIVEL; RESERVADO -> VENDIDO/DISPONIVEL; INDISPONIVEL -> DISPONIVEL; VENDIDO é terminal. Uma transição fora dessa tabela retorna 409 com mensagem explicando o motivo."
+						"description": "Valores possíveis: disponivel, reservado, vendido, indisponivel. Transições permitidas: DISPONIVEL -> RESERVADO/INDISPONIVEL; RESERVADO -> VENDIDO/DISPONIVEL; INDISPONIVEL -> DISPONIVEL; VENDIDO é terminal. Uma transição fora dessa tabela retorna 409 com mensagem explicando o motivo. Toda transição gera automaticamente uma entrada em audit_log."
 					},
 					"response": []
 				},

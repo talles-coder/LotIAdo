@@ -5,15 +5,15 @@ from sqlalchemy.orm import sessionmaker
 from app.config import Settings
 from app.common.models import Base
 
-# Importados por efeito colateral: garante que todas as entidades estejam
-# registradas no registry do SQLAlchemy antes da primeira query, já que
-# relationships como `relationship("Tenant")` são resolvidos por nome de
-# classe e falham se o módulo dono da classe nunca foi importado.
-from app.tenancy.domain.models import Tenant  # noqa: F401
-from app.identity.domain.models import User, UserTenantMembership  # noqa: F401
-from app.clientes.domain.models import Cliente  # noqa: F401
-from app.corretores.domain.models import Corretor  # noqa: F401
-from app.loteamentos_lotes.domain.models import Loteamento, Lote  # noqa: F401
+# Importados pelo efeito colateral, nesta ordem:
+# 1. app.models — registra todos os domain models no declarative registry
+#    do SQLAlchemy, para que relationship() por string (ex.: "Tenant")
+#    resolva mesmo quando nada no caminho real da rota importa aquela
+#    classe diretamente.
+# 2. app.audit.infrastructure.tracking — registra o listener de auditoria
+#    automática (`before_flush`) em toda Session da aplicação.
+from app import models as _domain_models  # noqa: F401
+from app.audit.infrastructure import tracking as _audit_tracking  # noqa: F401
 
 settings = Settings()
 

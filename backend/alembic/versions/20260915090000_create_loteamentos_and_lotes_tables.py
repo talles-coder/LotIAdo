@@ -1,16 +1,16 @@
 """Create loteamentos and lotes tables.
 
-Revision ID: 20260914150000
-Revises: 20260914120000
-Create Date: 2026-09-14 15:00:00.000000
+Revision ID: 20260915090000
+Revises: 20260914150000
+Create Date: 2026-09-15 09:00:00.000000
 
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = '20260914150000'
-down_revision = '20260914120000'
+revision = '20260915090000'
+down_revision = '20260914150000'
 branch_labels = None
 depends_on = None
 
