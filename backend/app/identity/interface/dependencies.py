@@ -10,7 +10,11 @@ from app.config import Settings
 from app.database import get_db
 from app.identity.application.security import decode_access_token
 from app.identity.domain.models import User
-from app.identity.infrastructure.repository import get_user_by_id
+from app.identity.infrastructure.repository import (
+    get_membership_for_user_and_tenant,
+    get_user_by_id,
+    role_has_permission,
+)
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -83,3 +87,31 @@ async def get_current_tenant_id(
         return UUID(raw_tenant_id)
     except ValueError:
         raise unauthorized
+
+
+def require_permission(permission_key: str):
+    """Build a dependency that only allows requests whose role grants `permission_key`.
+
+    Permissions are resolved via `role_permissions`, not a hardcoded role name,
+    so granting a new permission to a custom role never requires touching route code.
+    """
+
+    async def _dependency(
+        user: User = Depends(get_current_user),
+        tenant_id: UUID = Depends(get_current_tenant_id),
+        db: AsyncSession = Depends(get_db),
+    ) -> None:
+        membership = await get_membership_for_user_and_tenant(db, user.id, tenant_id)
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User has no membership in this tenant",
+            )
+
+        if not await role_has_permission(db, membership.role, permission_key):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{membership.role}' is missing permission '{permission_key}'",
+            )
+
+    return _dependency

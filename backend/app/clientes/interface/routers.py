@@ -11,7 +11,7 @@ from app.clientes.interface.schemas import (
     ClienteResponse,
     ClienteUpdateRequest,
 )
-from app.identity.interface.dependencies import get_current_tenant_id
+from app.identity.interface.dependencies import get_current_tenant_id, require_permission
 from app.tenancy.interface.dependencies import get_tenant_scoped_db
 
 router = APIRouter(prefix="/clientes", tags=["clientes"])
@@ -22,6 +22,7 @@ async def criar_cliente(
     request: ClienteCreateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("clientes:gerenciar")),
 ) -> ClienteResponse:
     """Cadastra um novo cliente para o tenant autenticado."""
     service = ClienteService(db)
@@ -61,6 +62,7 @@ async def atualizar_cliente(
     request: ClienteUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("clientes:gerenciar")),
 ) -> ClienteResponse:
     """Atualiza os campos informados de um cliente ativo do tenant autenticado."""
     service = ClienteService(db)
@@ -82,6 +84,7 @@ async def remover_cliente(
     cliente_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("clientes:gerenciar")),
 ) -> None:
     """Remove logicamente (soft-delete) um cliente do tenant autenticado."""
     service = ClienteService(db)
