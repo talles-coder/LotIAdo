@@ -1,8 +1,11 @@
 """Testes de integração do módulo loteamentos_lotes (CRUD e transição de status)."""
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit.domain.acoes import AcaoAuditoria
+from app.audit.domain.models import AuditLog
 from app.config import Settings
 from app.identity.application.security import create_access_token, hash_password
 from app.identity.domain.models import User, UserTenantMembership
@@ -11,6 +14,14 @@ from app.tenancy.domain.models import Tenant
 
 async def _criar_usuario_com_tenant(db: AsyncSession, tenant_slug: str) -> str:
     """Cria um usuário com membership em um tenant e retorna o token JWT."""
+    token, _user, _tenant = await _criar_usuario_com_tenant_completo(db, tenant_slug)
+    return token
+
+
+async def _criar_usuario_com_tenant_completo(
+    db: AsyncSession, tenant_slug: str
+) -> tuple[str, User, Tenant]:
+    """Cria um usuário com membership em um tenant e retorna (token, user, tenant)."""
     tenant = Tenant(name=tenant_slug, slug=tenant_slug)
     db.add(tenant)
     await db.flush()
@@ -26,7 +37,8 @@ async def _criar_usuario_com_tenant(db: AsyncSession, tenant_slug: str) -> str:
     db.add(UserTenantMembership(user_id=user.id, tenant_id=tenant.id, role="admin"))
     await db.commit()
 
-    return create_access_token(user.id, tenant.id, Settings())
+    token = create_access_token(user.id, tenant.id, Settings())
+    return token, user, tenant
 
 
 def _auth_headers(token: str) -> dict[str, str]:
@@ -230,3 +242,40 @@ async def test_loteamentos_sem_token_retorna_401(client: AsyncClient):
     response = await client.get("/loteamentos")
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_transicao_de_status_gera_uma_entrada_de_auditoria(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Uma transição de status via API gera exatamente uma entrada em audit_log, com o payload correto.
+
+    Critério de aceite da SCRUM-54 (FASE1-IMPL-04) para o lado de
+    loteamentos_lotes: a auditoria é automática (`Lote` é decorado com
+    `@rastrear_auditoria`, ver app/loteamentos_lotes/domain/models.py) —
+    nenhuma chamada explícita é feita pelo service ou pela rota.
+    """
+    token, user, tenant = await _criar_usuario_com_tenant_completo(
+        db_session, "tenant-lote-auditoria"
+    )
+    loteamento_id = await _criar_loteamento(client, token)
+    lote = await _criar_lote(client, token, loteamento_id)
+
+    response = await client.patch(
+        f"/lotes/{lote['id']}/status", json={"status": "reservado"}, headers=_auth_headers(token)
+    )
+    assert response.status_code == 200
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.entidade_id == lote["id"])
+    )
+    entradas = result.scalars().all()
+
+    assert len(entradas) == 1
+    entrada = entradas[0]
+    assert entrada.acao == AcaoAuditoria.TRANSICAO_STATUS
+    assert entrada.entidade == "lote"
+    assert entrada.tenant_id == tenant.id
+    assert entrada.usuario_id == user.id
+    assert entrada.payload_antes == {"status": "disponivel"}
+    assert entrada.payload_depois == {"status": "reservado"}
