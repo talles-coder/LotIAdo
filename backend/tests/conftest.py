@@ -11,9 +11,36 @@ from dotenv import load_dotenv
 
 from app.common.models import Base
 from app.database import get_db
+from app.identity.domain.models import Permission, RolePermission
 from app.main import app
 
 load_dotenv()
+
+# Mantém as fixtures de teste equivalentes ao seed de produção (ver migration
+# 20260915170000): admin/gestor/corretor recebem todas as permissões, então
+# os testes existentes (que usam role="admin") continuam passando sem
+# precisar conhecer as permissões de cada rota.
+PERMISSOES_SEED = (
+    "clientes:gerenciar",
+    "corretores:gerenciar",
+    "loteamentos_lotes:gerenciar",
+)
+PAPEIS_SEED = ("admin", "gestor", "corretor")
+
+
+async def _seed_permissions(engine) -> None:
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with async_session() as session:
+        permissoes = [Permission(key=key, description=key) for key in PERMISSOES_SEED]
+        session.add_all(permissoes)
+        await session.flush()
+
+        session.add_all(
+            RolePermission(role=papel, permission_id=permissao.id)
+            for papel in PAPEIS_SEED
+            for permissao in permissoes
+        )
+        await session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -36,6 +63,8 @@ async def async_engine():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    await _seed_permissions(engine)
 
     yield engine
 

@@ -11,7 +11,7 @@ from app.corretores.interface.schemas import (
     CorretorResponse,
     CorretorUpdateRequest,
 )
-from app.identity.interface.dependencies import get_current_tenant_id
+from app.identity.interface.dependencies import get_current_tenant_id, require_permission
 from app.tenancy.interface.dependencies import get_tenant_scoped_db
 
 router = APIRouter(prefix="/corretores", tags=["corretores"])
@@ -22,6 +22,7 @@ async def criar_corretor(
     request: CorretorCreateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("corretores:gerenciar")),
 ) -> CorretorResponse:
     """Cadastra um novo corretor para o tenant autenticado."""
     service = CorretorService(db)
@@ -61,6 +62,7 @@ async def atualizar_corretor(
     request: CorretorUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("corretores:gerenciar")),
 ) -> CorretorResponse:
     """Atualiza os campos informados de um corretor ativo do tenant autenticado."""
     service = CorretorService(db)
@@ -82,6 +84,7 @@ async def remover_corretor(
     corretor_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
     db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("corretores:gerenciar")),
 ) -> None:
     """Remove logicamente (soft-delete) um corretor do tenant autenticado."""
     service = CorretorService(db)
