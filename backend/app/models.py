@@ -18,3 +18,4 @@ from app.corretores.domain.models import Corretor  # noqa: F401
 from app.identity.domain.models import User, UserTenantMembership  # noqa: F401
 from app.loteamentos_lotes.domain.models import Loteamento, Lote  # noqa: F401
 from app.tenancy.domain.models import Tenant  # noqa: F401
+from app.vendas_reservas.domain.models import ReservaVenda  # noqa: F401
