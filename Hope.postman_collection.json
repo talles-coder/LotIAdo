@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login",
+		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id: preenchidos automaticamente pelos requests de criação correspondentes",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -19,6 +19,14 @@
 		},
 		{
 			"key": "corretor_id",
+			"value": ""
+		},
+		{
+			"key": "loteamento_id",
+			"value": ""
+		},
+		{
+			"key": "lote_id",
 			"value": ""
 		}
 	],
@@ -416,6 +424,257 @@
 							"path": ["corretores", "{{corretor_id}}"]
 						},
 						"description": "Remove logicamente (soft-delete) um corretor do tenant autenticado."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Loteamentos e Lotes",
+			"item": [
+				{
+					"name": "Criar Loteamento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('loteamento_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Residencial Sol Nascente\",\n  \"descricao\": \"Fase 1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos"]
+						},
+						"description": "Cadastra um novo loteamento para o tenant autenticado. Salva o id criado na variável de coleção `loteamento_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Loteamentos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos"]
+						},
+						"description": "Lista os loteamentos ativos do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Loteamento",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						},
+						"description": "Retorna um loteamento ativo do tenant autenticado. Requer rodar 'Criar Loteamento' antes (ou definir manualmente a variável loteamento_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Loteamento",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"descricao\": \"Fase 1 - atualizado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						},
+						"description": "Atualiza os campos informados de um loteamento ativo do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Loteamento",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}"]
+						},
+						"description": "Remove logicamente (soft-delete) um loteamento do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Lote",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('lote_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identificacao\": \"Lote 01\",\n  \"quadra\": \"A\",\n  \"area_m2\": \"300.00\",\n  \"preco\": \"120000.00\",\n  \"caracteristicas\": {\"esquina\": true}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
+						},
+						"description": "Cadastra um novo lote em um loteamento do tenant autenticado (nasce sempre com status \"disponivel\"). Salva o id criado na variável de coleção `lote_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Lotes do Loteamento",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
+						},
+						"description": "Lista os lotes ativos de um loteamento do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Lote",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						},
+						"description": "Retorna um lote ativo do tenant autenticado. Requer rodar 'Criar Lote' antes (ou definir manualmente a variável lote_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Lote",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"preco\": \"135000.00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						},
+						"description": "Atualiza campos gerais do lote. O status NÃO é editável por aqui — use 'Transicionar Status do Lote'."
+					},
+					"response": []
+				},
+				{
+					"name": "Transicionar Status do Lote",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"reservado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}", "status"]
+						},
+						"description": "Valores possíveis: disponivel, reservado, vendido, indisponivel. Transições permitidas: DISPONIVEL -> RESERVADO/INDISPONIVEL; RESERVADO -> VENDIDO/DISPONIVEL; INDISPONIVEL -> DISPONIVEL; VENDIDO é terminal. Uma transição fora dessa tabela retorna 409 com mensagem explicando o motivo. Toda transição gera automaticamente uma entrada em audit_log."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Lote",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}"]
+						},
+						"description": "Remoção lógica (soft-delete) — não é hard-delete."
 					},
 					"response": []
 				}

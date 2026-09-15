@@ -16,4 +16,5 @@ from app.audit.domain.models import AuditLog  # noqa: F401
 from app.clientes.domain.models import Cliente  # noqa: F401
 from app.corretores.domain.models import Corretor  # noqa: F401
 from app.identity.domain.models import User, UserTenantMembership  # noqa: F401
+from app.loteamentos_lotes.domain.models import Loteamento, Lote  # noqa: F401
 from app.tenancy.domain.models import Tenant  # noqa: F401
