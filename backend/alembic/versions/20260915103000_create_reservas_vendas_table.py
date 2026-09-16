@@ -1,22 +1,23 @@
 """Create reservas_vendas table.
 
 Revision ID: 20260915103000
-Revises: 20260915170000
+Revises: 20260915090000
 Create Date: 2026-09-15 10:30:00.000000
 
-Rebaseada para depois de `20260915170000` (permissions) porque, no commit
-original, esta migration e `20260915160000` (enable RLS) divergiam do mesmo
-pai (`20260915090000`), gerando dois heads de migration simultâneos — o que
-faria `alembic upgrade head` falhar com "Multiple head revisions are
-present". `reservas_vendas` não é tocada por nenhuma das duas, então
-reordenar é seguro.
+No commit original, esta migration e `20260915160000` (enable RLS)
+divergiam do mesmo pai (`20260915090000`), gerando dois heads de migration
+simultâneos — `alembic upgrade head` falharia com "Multiple head revisions
+are present". Mantém o `down_revision` original (não reordena o histórico
+já publicado): quem já tiver rodado esta migration antes de qualquer fix
+continua com uma cadeia válida. O merge dos dois heads é feito por uma
+migration de merge dedicada (ver `20260916085000`), não reescrevendo esta.
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = '20260915103000'
-down_revision = '20260915170000'
+down_revision = '20260915090000'
 branch_labels = None
 depends_on = None
 
