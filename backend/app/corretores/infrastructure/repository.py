@@ -31,15 +31,21 @@ async def list_by_tenant(db: AsyncSession, tenant_id: UUID) -> list[Corretor]:
 
 
 async def create(db: AsyncSession, corretor: Corretor) -> Corretor:
-    """Persist a new corretor."""
+    """Persist a new corretor.
+
+    Sem `db.refresh()` de propósito: a sessão tem `expire_on_commit=False`
+    (ver app/database.py) e o INSERT já traz os defaults gerados pelo server
+    (`created_at`/`updated_at`) via `RETURNING`, então o objeto já está
+    completo após o commit. Um `refresh()` abriria uma *nova* transação sem
+    `app.tenant_id` setado — a policy de RLS derrubaria a query pra zero
+    linhas (ver app/tenancy/interface/dependencies.py).
+    """
     db.add(corretor)
     await db.commit()
-    await db.refresh(corretor)
     return corretor
 
 
 async def save(db: AsyncSession, corretor: Corretor) -> Corretor:
-    """Persist changes made to an existing corretor."""
+    """Persist changes made to an existing corretor. Ver nota em `create()`."""
     await db.commit()
-    await db.refresh(corretor)
     return corretor

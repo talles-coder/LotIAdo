@@ -11,8 +11,8 @@ from app.corretores.interface.schemas import (
     CorretorResponse,
     CorretorUpdateRequest,
 )
-from app.database import get_db
 from app.identity.interface.dependencies import get_current_tenant_id
+from app.tenancy.interface.dependencies import get_tenant_scoped_db
 
 router = APIRouter(prefix="/corretores", tags=["corretores"])
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/corretores", tags=["corretores"])
 async def criar_corretor(
     request: CorretorCreateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> CorretorResponse:
     """Cadastra um novo corretor para o tenant autenticado."""
     service = CorretorService(db)
@@ -32,7 +32,7 @@ async def criar_corretor(
 @router.get("", response_model=list[CorretorResponse])
 async def listar_corretores(
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> list[CorretorResponse]:
     """Lista os corretores ativos do tenant autenticado."""
     service = CorretorService(db)
@@ -44,7 +44,7 @@ async def listar_corretores(
 async def obter_corretor(
     corretor_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> CorretorResponse:
     """Retorna um corretor ativo do tenant autenticado."""
     service = CorretorService(db)
@@ -60,7 +60,7 @@ async def atualizar_corretor(
     corretor_id: UUID,
     request: CorretorUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> CorretorResponse:
     """Atualiza os campos informados de um corretor ativo do tenant autenticado."""
     service = CorretorService(db)
@@ -81,7 +81,7 @@ async def atualizar_corretor(
 async def remover_corretor(
     corretor_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> None:
     """Remove logicamente (soft-delete) um corretor do tenant autenticado."""
     service = CorretorService(db)
