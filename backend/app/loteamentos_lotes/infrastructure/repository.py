@@ -65,6 +65,26 @@ async def get_lote_by_id(db: AsyncSession, tenant_id: UUID, lote_id: UUID) -> Lo
     return result.scalar_one_or_none()
 
 
+async def get_lote_by_id_for_update(db: AsyncSession, tenant_id: UUID, lote_id: UUID) -> Lote | None:
+    """Fetch an active lote locking its row (`SELECT ... FOR UPDATE`) until the transaction ends.
+
+    Used before a status transition that must not race with a concurrent one
+    (ex.: duas reservas simultâneas do mesmo lote em `vendas_reservas`) — o
+    segundo `SELECT FOR UPDATE` bloqueia até a primeira transação commitar,
+    e então enxerga o status já atualizado.
+    """
+    result = await db.execute(
+        select(Lote)
+        .where(
+            Lote.id == lote_id,
+            Lote.tenant_id == tenant_id,
+            Lote.deleted_at.is_(None),
+        )
+        .with_for_update()
+    )
+    return result.scalar_one_or_none()
+
+
 async def list_lotes_by_loteamento(
     db: AsyncSession, tenant_id: UUID, loteamento_id: UUID
 ) -> list[Lote]:
