@@ -25,3 +25,24 @@ class UserTenantMembership(BaseModel):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     role = Column(String(50), nullable=False, default="member")
+
+
+class Permission(BaseModel):
+    """A single grantable permission, identified by a stable key."""
+
+    __tablename__ = "permissions"
+
+    key = Column(String(100), nullable=False, unique=True)
+    description = Column(String(255), nullable=False)
+
+
+class RolePermission(BaseModel):
+    """Grants a permission to every membership with the given role."""
+
+    __tablename__ = "role_permissions"
+    __table_args__ = (
+        UniqueConstraint("role", "permission_id", name="uq_role_permissions"),
+    )
+
+    role = Column(String(50), nullable=False)
+    permission_id = Column(UUID(as_uuid=True), ForeignKey("permissions.id"), nullable=False)
