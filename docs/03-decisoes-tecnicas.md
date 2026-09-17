@@ -130,6 +130,26 @@ Nova decisão, consequência direta de D2 (Expo for Web): `react-native-maps`, u
 
 **Recomendação:** (A). Mantém consistência com a decisão de usar Google Maps como camada de visualização (briefing original) e reaproveita ao máximo o componente de mapa entre mobile e web — a tela de edição de polígono da Fase 5 adiciona só a camada de desenho por cima do mesmo `MapView` web. Se o wrapper comunitário se mostrar instável durante a Fase 5, cair para (B) como plano B, registrando a mudança aqui.
 
+## D9 — Biblioteca de componentes multiplataforma (mobile + web) — ✅ Decidido: (A) React Native Paper
+
+Decisão motivada pelo comentário em SCRUM-63 pedindo para definir o design da aplicação junto com o setup do Expo (FASE3-IMPL-01) — esse padrão vale para as telas de domínio da Fase 3 e para o backoffice web da Fase 5 (D2). Pesquisa de apoio (apps do nicho, CRMs de loteamento, SaaS backoffice) em [docs/design/referencias-apps.md](design/referencias-apps.md); opções comparadas em [docs/design/proposta-design-system.md](design/proposta-design-system.md).
+
+**Opções:**
+- (A) React Native Paper (Material Design 3, mantida pela Callstack) — **escolhida**.
+- (B) Tamagui (tokens + compilador, pensado para nativo+web desde a raiz).
+- (C) Componentes próprios sobre `View`/`Pressable`/`Text`, sem biblioteca.
+
+| | (A) React Native Paper | (B) Tamagui | (C) Componentes próprios |
+|---|---|---|---|
+| Vantagens | Setup rápido; acessibilidade (alvos de toque, screen reader) já resolvida; madura desde 2017 | Melhor caso de uso para web como alvo de primeira classe; tokens nativos | Controle total; zero dependência |
+| Desvantagens | Web via RN Web é suportada mas não é o caso de uso mais testado da lib | Setup mais pesado (config + compilador); curva de aprendizado maior | Reinventa botão, input, modal — atrasa a Fase 3 sem ganho de aprendizado central para o projeto |
+| Custo | Zero | Zero | Zero |
+| Impacto no aprendizado | Médio | Médio-alto (concentrado em ferramenta, não em domínio) | Baixo |
+
+**Recomendação:** (A). Foco do projeto é domínio + IA, não profundidade em design system — Paper resolve componentes básicos (lista, botão, badge, input) rápido e com acessibilidade de graça. Reavaliar para (B) Tamagui só se a Fase 5 (Expo for Web) expuser limitação real de estilização compartilhada — mesmo critério usado em D8 para o wrapper de mapa.
+
+**Tokens semânticos propostos** (nomes, não valores — ver detalhe em `docs/design/proposta-design-system.md`): `status.disponivel/reservado/vendido/bloqueado` (cor + label, nunca só cor), `surface.primary/secondary`, `action.primary/danger`.
+
 ## Registro de decisões tomadas durante a execução
 
 Conforme as fases avançarem e decisões como D6 forem resolvidas empiricamente, o resultado deve ser adicionado como uma nova entrada neste documento (ex. "D6 — decidido: Ollama nomic-embed-text, ver task FASE7-EST-03").

@@ -1,5 +1,6 @@
 docs/*
 !docs/03-decisoes-tecnicas.md
+!docs/design/
 estudos
 .env
 __pycache__/
