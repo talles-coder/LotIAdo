@@ -33,17 +33,23 @@ async def list_loteamentos_by_tenant(db: AsyncSession, tenant_id: UUID) -> list[
 
 
 async def create_loteamento(db: AsyncSession, loteamento: Loteamento) -> Loteamento:
-    """Persist a new loteamento."""
+    """Persist a new loteamento.
+
+    Sem `db.refresh()` de propósito: a sessão tem `expire_on_commit=False`
+    (ver app/database.py) e o INSERT já traz os defaults gerados pelo server
+    (`created_at`/`updated_at`) via `RETURNING`, então o objeto já está
+    completo após o commit. Um `refresh()` abriria uma *nova* transação sem
+    `app.tenant_id` setado — a policy de RLS derrubaria a query pra zero
+    linhas (ver app/tenancy/interface/dependencies.py).
+    """
     db.add(loteamento)
     await db.commit()
-    await db.refresh(loteamento)
     return loteamento
 
 
 async def save_loteamento(db: AsyncSession, loteamento: Loteamento) -> Loteamento:
-    """Persist changes made to an existing loteamento."""
+    """Persist changes made to an existing loteamento. Ver nota em `create_loteamento()`."""
     await db.commit()
-    await db.refresh(loteamento)
     return loteamento
 
 
@@ -55,6 +61,26 @@ async def get_lote_by_id(db: AsyncSession, tenant_id: UUID, lote_id: UUID) -> Lo
             Lote.tenant_id == tenant_id,
             Lote.deleted_at.is_(None),
         )
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_lote_by_id_for_update(db: AsyncSession, tenant_id: UUID, lote_id: UUID) -> Lote | None:
+    """Fetch an active lote locking its row (`SELECT ... FOR UPDATE`) until the transaction ends.
+
+    Used before a status transition that must not race with a concurrent one
+    (ex.: duas reservas simultâneas do mesmo lote em `vendas_reservas`) — o
+    segundo `SELECT FOR UPDATE` bloqueia até a primeira transação commitar,
+    e então enxerga o status já atualizado.
+    """
+    result = await db.execute(
+        select(Lote)
+        .where(
+            Lote.id == lote_id,
+            Lote.tenant_id == tenant_id,
+            Lote.deleted_at.is_(None),
+        )
+        .with_for_update()
     )
     return result.scalar_one_or_none()
 
@@ -74,15 +100,13 @@ async def list_lotes_by_loteamento(
 
 
 async def create_lote(db: AsyncSession, lote: Lote) -> Lote:
-    """Persist a new lote."""
+    """Persist a new lote. Ver nota em `create_loteamento()` sobre não usar `db.refresh()`."""
     db.add(lote)
     await db.commit()
-    await db.refresh(lote)
     return lote
 
 
 async def save_lote(db: AsyncSession, lote: Lote) -> Lote:
-    """Persist changes made to an existing lote."""
+    """Persist changes made to an existing lote. Ver nota em `create_loteamento()`."""
     await db.commit()
-    await db.refresh(lote)
     return lote

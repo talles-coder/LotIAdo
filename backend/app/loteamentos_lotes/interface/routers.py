@@ -4,8 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
-from app.identity.interface.dependencies import get_current_tenant_id
+from app.identity.interface.dependencies import get_current_tenant_id, require_permission
 from app.loteamentos_lotes.application.lote_service import LoteService
 from app.loteamentos_lotes.application.loteamento_service import LoteamentoService
 from app.loteamentos_lotes.domain.exceptions import (
@@ -22,6 +21,7 @@ from app.loteamentos_lotes.interface.schemas import (
     LoteStatusUpdateRequest,
     LoteUpdateRequest,
 )
+from app.tenancy.interface.dependencies import get_tenant_scoped_db
 
 router = APIRouter(tags=["loteamentos_lotes"])
 
@@ -30,7 +30,8 @@ router = APIRouter(tags=["loteamentos_lotes"])
 async def criar_loteamento(
     request: LoteamentoCreateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> LoteamentoResponse:
     """Cadastra um novo loteamento para o tenant autenticado."""
     service = LoteamentoService(db)
@@ -41,7 +42,7 @@ async def criar_loteamento(
 @router.get("/loteamentos", response_model=list[LoteamentoResponse])
 async def listar_loteamentos(
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> list[LoteamentoResponse]:
     """Lista os loteamentos ativos do tenant autenticado."""
     service = LoteamentoService(db)
@@ -53,7 +54,7 @@ async def listar_loteamentos(
 async def obter_loteamento(
     loteamento_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> LoteamentoResponse:
     """Retorna um loteamento ativo do tenant autenticado."""
     service = LoteamentoService(db)
@@ -69,7 +70,8 @@ async def atualizar_loteamento(
     loteamento_id: UUID,
     request: LoteamentoUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> LoteamentoResponse:
     """Atualiza os campos informados de um loteamento ativo do tenant autenticado."""
     service = LoteamentoService(db)
@@ -86,7 +88,8 @@ async def atualizar_loteamento(
 async def remover_loteamento(
     loteamento_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> None:
     """Remove logicamente (soft-delete) um loteamento do tenant autenticado."""
     service = LoteamentoService(db)
@@ -105,7 +108,8 @@ async def criar_lote(
     loteamento_id: UUID,
     request: LoteCreateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> LoteResponse:
     """Cadastra um novo lote (status inicial DISPONIVEL) em um loteamento do tenant autenticado."""
     loteamento_service = LoteamentoService(db)
@@ -131,7 +135,7 @@ async def criar_lote(
 async def listar_lotes(
     loteamento_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> list[LoteResponse]:
     """Lista os lotes ativos de um loteamento do tenant autenticado."""
     service = LoteService(db)
@@ -143,7 +147,7 @@ async def listar_lotes(
 async def obter_lote(
     lote_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
 ) -> LoteResponse:
     """Retorna um lote ativo do tenant autenticado."""
     service = LoteService(db)
@@ -159,7 +163,8 @@ async def atualizar_lote(
     lote_id: UUID,
     request: LoteUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> LoteResponse:
     """Atualiza os campos informados de um lote ativo (status não é editável aqui)."""
     service = LoteService(db)
@@ -184,7 +189,8 @@ async def transicionar_status_lote(
     lote_id: UUID,
     request: LoteStatusUpdateRequest,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> LoteResponse:
     """Transiciona o status de um lote, validando contra a máquina de estados."""
     service = LoteService(db)
@@ -201,7 +207,8 @@ async def transicionar_status_lote(
 async def remover_lote(
     lote_id: UUID,
     tenant_id: UUID = Depends(get_current_tenant_id),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
 ) -> None:
     """Remove logicamente (soft-delete) um lote do tenant autenticado."""
     service = LoteService(db)

@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id: preenchidos automaticamente pelos requests de criação correspondentes",
+		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id, reserva_id: preenchidos automaticamente pelos requests de criação correspondentes",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -27,6 +27,10 @@
 		},
 		{
 			"key": "lote_id",
+			"value": ""
+		},
+		{
+			"key": "reserva_id",
 			"value": ""
 		}
 	],
@@ -675,6 +679,83 @@
 							"path": ["lotes", "{{lote_id}}"]
 						},
 						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vendas e Reservas",
+			"item": [
+				{
+					"name": "Criar Reserva",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('reserva_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"lote_id\": \"{{lote_id}}\",\n  \"cliente_id\": \"{{cliente_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Reserva um lote disponível para um cliente do tenant autenticado (move o lote para \"reservado\"). `corretor_id` é opcional. Salva o id criado na variável de coleção `reserva_id`. Gera automaticamente entradas em audit_log para o lote (transição de status) e para a reserva (criação)."
+					},
+					"response": []
+				},
+				{
+					"name": "Converter Reserva em Venda",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas/{{reserva_id}}/converter-venda",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "{{reserva_id}}", "converter-venda"]
+						},
+						"description": "Converte uma reserva ativa em venda, movendo o lote para \"vendido\". Requer rodar 'Criar Reserva' antes (ou definir manualmente a variável reserva_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Cancelar Reserva",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas/{{reserva_id}}/cancelar",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "{{reserva_id}}", "cancelar"]
+						},
+						"description": "Cancela uma reserva ativa, devolvendo o lote para \"disponivel\". Requer rodar 'Criar Reserva' antes (ou definir manualmente a variável reserva_id)."
 					},
 					"response": []
 				}
