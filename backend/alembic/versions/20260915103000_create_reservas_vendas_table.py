@@ -4,6 +4,13 @@ Revision ID: 20260915103000
 Revises: 20260915090000
 Create Date: 2026-09-15 10:30:00.000000
 
+No commit original, esta migration e `20260915160000` (enable RLS)
+divergiam do mesmo pai (`20260915090000`), gerando dois heads de migration
+simultâneos — `alembic upgrade head` falharia com "Multiple head revisions
+are present". Mantém o `down_revision` original (não reordena o histórico
+já publicado): quem já tiver rodado esta migration antes de qualquer fix
+continua com uma cadeia válida. O merge dos dois heads é feito por uma
+migration de merge dedicada (ver `20260916085000`), não reescrevendo esta.
 """
 from alembic import op
 import sqlalchemy as sa
