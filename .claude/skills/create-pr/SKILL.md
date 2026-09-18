@@ -80,6 +80,8 @@ $ /create-pr
 
 ⚠️ **Cada task = branch nova, NUNCA reutilize branches de outras tasks**
 
+⚠️ **Sempre dar pull/fetch da `master` antes de criar a branch e começar a desenvolver** — `git fetch origin master` + branch criada a partir de `origin/master` (não de uma `master` local desatualizada). Outro dev pode ter mergeado algo enquanto a task estava sendo planejada; começar de uma base velha gera conflito maior depois e risco de reimplementar algo que já mudou (ex.: contrato de endpoint, schema). Se a branch já foi criada e a `master` andou nesse meio tempo, faça `git merge origin/master` antes de abrir o PR (não rebase — merge preserva o histórico de quem trabalhou em paralelo).
+
 Padrão de nome:
 ```
 feat/SCRUM-XX-descrição-curta
@@ -91,6 +93,14 @@ Exemplos:
 - `feat/SCRUM-45-backend-skeleton`
 - `feat/SCRUM-50-tenancy-module`
 - `fix/SCRUM-48-tenant-isolation`
+
+## Screenshots de Telas Novas — OBRIGATÓRIO
+
+⚠️ **Toda tela nova ou alterada (mobile ou backoffice web) entra no PR com print.**
+
+Antes de abrir o PR: suba a tela (`expo start --web` é suficiente pra captura, mesmo que o alvo real da task seja nativo — só documentar visualmente) e tire um screenshot de cada tela nova/alterada. Salve em `docs/design/screenshots/<task>-<tela>.png`, commite junto com o resto da task, e referencie as imagens na seção **Evidências** do PR (via raw.githubusercontent.com, apontando pra branch da PR — GitHub renderiza inline). PR com tela nova e sem print não está pronto para abrir.
+
+⚠️ **Toda tela nova segue os tokens/componentes de `docs/design/lovable-mapeamento.md`** (cores, tipografia Outfit/Figtree, raio, componentes como `Logo`/`StatusBadge`) — não estiliza no improviso. Se a tela usar um padrão ainda não mapeado ali, estende a mesma lógica visual e atualiza o mapeamento antes de abrir o PR.
 
 ## Formato do PR
 
@@ -123,7 +133,7 @@ SCRUM-50: feat(tenancy): implement multi-tenant isolation
 **Branch & Task:**
 - [ ] Branch dedicada para esta task (nunca reutilize de outra task)
 - [ ] Nome da branch segue padrão: `feat/SCRUM-XX-descrição` ou `fix/SCRUM-XX-descrição`
-- [ ] Branch criada de `master` (não de outra feature branch)
+- [ ] Branch criada a partir da `master` **atualizada** (`git fetch origin master` antes de criar/começar; `git merge origin/master` se a `master` andou depois)
 - [ ] Número da task está correto no nome da branch
 
 **Código & Testes:**
@@ -137,3 +147,4 @@ SCRUM-50: feat(tenancy): implement multi-tenant isolation
 - [ ] Handoff é claro (outro dev sem contexto entende)
 - [ ] Riscos/impactos mencionados (se houver)
 - [ ] Título do PR começa com número da task (SCRUM-XX: ...)
+- [ ] Tela nova ou alterada (mobile/web)? Screenshot tirado, commitado em `docs/design/screenshots/` e embutido na seção Evidências

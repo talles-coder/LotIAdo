@@ -1,0 +1,11 @@
+import { apiClient } from './client';
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export async function login(email: string, password: string): Promise<string> {
+  const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password });
+  return data.access_token;
+}
