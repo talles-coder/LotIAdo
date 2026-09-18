@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+import { Button, HelperText } from 'react-native-paper';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { criarCliente } from '../../src/api/clientes';
+import { Field } from '../../src/components/Field';
 import { getErrorMessage } from '../../src/lib/errors';
 import { colors, fonts } from '../../src/theme/tokens';
+import { shared } from '../../src/theme/shared';
 
 export default function NovoClienteScreen() {
   const queryClient = useQueryClient();
@@ -37,35 +39,28 @@ export default function NovoClienteScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        <TextInput
-          label="Nome"
-          mode="outlined"
-          value={nome}
-          onChangeText={setNome}
-          style={styles.input}
-          outlineStyle={styles.inputOutline}
-        />
-        <TextInput
-          label="Documento (CPF/CNPJ)"
-          mode="outlined"
+        <Field label="Nome completo" placeholder="Ex.: Maria Aparecida Souza" value={nome} onChangeText={setNome} />
+        <Field
+          label="CPF ou CNPJ"
+          placeholder="000.000.000-00"
+          keyboardType="numeric"
           value={documento}
           onChangeText={setDocumento}
-          style={styles.input}
-          outlineStyle={styles.inputOutline}
         />
-        <TextInput
-          label="Contato (e-mail ou telefone)"
-          mode="outlined"
+        <Field
+          label="Contato"
+          placeholder="(64) 99999-0000 ou cliente@email.com"
+          hint="Usaremos para enviar a proposta."
           value={contato}
           onChangeText={setContato}
-          style={styles.input}
-          outlineStyle={styles.inputOutline}
         />
 
         <HelperText type="error" visible={error !== null}>
           {error}
         </HelperText>
+      </ScrollView>
 
+      <View style={shared.stickyFooter}>
         <Button
           mode="contained"
           onPress={() => {
@@ -77,9 +72,9 @@ export default function NovoClienteScreen() {
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
         >
-          Cadastrar cliente
+          Salvar cliente
         </Button>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -96,6 +91,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
     paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 36,
@@ -114,14 +111,7 @@ const styles = StyleSheet.create({
   form: {
     flexGrow: 1,
     padding: 20,
-    paddingTop: 8,
-  },
-  input: {
-    marginBottom: 12,
-    backgroundColor: colors.card,
-  },
-  inputOutline: {
-    borderRadius: 12,
+    gap: 16,
   },
   buttonContent: {
     minHeight: 52,

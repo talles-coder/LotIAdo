@@ -20,17 +20,19 @@ export function acoesDisponiveisParaStatus(status: LoteStatus): {
   reservar: boolean;
   converterVenda: boolean;
   cancelar: boolean;
+  mostrarCliente: boolean;
 } {
   return {
     reservar: status === 'disponivel',
     converterVenda: status === 'reservado',
     cancelar: status === 'reservado',
+    mostrarCliente: status === 'reservado' || status === 'vendido',
   };
 }
 
-export async function obterReservaAtivaPorLote(loteId: string): Promise<Reserva | null> {
+export async function obterReservaAtualPorLote(loteId: string): Promise<Reserva | null> {
   try {
-    const { data } = await apiClient.get<Reserva>(`/reservas/ativa-por-lote/${loteId}`);
+    const { data } = await apiClient.get<Reserva>(`/reservas/atual-por-lote/${loteId}`);
     return data;
   } catch (err) {
     if (isAxiosError(err) && err.response?.status === 404) {

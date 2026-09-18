@@ -2,14 +2,15 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Button } from 'react-native-paper';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Check, User } from 'lucide-react-native';
 
+import { obterCliente } from '../../src/api/clientes';
 import { obterLote } from '../../src/api/loteamentos';
 import {
   acoesDisponiveisParaStatus,
   cancelarReserva,
   converterReservaEmVenda,
-  obterReservaAtivaPorLote,
+  obterReservaAtualPorLote,
 } from '../../src/api/reservas';
 import { formatArea, formatBRL } from '../../src/lib/format';
 import { getErrorMessage } from '../../src/lib/errors';
@@ -18,23 +19,34 @@ import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
 import { BottomNav } from '../../src/components/BottomNav';
 
+const CELULA_DESTACADA_NA_PLANTA = 8;
+
 export default function LoteDetalheScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['lotes', id], queryFn: () => obterLote(id) });
 
   const acoes = query.data ? acoesDisponiveisParaStatus(query.data.status) : null;
+  const temFooterDeAcao = query.data
+    ? acoes?.reservar || acoes?.converterVenda || acoes?.cancelar || query.data.status === 'vendido' || query.data.status === 'indisponivel'
+    : false;
 
-  const reservaAtivaQuery = useQuery({
-    queryKey: ['reservas', 'ativa-por-lote', id],
-    queryFn: () => obterReservaAtivaPorLote(id),
-    enabled: acoes?.converterVenda === true || acoes?.cancelar === true,
+  const reservaAtualQuery = useQuery({
+    queryKey: ['reservas', 'atual-por-lote', id],
+    queryFn: () => obterReservaAtualPorLote(id),
+    enabled: acoes?.mostrarCliente === true,
+  });
+
+  const clienteQuery = useQuery({
+    queryKey: ['clientes', reservaAtualQuery.data?.cliente_id],
+    queryFn: () => obterCliente(reservaAtualQuery.data!.cliente_id),
+    enabled: reservaAtualQuery.data?.cliente_id !== undefined,
   });
 
   async function invalidarLoteEReserva() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['lotes', id] }),
-      queryClient.invalidateQueries({ queryKey: ['reservas', 'ativa-por-lote', id] }),
+      queryClient.invalidateQueries({ queryKey: ['reservas', 'atual-por-lote', id] }),
     ]);
   }
 
@@ -49,6 +61,17 @@ export default function LoteDetalheScreen() {
     onSuccess: invalidarLoteEReserva,
     onError: (err) => Alert.alert('Não foi possível cancelar a reserva', getErrorMessage(err, 'Tente novamente.')),
   });
+
+  function confirmarCancelamento(reservaId: string) {
+    Alert.alert(
+      'Cancelar reserva',
+      'Tem certeza que deseja cancelar esta reserva? O lote voltará a ficar disponível.',
+      [
+        { text: 'Voltar', style: 'cancel' },
+        { text: 'Cancelar reserva', style: 'destructive', onPress: () => cancelarMutation.mutate(reservaId) },
+      ],
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -125,73 +148,112 @@ export default function LoteDetalheScreen() {
             </View>
           )}
 
-          {acoes?.reservar && (
-            <View style={styles.section}>
-              <Button
-                mode="contained"
-                onPress={() => router.push(`/lotes/${id}/reservar`)}
-                contentStyle={styles.actionButtonContent}
-                labelStyle={styles.actionButtonLabel}
-              >
-                Reservar
-              </Button>
+          {acoes?.mostrarCliente && (
+            <View style={[shared.cardSurface, styles.section, styles.clienteCard]}>
+              <User size={20} color={colors.mutedForeground} />
+              <View style={styles.clienteInfo}>
+                <Text style={styles.clienteLabel}>Cliente</Text>
+                <Text style={styles.clienteNome}>
+                  {reservaAtualQuery.isLoading || clienteQuery.isLoading
+                    ? 'Carregando...'
+                    : (clienteQuery.data?.nome ?? '—')}
+                </Text>
+              </View>
             </View>
           )}
 
-          {(acoes?.converterVenda || acoes?.cancelar) && (
-            <View style={styles.section}>
-              {reservaAtivaQuery.isLoading ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : reservaAtivaQuery.data ? (
-                <View style={styles.actionsColumn}>
-                  {acoes?.converterVenda && (
-                    <Button
-                      mode="contained"
-                      onPress={() => converterMutation.mutate(reservaAtivaQuery.data!.id)}
-                      loading={converterMutation.isPending}
-                      disabled={converterMutation.isPending || cancelarMutation.isPending}
-                      contentStyle={styles.actionButtonContent}
-                      labelStyle={styles.actionButtonLabel}
-                    >
-                      Converter em venda
-                    </Button>
-                  )}
-                  {acoes?.cancelar && (
-                    <Button
-                      mode="outlined"
-                      textColor={colors.destructive}
-                      onPress={() =>
-                        Alert.alert(
-                          'Cancelar reserva',
-                          'Tem certeza que deseja cancelar esta reserva? O lote voltará a ficar disponível.',
-                          [
-                            { text: 'Voltar', style: 'cancel' },
-                            {
-                              text: 'Cancelar reserva',
-                              style: 'destructive',
-                              onPress: () => cancelarMutation.mutate(reservaAtivaQuery.data!.id),
-                            },
-                          ],
-                        )
-                      }
-                      loading={cancelarMutation.isPending}
-                      disabled={converterMutation.isPending || cancelarMutation.isPending}
-                      contentStyle={styles.actionButtonContent}
-                      labelStyle={styles.actionButtonLabel}
-                    >
-                      Cancelar reserva
-                    </Button>
-                  )}
-                </View>
-              ) : (
-                <Text style={styles.errorText}>Não foi possível carregar a reserva deste lote.</Text>
-              )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Localização na planta</Text>
+            <View style={styles.plantaGrid}>
+              {Array.from({ length: 18 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.plantaCelula, i === CELULA_DESTACADA_NA_PLANTA && styles.plantaCelulaDestacada]}
+                />
+              ))}
             </View>
-          )}
+          </View>
+
+          <Button
+            mode="outlined"
+            onPress={() => router.push('/clientes/novo')}
+            style={styles.section}
+            contentStyle={styles.actionButtonContent}
+            labelStyle={styles.actionButtonLabel}
+          >
+            Cadastrar novo cliente
+          </Button>
         </ScrollView>
       )}
 
-      <BottomNav />
+      {query.data && temFooterDeAcao ? (
+        <View style={shared.stickyFooter}>
+          {acoes?.reservar && (
+            <Button
+              mode="contained"
+              onPress={() => router.push(`/lotes/${id}/reservar`)}
+              contentStyle={styles.actionButtonContent}
+              labelStyle={styles.actionButtonLabel}
+            >
+              Reservar
+            </Button>
+          )}
+
+          {(acoes?.converterVenda || acoes?.cancelar) &&
+            (reservaAtualQuery.isLoading ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : reservaAtualQuery.data ? (
+              <View style={styles.footerActionsRow}>
+                <Button
+                  mode="outlined"
+                  textColor={colors.destructive}
+                  onPress={() => confirmarCancelamento(reservaAtualQuery.data!.id)}
+                  loading={cancelarMutation.isPending}
+                  disabled={converterMutation.isPending || cancelarMutation.isPending}
+                  style={styles.footerActionCancelar}
+                  contentStyle={styles.footerActionContent}
+                  labelStyle={styles.footerActionLabel}
+                >
+                  Cancelar reserva
+                </Button>
+                <Button
+                  mode="contained"
+                  buttonColor={colors.accent}
+                  icon={({ size, color }) => <Check size={size} color={color} />}
+                  onPress={() => converterMutation.mutate(reservaAtualQuery.data!.id)}
+                  loading={converterMutation.isPending}
+                  disabled={converterMutation.isPending || cancelarMutation.isPending}
+                  style={styles.footerActionConverter}
+                  contentStyle={styles.footerActionContent}
+                  labelStyle={styles.footerActionLabel}
+                >
+                  Converter em venda
+                </Button>
+              </View>
+            ) : (
+              <Text style={styles.errorText}>Não foi possível carregar a reserva deste lote.</Text>
+            ))}
+
+          {query.data.status === 'vendido' && (
+            <View style={[styles.infoBanner, { backgroundColor: colors.status.vendido.soft }]}>
+              <Check size={18} color={colors.status.vendido.text} />
+              <Text style={[styles.infoBannerText, { color: colors.status.vendido.text }]}>
+                Venda concluída — nenhuma ação disponível
+              </Text>
+            </View>
+          )}
+
+          {query.data.status === 'indisponivel' && (
+            <View style={[styles.infoBanner, { backgroundColor: colors.status.indisponivel.soft }]}>
+              <Text style={[styles.infoBannerText, { color: colors.status.indisponivel.text }]}>
+                Lote indisponível — fale com o gestor.
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : (
+        <BottomNav />
+      )}
     </View>
   );
 }
@@ -208,6 +270,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
     paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 36,
@@ -233,7 +297,7 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 20,
-    paddingTop: 4,
+    paddingTop: 16,
   },
   titleRow: {
     flexDirection: 'row',
@@ -312,6 +376,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.secondaryForeground,
   },
+  clienteCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+  },
+  clienteInfo: {
+    flex: 1,
+  },
+  clienteLabel: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.mutedForeground,
+  },
+  clienteNome: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 14,
+    color: colors.foreground,
+    marginTop: 2,
+  },
+  plantaGrid: {
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    backgroundColor: colors.muted,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 8,
+  },
+  plantaCelula: {
+    width: '15%',
+    aspectRatio: 1,
+    backgroundColor: colors.card,
+    borderRadius: 6,
+  },
+  plantaCelulaDestacada: {
+    backgroundColor: colors.primary,
+  },
   errorText: {
     fontFamily: fonts.body,
     fontSize: 14,
@@ -321,14 +425,44 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: 4,
   },
-  actionsColumn: {
-    gap: 10,
-  },
   actionButtonContent: {
     minHeight: 48,
   },
   actionButtonLabel: {
     fontFamily: fonts.displayBold,
     fontSize: 15,
+  },
+  footerActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  footerActionCancelar: {
+    flex: 1,
+  },
+  footerActionConverter: {
+    flex: 1.4,
+  },
+  footerActionContent: {
+    minHeight: 48,
+    paddingHorizontal: 2,
+  },
+  footerActionLabel: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    marginHorizontal: 4,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+  },
+  infoBannerText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

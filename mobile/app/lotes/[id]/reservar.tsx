@@ -35,7 +35,7 @@ export default function ReservarLoteScreen() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['lotes', id] }),
-        queryClient.invalidateQueries({ queryKey: ['reservas', 'ativa-por-lote', id] }),
+        queryClient.invalidateQueries({ queryKey: ['reservas', 'atual-por-lote', id] }),
       ]);
       router.back();
     },
@@ -106,8 +106,8 @@ export default function ReservarLoteScreen() {
         />
       )}
 
-      <View style={styles.footer}>
-        <HelperText type="error" visible={error !== null}>
+      <View style={[shared.stickyFooter, styles.footer]}>
+        <HelperText type="error" visible={error !== null} style={styles.footerError}>
           {error}
         </HelperText>
         <Button
@@ -140,6 +140,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
     paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 36,
@@ -156,6 +158,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
   },
   searchRow: {
+    marginTop: 12,
     paddingHorizontal: 16,
   },
   searchInput: {
@@ -226,8 +229,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    padding: 16,
-    paddingTop: 0,
+    gap: 4,
+  },
+  footerError: {
+    paddingHorizontal: 0,
   },
   buttonContent: {
     minHeight: 52,

@@ -12,6 +12,11 @@ export async function listarClientes(): Promise<Cliente[]> {
   return data;
 }
 
+export async function obterCliente(clienteId: string): Promise<Cliente> {
+  const { data } = await apiClient.get<Cliente>(`/clientes/${clienteId}`);
+  return data;
+}
+
 export async function criarCliente(input: {
   nome: string;
   documento: string;
