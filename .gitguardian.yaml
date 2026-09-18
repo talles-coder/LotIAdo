@@ -1,0 +1,22 @@
+# Config do GitGuardian (ggshield) para este repositório.
+#
+# Todas as senhas abaixo são fixtures de teste hardcoded de propósito — usadas só
+# contra o Postgres de teste local (docker-compose), nunca contra um serviço real.
+# É convenção repetida em quase todo `backend/tests/*.py` (ver hash_password("senha123")
+# e o corpo de request `{"password": "senha123"}` no Hope.postman_collection.json como
+# exemplo de payload da doc da API) — não são segredos vazados.
+version: 2
+secret:
+  ignored-matches:
+    - name: fixture de teste — senha123
+      match: senha123
+    - name: fixture de teste — outrasenha
+      match: outrasenha
+    - name: fixture de teste — senha-antiga
+      match: senha-antiga
+    - name: fixture de teste — senha-errada
+      match: senha-errada
+    - name: fixture de teste — senha-ignorada
+      match: senha-ignorada
+    - name: fixture de teste — qualquer
+      match: qualquer
