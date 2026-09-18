@@ -16,9 +16,11 @@ from app.main import app
 
 load_dotenv()
 
-# Mantém as fixtures de teste equivalentes ao seed de produção (ver migration
-# 20260915170000): admin/gestor/corretor recebem todas as permissões, então
-# os testes existentes (que usam role="admin") continuam passando sem
+# Mantém as fixtures de teste equivalentes ao seed de produção (ver migrations
+# 20260915170000 e 20260917100000): admin/gestor/corretor recebem as
+# permissões "operacionais"; só admin/gestor recebem `usuarios:gerenciar`
+# (convite/desativação, SCRUM-59) — corretor não gerencia outros usuários.
+# Assim os testes existentes (que usam role="admin") continuam passando sem
 # precisar conhecer as permissões de cada rota.
 PERMISSOES_SEED = (
     "clientes:gerenciar",
@@ -27,18 +29,29 @@ PERMISSOES_SEED = (
 )
 PAPEIS_SEED = ("admin", "gestor", "corretor")
 
+PERMISSOES_SEED_ADMIN_GESTOR = ("usuarios:gerenciar",)
+PAPEIS_SEED_ADMIN_GESTOR = ("admin", "gestor")
+
 
 async def _seed_permissions(engine) -> None:
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
-        permissoes = [Permission(key=key, description=key) for key in PERMISSOES_SEED]
-        session.add_all(permissoes)
+        permissoes = {
+            key: Permission(key=key, description=key)
+            for key in (*PERMISSOES_SEED, *PERMISSOES_SEED_ADMIN_GESTOR)
+        }
+        session.add_all(permissoes.values())
         await session.flush()
 
         session.add_all(
-            RolePermission(role=papel, permission_id=permissao.id)
+            RolePermission(role=papel, permission_id=permissoes[key].id)
             for papel in PAPEIS_SEED
-            for permissao in permissoes
+            for key in PERMISSOES_SEED
+        )
+        session.add_all(
+            RolePermission(role=papel, permission_id=permissoes[key].id)
+            for papel in PAPEIS_SEED_ADMIN_GESTOR
+            for key in PERMISSOES_SEED_ADMIN_GESTOR
         )
         await session.commit()
 

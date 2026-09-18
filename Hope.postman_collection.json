@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id, reserva_id: preenchidos automaticamente pelos requests de criação correspondentes",
+		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id, reserva_id: preenchidos automaticamente pelos requests de criação correspondentes\n- invitation_token, membership_id: preenchidos automaticamente por 'Convidar Usuário'",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -31,6 +31,14 @@
 		},
 		{
 			"key": "reserva_id",
+			"value": ""
+		},
+		{
+			"key": "invitation_token",
+			"value": ""
+		},
+		{
+			"key": "membership_id",
 			"value": ""
 		}
 	],
@@ -114,6 +122,100 @@
 							"path": ["auth", "me"]
 						},
 						"description": "Retorna o usuário autenticado e seu tenant atual. Requer rodar 'Login' antes (ou definir manualmente a variável access_token)."
+					},
+					"response": []
+				},
+				{
+					"name": "Convidar Usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('invitation_token', body.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"convidado@email.com\",\n  \"role\": \"corretor\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/invitations",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "invitations"]
+						},
+						"description": "Convida um e-mail para o tenant autenticado com o papel informado (requer permissão 'usuarios:gerenciar', concedida a admin/gestor). Não há envio de e-mail (MVP): o token do convite volta na própria resposta e é salvo na variável de coleção `invitation_token`."
+					},
+					"response": []
+				},
+				{
+					"name": "Aceitar Convite",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"full_name\": \"Novo Usuário\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/invitations/{{invitation_token}}/accept",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "invitations", "{{invitation_token}}", "accept"]
+						},
+						"description": "Rota pública (sem token): aceita um convite pendente, criando (ou reativando) o usuário e ativando sua membership no tenant do convite. Requer rodar 'Convidar Usuário' antes (ou definir manualmente a variável invitation_token). Um token já aceito ou expirado retorna 409."
+					},
+					"response": []
+				},
+				{
+					"name": "Desativar Membership",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/memberships/{{membership_id}}/deactivate",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "memberships", "{{membership_id}}", "deactivate"]
+						},
+						"description": "Desativa a membership de um usuário no tenant autenticado (requer permissão 'usuarios:gerenciar'), sem apagar histórico. Um JWT já emitido para essa membership para de funcionar no tenant a partir da próxima requisição."
 					},
 					"response": []
 				}

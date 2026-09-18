@@ -1,5 +1,5 @@
 """Identity domain models."""
-from sqlalchemy import Column, String, ForeignKey, UniqueConstraint, UUID
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, UniqueConstraint, UUID
 
 from app.common.models import BaseModel
 
@@ -25,6 +25,7 @@ class UserTenantMembership(BaseModel):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     role = Column(String(50), nullable=False, default="member")
+    is_active = Column(Boolean, nullable=False, default=True)
 
 
 class Permission(BaseModel):
@@ -46,3 +47,22 @@ class RolePermission(BaseModel):
 
     role = Column(String(50), nullable=False)
     permission_id = Column(UUID(as_uuid=True), ForeignKey("permissions.id"), nullable=False)
+
+
+class Invitation(BaseModel):
+    """A single-use, time-limited invitation for someone to join a tenant.
+
+    Fica fora da RLS, como `users`/`tenants`/`user_tenant_membership` (ver
+    TENANT_CONVENTION.md): o aceite acontece antes de existir qualquer sessão
+    de tenant autenticada.
+    """
+
+    __tablename__ = "invitations"
+
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
+    email = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False)
+    token = Column(String(255), nullable=False, unique=True, index=True)
+    invited_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
