@@ -11,7 +11,7 @@ from app.vendas_reservas.interface.routers import router as vendas_reservas_rout
 settings = Settings()
 
 app = FastAPI(
-    title="Hope",
+    title="LotIAdo",
     description="Sistema SaaS multitenant para gestão de loteamentos e imóveis",
     version="0.1.0",
 )

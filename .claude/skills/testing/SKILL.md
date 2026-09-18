@@ -1,12 +1,12 @@
 ---
 name: testing
-description: Padrões de testes (pytest, fixtures, integração) para projeto Hope
+description: Padrões de testes (pytest, fixtures, integração) para projeto LotIAdo
 type: code-review
 trigger: [create-test, edit-test]
 applies-to: ["**/test_*.py", "**/*_test.py"]
 ---
 
-# Testes — Padrões do Projeto Hope
+# Testes — Padrões do Projeto LotIAdo
 
 Esta Skill se carrega quando você cria/edita testes ou quando uma funcionalidade exige cobertura de testes.
 
