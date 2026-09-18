@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
 
+    invitation_expire_hours: int = 168
+
     class Config:
         env_file = ".env"
         case_sensitive = False

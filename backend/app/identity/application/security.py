@@ -1,4 +1,5 @@
 """Password hashing and JWT helpers."""
+import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -9,6 +10,11 @@ from argon2.exceptions import VerifyMismatchError
 from app.config import Settings
 
 _password_hasher = PasswordHasher()
+
+
+def generate_invitation_token() -> str:
+    """Generate a random, URL-safe, single-use invitation token."""
+    return secrets.token_urlsafe(32)
 
 
 def hash_password(password: str) -> str:
