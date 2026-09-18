@@ -33,7 +33,7 @@ from app.vendas_reservas.domain.exceptions import (
     ReservaNaoEstaAtivaError,
 )
 from app.vendas_reservas.domain.models import ReservaVenda, StatusReservaVenda, TipoReservaVenda
-from app.vendas_reservas.infrastructure.repository import get_reserva_ativa_by_lote, get_reserva_by_id
+from app.vendas_reservas.infrastructure.repository import get_reserva_atual_by_lote, get_reserva_by_id
 
 
 class ReservaService:
@@ -84,9 +84,9 @@ class ReservaService:
             raise ReservaNaoEncontradaError()
         return reserva
 
-    async def obter_ativa_por_lote(self, tenant_id: UUID, lote_id: UUID) -> ReservaVenda:
-        """Fetch the active (RESERVADO) reserva for a lote, raising if there is none."""
-        reserva = await get_reserva_ativa_by_lote(self.db, tenant_id, lote_id)
+    async def obter_atual_por_lote(self, tenant_id: UUID, lote_id: UUID) -> ReservaVenda:
+        """Fetch the current (non-cancelada) reserva/venda for a lote, raising if there is none."""
+        reserva = await get_reserva_atual_by_lote(self.db, tenant_id, lote_id)
         if reserva is None:
             raise ReservaNaoEncontradaError()
         return reserva
