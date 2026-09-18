@@ -15,4 +15,21 @@ export const shared = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
+  /**
+   * Barra de ação fixa no rodapé (`footer` do `MobileShell` no repo de referência do
+   * Lovable) — substitui o `BottomNav` sempre que a tela ganha uma ação principal.
+   */
+  stickyFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    shadowColor: colors.earth,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 4,
+  },
 });

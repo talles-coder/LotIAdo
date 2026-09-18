@@ -20,6 +20,21 @@ from app.vendas_reservas.interface.schemas import ReservaCreateRequest, ReservaR
 router = APIRouter(prefix="/reservas", tags=["vendas_reservas"])
 
 
+@router.get("/atual-por-lote/{lote_id}", response_model=ReservaResponse)
+async def obter_reserva_atual_por_lote(
+    lote_id: UUID,
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+) -> ReservaResponse:
+    """Retorna a reserva/venda atual (não cancelada) de um lote do tenant autenticado, se houver."""
+    service = ReservaService(db)
+    try:
+        reserva = await service.obter_atual_por_lote(tenant_id, lote_id)
+    except ReservaNaoEncontradaError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nenhuma reserva/venda para este lote")
+    return ReservaResponse.model_validate(reserva)
+
+
 @router.post("", response_model=ReservaResponse, status_code=status.HTTP_201_CREATED)
 async def criar_reserva(
     request: ReservaCreateRequest,

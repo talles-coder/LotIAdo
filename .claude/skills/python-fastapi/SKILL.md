@@ -1,12 +1,12 @@
 ---
 name: python-fastapi
-description: Padrões e boas práticas para Python/FastAPI no projeto Hope
+description: Padrões e boas práticas para Python/FastAPI no projeto LotIAdo
 type: code-review
 trigger: [create-python, edit-python, create-fastapi, edit-fastapi]
 applies-to: ["*.py"]
 ---
 
-# Python + FastAPI — Padrões do Projeto Hope
+# Python + FastAPI — Padrões do Projeto LotIAdo
 
 Esta Skill se carrega automaticamente quando você cria/edita código Python ou FastAPI. **Decisões específicas em `docs/` têm prioridade sobre recomendações genéricas.**
 
@@ -140,7 +140,7 @@ async def get_lot(db: AsyncSession, lote_id: UUID, tenant_id: UUID) -> Lote:
 - Endpoint tem teste de integração (com BD de teste real, não mock).
 - Fixtures de banco e cliente HTTP em `conftest.py`.
 
-## Decisões do Projeto Hope
+## Decisões do Projeto LotIAdo
 
 | Decisão | O que fazer | Por que | Exceção |
 |---|---|---|---|
