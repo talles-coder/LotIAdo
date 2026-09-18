@@ -10,6 +10,7 @@ import { formatArea, formatBRL } from '../../src/lib/format';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
+import { BottomNav } from '../../src/components/BottomNav';
 
 const FILTROS: { key: LoteStatus | 'todos'; label: string }[] = [
   { key: 'todos', label: 'Todos' },
@@ -93,6 +94,7 @@ export default function LotesDoLoteamentoScreen() {
         <FlatList
           data={lotesFiltrados}
           keyExtractor={(item) => item.id}
+          style={styles.listFlex}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
@@ -119,7 +121,13 @@ export default function LotesDoLoteamentoScreen() {
                   {item.quadra ? <Text style={styles.cardQuadra}>{item.quadra}</Text> : null}
                 </View>
                 <Text style={styles.cardSubtitle}>
-                  {[formatArea(item.area_m2), formatBRL(item.preco)].filter(Boolean).join(' · ') || '—'}
+                  {formatArea(item.area_m2) ?? '—'}
+                  {item.preco ? (
+                    <>
+                      {' · '}
+                      <Text style={styles.cardPrice}>{formatBRL(item.preco)}</Text>
+                    </>
+                  ) : null}
                 </Text>
               </View>
               <StatusBadge status={item.status} />
@@ -127,6 +135,8 @@ export default function LotesDoLoteamentoScreen() {
           )}
         />
       )}
+
+      <BottomNav />
     </View>
   );
 }
@@ -205,6 +215,9 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 12,
   },
+  listFlex: {
+    flex: 1,
+  },
   list: {
     padding: 16,
     paddingTop: 8,
@@ -215,7 +228,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderLeftWidth: 4,
+    borderLeftWidth: 6,
+    overflow: 'hidden',
   },
   cardPressed: {
     backgroundColor: colors.muted,
@@ -243,6 +257,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.mutedForeground,
     marginTop: 2,
+  },
+  cardPrice: {
+    fontFamily: fonts.bodySemiBold,
+    color: colors.foreground,
   },
   empty: {
     fontFamily: fonts.body,

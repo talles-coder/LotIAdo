@@ -8,6 +8,7 @@ import { ChevronRight, MapPin, Search } from 'lucide-react-native';
 import { listarLoteamentos, listarLotes, type Loteamento } from '../../src/api/loteamentos';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
+import { BottomNav } from '../../src/components/BottomNav';
 
 export default function LoteamentosScreen() {
   const [search, setSearch] = useState('');
@@ -78,6 +79,7 @@ export default function LoteamentosScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        style={styles.listFlex}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -130,6 +132,8 @@ export default function LoteamentosScreen() {
           );
         }}
       />
+
+      <BottomNav />
     </View>
   );
 }
@@ -177,6 +181,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.foreground,
+  },
+  listFlex: {
+    flex: 1,
   },
   list: {
     padding: 16,

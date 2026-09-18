@@ -9,6 +9,7 @@ import { formatArea, formatBRL } from '../../src/lib/format';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
+import { BottomNav } from '../../src/components/BottomNav';
 
 export default function LoteDetalheScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -90,6 +91,8 @@ export default function LoteDetalheScreen() {
           )}
         </ScrollView>
       )}
+
+      <BottomNav />
     </View>
   );
 }
