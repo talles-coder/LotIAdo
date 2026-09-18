@@ -102,6 +102,8 @@ Antes de abrir o PR: suba a tela (`expo start --web` é suficiente pra captura, 
 
 ⚠️ **Toda tela nova segue os tokens/componentes de `docs/design/lovable-mapeamento.md`** (cores, tipografia Outfit/Figtree, raio, componentes como `Logo`/`StatusBadge`) — não estiliza no improviso. Se a tela usar um padrão ainda não mapeado ali, estende a mesma lógica visual e atualiza o mapeamento antes de abrir o PR.
 
+⚠️ **Fidelidade ao repo de referência do Lovable — OBRIGATÓRIO.** Antes de considerar uma tela pronta (nova ou alterada), compare com o print equivalente em `docs/design/screenshots/lovable-reference/` (índice em `docs/design/lovable-mapeamento.md`). Se não existir print pra aquela tela ainda, suba o repo de referência (`git clone talles-coder/lotiado-gest-o-imobili-ria-inteligente`, `npm install`, `npm run dev`) e capture antes de implementar — não implemente de memória/suposição. Layout, hierarquia, espaçamento, o que é fixo (header/footer) vs. rolável, e o texto/rótulo exato seguem o repo. A única razão pra divergir é **campo/seção que não existe no domínio real** (schema do backend ou regra de negócio da fase atual) — nesse caso adapta e documenta a adaptação em `lovable-mapeamento.md` (ver exemplos já registrados: specs do lote, cadastro de cliente). Nunca divergir só porque "ficou mais simples de implementar" ou por não ter conferido a referência.
+
 ## Formato do PR
 
 **Idioma:** A descrição do PR (body) é **sempre em pt-BR**, mesmo que título, nomes de código, tipos de Conventional Commits e trechos de código permaneçam em inglês. Nunca gere o body em inglês.
