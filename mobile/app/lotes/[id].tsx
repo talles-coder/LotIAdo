@@ -1,11 +1,18 @@
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { obterLote } from '../../src/api/loteamentos';
+import {
+  acoesDisponiveisParaStatus,
+  cancelarReserva,
+  converterReservaEmVenda,
+  obterReservaAtivaPorLote,
+} from '../../src/api/reservas';
 import { formatArea, formatBRL } from '../../src/lib/format';
+import { getErrorMessage } from '../../src/lib/errors';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
@@ -13,7 +20,35 @@ import { BottomNav } from '../../src/components/BottomNav';
 
 export default function LoteDetalheScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['lotes', id], queryFn: () => obterLote(id) });
+
+  const acoes = query.data ? acoesDisponiveisParaStatus(query.data.status) : null;
+
+  const reservaAtivaQuery = useQuery({
+    queryKey: ['reservas', 'ativa-por-lote', id],
+    queryFn: () => obterReservaAtivaPorLote(id),
+    enabled: acoes?.converterVenda === true || acoes?.cancelar === true,
+  });
+
+  async function invalidarLoteEReserva() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['lotes', id] }),
+      queryClient.invalidateQueries({ queryKey: ['reservas', 'ativa-por-lote', id] }),
+    ]);
+  }
+
+  const converterMutation = useMutation({
+    mutationFn: (reservaId: string) => converterReservaEmVenda(reservaId),
+    onSuccess: invalidarLoteEReserva,
+    onError: (err) => Alert.alert('Não foi possível converter em venda', getErrorMessage(err, 'Tente novamente.')),
+  });
+
+  const cancelarMutation = useMutation({
+    mutationFn: (reservaId: string) => cancelarReserva(reservaId),
+    onSuccess: invalidarLoteEReserva,
+    onError: (err) => Alert.alert('Não foi possível cancelar a reserva', getErrorMessage(err, 'Tente novamente.')),
+  });
 
   return (
     <View style={styles.container}>
@@ -87,6 +122,70 @@ export default function LoteDetalheScreen() {
                   </View>
                 ))}
               </View>
+            </View>
+          )}
+
+          {acoes?.reservar && (
+            <View style={styles.section}>
+              <Button
+                mode="contained"
+                onPress={() => router.push(`/lotes/${id}/reservar`)}
+                contentStyle={styles.actionButtonContent}
+                labelStyle={styles.actionButtonLabel}
+              >
+                Reservar
+              </Button>
+            </View>
+          )}
+
+          {(acoes?.converterVenda || acoes?.cancelar) && (
+            <View style={styles.section}>
+              {reservaAtivaQuery.isLoading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : reservaAtivaQuery.data ? (
+                <View style={styles.actionsColumn}>
+                  {acoes?.converterVenda && (
+                    <Button
+                      mode="contained"
+                      onPress={() => converterMutation.mutate(reservaAtivaQuery.data!.id)}
+                      loading={converterMutation.isPending}
+                      disabled={converterMutation.isPending || cancelarMutation.isPending}
+                      contentStyle={styles.actionButtonContent}
+                      labelStyle={styles.actionButtonLabel}
+                    >
+                      Converter em venda
+                    </Button>
+                  )}
+                  {acoes?.cancelar && (
+                    <Button
+                      mode="outlined"
+                      textColor={colors.destructive}
+                      onPress={() =>
+                        Alert.alert(
+                          'Cancelar reserva',
+                          'Tem certeza que deseja cancelar esta reserva? O lote voltará a ficar disponível.',
+                          [
+                            { text: 'Voltar', style: 'cancel' },
+                            {
+                              text: 'Cancelar reserva',
+                              style: 'destructive',
+                              onPress: () => cancelarMutation.mutate(reservaAtivaQuery.data!.id),
+                            },
+                          ],
+                        )
+                      }
+                      loading={cancelarMutation.isPending}
+                      disabled={converterMutation.isPending || cancelarMutation.isPending}
+                      contentStyle={styles.actionButtonContent}
+                      labelStyle={styles.actionButtonLabel}
+                    >
+                      Cancelar reserva
+                    </Button>
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.errorText}>Não foi possível carregar a reserva deste lote.</Text>
+              )}
             </View>
           )}
         </ScrollView>
@@ -221,5 +320,15 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 4,
+  },
+  actionsColumn: {
+    gap: 10,
+  },
+  actionButtonContent: {
+    minHeight: 48,
+  },
+  actionButtonLabel: {
+    fontFamily: fonts.displayBold,
+    fontSize: 15,
   },
 });
