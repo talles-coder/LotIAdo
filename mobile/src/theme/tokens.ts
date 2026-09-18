@@ -31,12 +31,16 @@ export const colors = {
   border: '#E4DDD3',
   input: '#DDD6CD',
 
+  /**
+   * O enum real do backend (`LoteStatus`, backend/app/loteamentos_lotes/domain/state_machine.py)
+   * tem 4 estados, não os 5 do repo de referência do Lovable — `indisponivel` cobre o que lá
+   * era `bloqueado` (estado administrativo que bloqueia ação, só retorna a `disponivel`).
+   */
   status: {
     disponivel: { text: '#007F35', soft: '#D8F9DD' },
     reservado: { text: '#B76C00', soft: '#FFF0C5' },
     vendido: { text: '#2A669F', soft: '#DDEDFF' },
-    bloqueado: { text: '#C92F33', soft: '#FFE6E3' },
-    inativo: { text: '#787069', soft: '#EFEAE5' },
+    indisponivel: { text: '#C92F33', soft: '#FFE6E3' },
   },
 } as const;
 

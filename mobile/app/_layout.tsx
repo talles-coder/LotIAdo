@@ -3,12 +3,15 @@ import { ActivityIndicator, View } from 'react-native';
 import { Slot } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 
 import { initSession } from '../src/auth/session';
 import { colors } from '../src/theme/tokens';
 import { paperTheme } from '../src/theme/paperTheme';
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [sessionReady, setSessionReady] = useState(false);
@@ -34,9 +37,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PaperProvider theme={paperTheme}>
-        <Slot />
-      </PaperProvider>
+      <QueryClientProvider client={queryClient}>
+        <PaperProvider theme={paperTheme}>
+          <Slot />
+        </PaperProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

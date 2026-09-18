@@ -21,6 +21,14 @@ export default function HomeScreen() {
       <View style={styles.body}>
         <Text style={styles.message}>Você está logado.</Text>
         <Button
+          mode="contained"
+          onPress={() => router.push('/loteamentos')}
+          contentStyle={styles.logoutContent}
+          labelStyle={styles.logoutLabel}
+        >
+          Ver loteamentos
+        </Button>
+        <Button
           mode="outlined"
           onPress={handleLogout}
           contentStyle={styles.logoutContent}
