@@ -57,6 +57,9 @@ Ver `docs/02-arquitetura.md` para diagramas e fluxos completos.
 - Use abstração quando surgir **problema concreto**, não porque "pode vir a ser necessário".
 - Avoid overengineering: YAGNI é moto do projeto.
 
+**Identidade visual (mobile + backoffice web):**
+- Todo trabalho de estilo/UI segue os tokens e padrões definidos em `docs/design/lovable-mapeamento.md` — nunca inventar cor/fonte/componente novo fora dali.
+
 **Isolamento multi-tenant:**
 - Toda tabela de domínio tem `tenant_id` (coluna + RLS quando Fase 2).
 - Queries vetoriais (pgvector) incluem filtro de `tenant_id` explicitamente, como defesa em profundidade.

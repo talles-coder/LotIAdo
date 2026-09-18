@@ -148,7 +148,7 @@ Decisão motivada pelo comentário em SCRUM-63 pedindo para definir o design da 
 
 **Recomendação:** (A). Foco do projeto é domínio + IA, não profundidade em design system — Paper resolve componentes básicos (lista, botão, badge, input) rápido e com acessibilidade de graça. Reavaliar para (B) Tamagui só se a Fase 5 (Expo for Web) expuser limitação real de estilização compartilhada — mesmo critério usado em D8 para o wrapper de mapa.
 
-**Tokens semânticos propostos** (nomes, não valores — ver detalhe em `docs/design/proposta-design-system.md`): `status.disponivel/reservado/vendido/bloqueado` (cor + label, nunca só cor), `surface.primary/secondary`, `action.primary/danger`.
+**Identidade visual (cor/tipografia/componentes):** gerada no [Lovable](https://github.com/talles-coder/lotiado-gest-o-imobili-ria-inteligente) a partir de um brief próprio ([docs/design/lovable-brief.md](design/lovable-brief.md)) e mapeada em detalhe em [docs/design/lovable-mapeamento.md](design/lovable-mapeamento.md) — **fonte de verdade dos tokens** (cores em hex, tipografia Outfit/Figtree, raio, sombra, componentes como `Logo`/`StatusBadge`, padrões de tela). Regra permanente: qualquer trabalho de estilo/UI segue esse mapeamento, não inventa token novo fora dele.
 
 ## Registro de decisões tomadas durante a execução
 

@@ -100,6 +100,8 @@ Exemplos:
 
 Antes de abrir o PR: suba a tela (`expo start --web` é suficiente pra captura, mesmo que o alvo real da task seja nativo — só documentar visualmente) e tire um screenshot de cada tela nova/alterada. Salve em `docs/design/screenshots/<task>-<tela>.png`, commite junto com o resto da task, e referencie as imagens na seção **Evidências** do PR (via raw.githubusercontent.com, apontando pra branch da PR — GitHub renderiza inline). PR com tela nova e sem print não está pronto para abrir.
 
+⚠️ **Toda tela nova segue os tokens/componentes de `docs/design/lovable-mapeamento.md`** (cores, tipografia Outfit/Figtree, raio, componentes como `Logo`/`StatusBadge`) — não estiliza no improviso. Se a tela usar um padrão ainda não mapeado ali, estende a mesma lógica visual e atualiza o mapeamento antes de abrir o PR.
+
 ## Formato do PR
 
 **Idioma:** A descrição do PR (body) é **sempre em pt-BR**, mesmo que título, nomes de código, tipos de Conventional Commits e trechos de código permaneçam em inglês. Nunca gere o body em inglês.
