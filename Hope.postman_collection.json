@@ -826,6 +826,24 @@
 					"response": []
 				},
 				{
+					"name": "Obter Reserva Ativa por Lote",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas/ativa-por-lote/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "ativa-por-lote", "{{lote_id}}"]
+						},
+						"description": "Retorna a reserva ativa (status \"reservado\") de um lote do tenant autenticado. 404 se o lote não tiver reserva ativa no momento."
+					},
+					"response": []
+				},
+				{
 					"name": "Converter Reserva em Venda",
 					"request": {
 						"method": "POST",

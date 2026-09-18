@@ -225,6 +225,52 @@ async def test_cancelar_reserva_ja_vendida_retorna_409(client: AsyncClient, db_s
 
 
 @pytest.mark.asyncio
+async def test_obter_reserva_ativa_por_lote_retorna_a_reserva_em_aberto(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """A reserva ativa de um lote reservado é encontrada por lote_id."""
+    token, _user, _tenant = await _criar_usuario_com_tenant(db_session, "tenant-ativa-por-lote")
+    lote_id = await _criar_lote(client, token)
+    cliente_id = await _criar_cliente(client, token)
+    reserva = await _criar_reserva(client, token, lote_id, cliente_id)
+
+    response = await client.get(f"/reservas/ativa-por-lote/{lote_id}", headers=_auth_headers(token))
+
+    assert response.status_code == 200
+    assert response.json()["id"] == reserva["id"]
+    assert response.json()["status"] == "reservado"
+
+
+@pytest.mark.asyncio
+async def test_obter_reserva_ativa_por_lote_sem_reserva_retorna_404(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Um lote disponível (sem reserva ativa) retorna 404."""
+    token, _user, _tenant = await _criar_usuario_com_tenant(db_session, "tenant-sem-reserva-ativa")
+    lote_id = await _criar_lote(client, token)
+
+    response = await client.get(f"/reservas/ativa-por-lote/{lote_id}", headers=_auth_headers(token))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_obter_reserva_ativa_por_lote_apos_cancelamento_retorna_404(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Após cancelar a reserva, o lote deixa de ter uma reserva ativa."""
+    token, _user, _tenant = await _criar_usuario_com_tenant(db_session, "tenant-ativa-cancelada")
+    lote_id = await _criar_lote(client, token)
+    cliente_id = await _criar_cliente(client, token)
+    reserva = await _criar_reserva(client, token, lote_id, cliente_id)
+    await client.post(f"/reservas/{reserva['id']}/cancelar", headers=_auth_headers(token))
+
+    response = await client.get(f"/reservas/ativa-por-lote/{lote_id}", headers=_auth_headers(token))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_reservas_sem_token_retorna_401(client: AsyncClient):
     """Acesso a /reservas sem token retorna 401."""
     response = await client.post("/reservas", json={"lote_id": "x", "cliente_id": "y"})
