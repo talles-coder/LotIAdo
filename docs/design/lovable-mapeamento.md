@@ -42,10 +42,11 @@ Paleta "terra quente" — cream/terracota/verde, nada de azul-corporativo genér
 | Disponível | verde | `#007F35` | `#D8F9DD` |
 | Reservado | âmbar | `#B76C00` | `#FFF0C5` |
 | Vendido | azul | `#2A669F` | `#DDEDFF` |
-| Bloqueado | vermelho | `#C92F33` | `#FFE6E3` |
-| Inativo | cinza | `#787069` | `#EFEAE5` |
+| Indisponível | vermelho | `#C92F33` | `#FFE6E3` |
 
-Nota de design: "vendido" usa **azul**, não cinza — é um estado concluído/positivo, não neutro. "Inativo" fica cinza (neutro/arquivado). Isso é intencional e deve ser mantido — reforça visualmente que vender é bom, arquivar é neutro.
+Nota de design: "vendido" usa **azul**, não cinza — é um estado concluído/positivo, não neutro.
+
+⚠️ **Correção em relação ao repo de referência do Lovable:** lá o domínio tinha 5 status (`disponível/reservado/vendido/bloqueado/inativo`). O enum real implementado no backend (`LoteStatus`, `backend/app/loteamentos_lotes/domain/state_machine.py`, FASE1-IMPL-01) tem só **4**: `disponivel/reservado/vendido/indisponivel`. `indisponivel` herda a cor de "bloqueado" (vermelho) — é um estado administrativo que só retorna a `disponivel`, mais próximo de um bloqueio do que de um arquivamento neutro. Não existe "inativo" como status de lote nesta versão do domínio — não usar esse token.
 
 ## Forma, raio e sombra
 
@@ -63,15 +64,17 @@ Biblioteca `lucide` (o repo web usa `lucide-react`). No app: `lucide-react-nativ
 - **StatusBadge**: pill (`rounded-full`) com fundo "soft" da cor do status + texto na cor forte do status + um pontinho (`dot`) da cor forte antes do texto. Sempre cor + texto, nunca só cor.
 - **Cards** (`card-surface`): fundo branco, borda 1px `border`, raio grande, sombra leve.
 - **Botões**: 4 variantes — `primary` (fundo `primary`), `accent` (fundo `accent`, usado pra ação relacionada a IA/conversão), `outline` (contorno, fundo `card`), `danger` (contorno vermelho, usado só em ações destrutivas tipo cancelar reserva).
-- **Barra de ação fixa no rodapé**: muda de conteúdo conforme o status do lote (ver `lotes.$id.tsx` no repo) — disponível → botão "Reservar"; reservado → "Cancelar reserva" (danger) + "Converter em venda" (accent); vendido/bloqueado/inativo → faixa informativa sem ação, na cor "soft" do status.
+- **Barra de ação fixa no rodapé**: muda de conteúdo conforme o status do lote (ver `lotes.$id.tsx` no repo, adaptado aos 4 status reais — ver nota acima) — disponível → botão "Reservar"; reservado → "Cancelar reserva" (danger) + "Converter em venda" (accent); vendido/indisponível → faixa informativa sem ação, na cor "soft" do status.
 
 ## Padrões de tela mapeados
 
 - **Login**: bloco superior sólido na cor `earth` (com um padrão sutil de grade em SVG, ~15% opacidade — reforça a metáfora de "terreno em grade/lotes"), logo grande + tagline dentro desse bloco; formulário abaixo em fundo `background` (cream).
-- **Home**: saudação personalizada, 3 cards de indicador lado a lado (disponíveis/reservas ativas/vendas no mês, cada um com a cor do status correspondente), banner de entrada pro assistente de IA (fundo `earth`, ícone em bolha `accent`, texto de exemplo de pergunta), lista de "loteamentos recentes" (cards com % de disponibilidade e barra de progresso), lista de "reservas vencendo".
-- **Lista de loteamentos**: busca no topo, cards com nome/cidade, número disponível + barra de progresso percentual.
+- **Home**: saudação personalizada (nome vindo de `GET /auth/me`), 3 cards de indicador lado a lado, banner de entrada pro assistente de IA (fundo `earth`, ícone em bolha `accent`, texto de exemplo de pergunta) e lista de "loteamentos recentes" (cards com contagem de disponíveis). Duas adaptações em relação ao repo original, por falta de dado real no domínio da Fase 1: os indicadores são **Disponíveis/Reservados/Vendidos totais** (não "reservas ativas"/"vendas no mês" — não há timestamp de transição de status pra filtrar por período, então rotular como "no mês" seria inventar dado); e não existe seção de "reservas vencendo" (não há campo de prazo de reserva no domínio — reserva não expira no MVP, ver `01-analise-requisitos.md`). O banner de IA fica visível mas sem ação (RAG/agente é Fase 7+) — chega a "Em breve", nunca a um link morto.
+- **Lista de loteamentos**: busca no topo, cards com nome/cidade, número disponível (destacado na cor `status.disponivel`) + barra de progresso percentual.
+- **Lista de lotes de um loteamento**: chips de filtro por status (Todos/Disponíveis/Reservados/Vendidos/Indisponíveis) roláveis horizontalmente; cada card tem uma faixa colorida grossa na borda esquerda (**6px**, cor forte do status — não 4px, fica fina/errada) além do `StatusBadge` à direita; a área fica em cinza (`muted-foreground`) mas o **preço é `bodySemiBold` + `foreground`**, não cinza — só a área é secundária, o preço é informação primária.
 - **Detalhe do lote**: cabeçalho com identificação + `StatusBadge`; card de preço em destaque; grid de 3 specs (área/frente/fundo); chips de características; seção de cliente (quando reservado/vendido); placeholder de localização na planta; barra de ação fixa no rodapé (ver componentes acima).
-- **Navegação mobile**: shell com largura máxima tipo cartão centralizado (`max-w-md`), header sticky com botão voltar + título, bottom nav sticky de 4 itens (Início / Loteamentos / Cliente / Backoffice) — substituída pela barra de ação fixa quando a tela tem uma ação principal (ex.: detalhe do lote).
+- **Abertura do app**: splash nativo é só fundo sólido `background` (sem imagem — não há asset raster do logo ainda); assim que o JS sobe, o `Logo` aparece com fade + scale-in, segura ~450ms, e dá fade-out revelando a tela real (padrão tipo iFood/Nubank). Ver `src/components/SplashAnimation.tsx`.
+- **Navegação mobile**: bottom nav de 4 itens (Início / Loteamentos / Cliente / Backoffice) — ícone em pill `primary-soft` quando ativo, cor `primary` no texto/ícone ativo, `muted-foreground` inativo. "Cliente" (SCRUM-65) e "Backoffice" (Fase 5) ainda não têm tela: ficam visíveis (fidelidade visual) mas `disabled` — nunca um `href` morto. Ver `src/components/BottomNav.tsx`. É substituída pela barra de ação fixa quando a tela ganhar uma ação principal (ex.: detalhe do lote, quando SCRUM-65 adicionar reservar/converter/cancelar) — até lá, o nav aparece ali também.
 
 ## Regra permanente
 
