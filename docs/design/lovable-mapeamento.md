@@ -42,10 +42,11 @@ Paleta "terra quente" — cream/terracota/verde, nada de azul-corporativo genér
 | Disponível | verde | `#007F35` | `#D8F9DD` |
 | Reservado | âmbar | `#B76C00` | `#FFF0C5` |
 | Vendido | azul | `#2A669F` | `#DDEDFF` |
-| Bloqueado | vermelho | `#C92F33` | `#FFE6E3` |
-| Inativo | cinza | `#787069` | `#EFEAE5` |
+| Indisponível | vermelho | `#C92F33` | `#FFE6E3` |
 
-Nota de design: "vendido" usa **azul**, não cinza — é um estado concluído/positivo, não neutro. "Inativo" fica cinza (neutro/arquivado). Isso é intencional e deve ser mantido — reforça visualmente que vender é bom, arquivar é neutro.
+Nota de design: "vendido" usa **azul**, não cinza — é um estado concluído/positivo, não neutro.
+
+⚠️ **Correção em relação ao repo de referência do Lovable:** lá o domínio tinha 5 status (`disponível/reservado/vendido/bloqueado/inativo`). O enum real implementado no backend (`LoteStatus`, `backend/app/loteamentos_lotes/domain/state_machine.py`, FASE1-IMPL-01) tem só **4**: `disponivel/reservado/vendido/indisponivel`. `indisponivel` herda a cor de "bloqueado" (vermelho) — é um estado administrativo que só retorna a `disponivel`, mais próximo de um bloqueio do que de um arquivamento neutro. Não existe "inativo" como status de lote nesta versão do domínio — não usar esse token.
 
 ## Forma, raio e sombra
 
@@ -63,7 +64,7 @@ Biblioteca `lucide` (o repo web usa `lucide-react`). No app: `lucide-react-nativ
 - **StatusBadge**: pill (`rounded-full`) com fundo "soft" da cor do status + texto na cor forte do status + um pontinho (`dot`) da cor forte antes do texto. Sempre cor + texto, nunca só cor.
 - **Cards** (`card-surface`): fundo branco, borda 1px `border`, raio grande, sombra leve.
 - **Botões**: 4 variantes — `primary` (fundo `primary`), `accent` (fundo `accent`, usado pra ação relacionada a IA/conversão), `outline` (contorno, fundo `card`), `danger` (contorno vermelho, usado só em ações destrutivas tipo cancelar reserva).
-- **Barra de ação fixa no rodapé**: muda de conteúdo conforme o status do lote (ver `lotes.$id.tsx` no repo) — disponível → botão "Reservar"; reservado → "Cancelar reserva" (danger) + "Converter em venda" (accent); vendido/bloqueado/inativo → faixa informativa sem ação, na cor "soft" do status.
+- **Barra de ação fixa no rodapé**: muda de conteúdo conforme o status do lote (ver `lotes.$id.tsx` no repo, adaptado aos 4 status reais — ver nota acima) — disponível → botão "Reservar"; reservado → "Cancelar reserva" (danger) + "Converter em venda" (accent); vendido/indisponível → faixa informativa sem ação, na cor "soft" do status.
 
 ## Padrões de tela mapeados
 
