@@ -70,8 +70,10 @@ Biblioteca `lucide` (o repo web usa `lucide-react`). No app: `lucide-react-nativ
 
 - **Login**: bloco superior sólido na cor `earth` (com um padrão sutil de grade em SVG, ~15% opacidade — reforça a metáfora de "terreno em grade/lotes"), logo grande + tagline dentro desse bloco; formulário abaixo em fundo `background` (cream).
 - **Home**: saudação personalizada, 3 cards de indicador lado a lado (disponíveis/reservas ativas/vendas no mês, cada um com a cor do status correspondente), banner de entrada pro assistente de IA (fundo `earth`, ícone em bolha `accent`, texto de exemplo de pergunta), lista de "loteamentos recentes" (cards com % de disponibilidade e barra de progresso), lista de "reservas vencendo".
-- **Lista de loteamentos**: busca no topo, cards com nome/cidade, número disponível + barra de progresso percentual.
+- **Lista de loteamentos**: busca no topo, cards com nome/cidade, número disponível (destacado na cor `status.disponivel`) + barra de progresso percentual.
+- **Lista de lotes de um loteamento**: chips de filtro por status (Todos/Disponíveis/Reservados/Vendidos/Indisponíveis) roláveis horizontalmente; cada card tem uma faixa colorida na borda esquerda (4px, cor forte do status) além do `StatusBadge` à direita — reforça o status mesmo antes de ler o texto.
 - **Detalhe do lote**: cabeçalho com identificação + `StatusBadge`; card de preço em destaque; grid de 3 specs (área/frente/fundo); chips de características; seção de cliente (quando reservado/vendido); placeholder de localização na planta; barra de ação fixa no rodapé (ver componentes acima).
+- **Abertura do app**: splash nativo é só fundo sólido `background` (sem imagem — não há asset raster do logo ainda); assim que o JS sobe, o `Logo` aparece com fade + scale-in, segura ~450ms, e dá fade-out revelando a tela real (padrão tipo iFood/Nubank). Ver `src/components/SplashAnimation.tsx`.
 - **Navegação mobile**: shell com largura máxima tipo cartão centralizado (`max-w-md`), header sticky com botão voltar + título, bottom nav sticky de 4 itens (Início / Loteamentos / Cliente / Backoffice) — substituída pela barra de ação fixa quando a tela tem uma ação principal (ex.: detalhe do lote).
 
 ## Regra permanente

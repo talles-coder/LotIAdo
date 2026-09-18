@@ -1,17 +1,27 @@
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import { ArrowLeft, ChevronRight } from 'lucide-react-native';
 
-import { listarLotes, obterLoteamento, type Lote } from '../../src/api/loteamentos';
-import { formatArea } from '../../src/lib/format';
+import { listarLotes, obterLoteamento, type Lote, type LoteStatus } from '../../src/api/loteamentos';
+import { formatArea, formatBRL } from '../../src/lib/format';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
 
+const FILTROS: { key: LoteStatus | 'todos'; label: string }[] = [
+  { key: 'todos', label: 'Todos' },
+  { key: 'disponivel', label: 'Disponíveis' },
+  { key: 'reservado', label: 'Reservados' },
+  { key: 'vendido', label: 'Vendidos' },
+  { key: 'indisponivel', label: 'Indisponíveis' },
+];
+
 export default function LotesDoLoteamentoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [filtro, setFiltro] = useState<LoteStatus | 'todos'>('todos');
 
   const loteamentoQuery = useQuery({
     queryKey: ['loteamentos', id],
@@ -21,6 +31,12 @@ export default function LotesDoLoteamentoScreen() {
     queryKey: ['loteamentos', id, 'lotes'],
     queryFn: () => listarLotes(id),
   });
+
+  const lotesFiltrados = useMemo(() => {
+    if (!lotesQuery.data) return [];
+    if (filtro === 'todos') return lotesQuery.data;
+    return lotesQuery.data.filter((lote) => lote.status === filtro);
+  }, [lotesQuery.data, filtro]);
 
   const isLoading = loteamentoQuery.isLoading || lotesQuery.isLoading;
   const isError = loteamentoQuery.isError || lotesQuery.isError;
@@ -40,11 +56,27 @@ export default function LotesDoLoteamentoScreen() {
           <Text style={styles.headerTitle} numberOfLines={1}>
             {loteamentoQuery.data?.nome ?? 'Loteamento'}
           </Text>
-          <Text style={styles.headerSubtitle}>
-            {lotesQuery.data ? `${lotesQuery.data.length} lotes` : ' '}
-          </Text>
         </View>
       </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={styles.filtersContent}>
+        {FILTROS.map((f) => {
+          const active = filtro === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => setFiltro(f.key)}
+              style={[styles.filterChip, active && styles.filterChipActive]}
+            >
+              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{f.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {!isLoading && !isError && (
+        <Text style={styles.count}>{lotesFiltrados.length} lotes</Text>
+      )}
 
       {isLoading ? (
         <View style={styles.center}>
@@ -59,7 +91,7 @@ export default function LotesDoLoteamentoScreen() {
         </View>
       ) : (
         <FlatList
-          data={lotesQuery.data}
+          data={lotesFiltrados}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           refreshControl={
@@ -70,16 +102,24 @@ export default function LotesDoLoteamentoScreen() {
               tintColor={colors.primary}
             />
           }
-          ListEmptyComponent={<Text style={styles.empty}>Nenhum lote cadastrado neste loteamento.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>Nenhum lote encontrado.</Text>}
           renderItem={({ item }: { item: Lote }) => (
             <Pressable
-              style={({ pressed }) => [shared.cardSurface, styles.card, pressed && styles.cardPressed]}
+              style={({ pressed }) => [
+                shared.cardSurface,
+                styles.card,
+                { borderLeftColor: colors.status[item.status].text },
+                pressed && styles.cardPressed,
+              ]}
               onPress={() => router.push(`/lotes/${item.id}`)}
             >
               <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.identificacao}</Text>
+                <View style={styles.cardTitleRow}>
+                  <Text style={styles.cardTitle}>{item.identificacao}</Text>
+                  {item.quadra ? <Text style={styles.cardQuadra}>{item.quadra}</Text> : null}
+                </View>
                 <Text style={styles.cardSubtitle}>
-                  {[item.quadra, formatArea(item.area_m2)].filter(Boolean).join(' · ') || '—'}
+                  {[formatArea(item.area_m2), formatBRL(item.preco)].filter(Boolean).join(' · ') || '—'}
                 </Text>
               </View>
               <StatusBadge status={item.status} />
@@ -121,10 +161,42 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: colors.foreground,
   },
-  headerSubtitle: {
+  filters: {
+    flexGrow: 0,
+  },
+  filtersContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+    paddingBottom: 4,
+  },
+  filterChip: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterChipText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.foreground,
+  },
+  filterChipTextActive: {
+    color: colors.primaryForeground,
+  },
+  count: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.mutedForeground,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
   center: {
     flex: 1,
@@ -135,7 +207,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingTop: 4,
+    paddingTop: 8,
     gap: 10,
   },
   card: {
@@ -143,6 +215,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    borderLeftWidth: 4,
   },
   cardPressed: {
     backgroundColor: colors.muted,
@@ -150,10 +223,20 @@ const styles = StyleSheet.create({
   cardBody: {
     flex: 1,
   },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
   cardTitle: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 15,
     color: colors.foreground,
+  },
+  cardQuadra: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.mutedForeground,
   },
   cardSubtitle: {
     fontFamily: fonts.body,
