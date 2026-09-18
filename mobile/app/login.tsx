@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+import { Button, HelperText, TextInput } from 'react-native-paper';
 import { isAxiosError } from 'axios';
+import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { login } from '../src/api/auth';
 import { setSession } from '../src/auth/session';
+import { Logo } from '../src/components/Logo';
+import { colors, fonts } from '../src/theme/tokens';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -32,56 +35,120 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>
-        Hope
-      </Text>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.hero}>
+        <Svg style={StyleSheet.absoluteFill} opacity={0.15}>
+          <Defs>
+            <Pattern id="grid" width={24} height={24} patternUnits="userSpaceOnUse">
+              <Path d="M24 0H0V24" fill="none" stroke={colors.earthForeground} strokeWidth={1} />
+            </Pattern>
+          </Defs>
+          <Rect width="100%" height="100%" fill="url(#grid)" />
+        </Svg>
+        <Logo size="lg" onDark />
+        <Text style={styles.tagline}>Seus loteamentos, na palma da mão.</Text>
+      </View>
 
-      <TextInput
-        label="E-mail"
-        mode="outlined"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
-      <TextInput
-        label="Senha"
-        mode="outlined"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
+      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+        <Text style={styles.welcome}>Bem-vindo de volta</Text>
 
-      <HelperText type="error" visible={error !== null}>
-        {error}
-      </HelperText>
+        <TextInput
+          label="E-mail"
+          mode="outlined"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          outlineStyle={styles.inputOutline}
+        />
+        <TextInput
+          label="Senha"
+          mode="outlined"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          outlineStyle={styles.inputOutline}
+        />
 
-      <Button
-        mode="contained"
-        onPress={handleSubmit}
-        loading={submitting}
-        disabled={submitting || email === '' || password === ''}
-      >
-        Entrar
-      </Button>
-    </View>
+        <HelperText type="error" visible={error !== null}>
+          {error}
+        </HelperText>
+
+        <Button
+          mode="contained"
+          onPress={handleSubmit}
+          loading={submitting}
+          disabled={submitting || email === '' || password === ''}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+        >
+          Entrar
+        </Button>
+
+        <Text style={styles.footnote}>
+          Acesso restrito a corretores e gestores cadastrados pela sua imobiliária.
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 24,
+    backgroundColor: colors.background,
   },
-  title: {
-    marginBottom: 32,
-    textAlign: 'center',
+  hero: {
+    height: 224,
+    backgroundColor: colors.earth,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    overflow: 'hidden',
+  },
+  tagline: {
+    marginTop: 12,
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.earthForeground,
+    opacity: 0.8,
+  },
+  form: {
+    flexGrow: 1,
+    padding: 24,
+    paddingTop: 32,
+  },
+  welcome: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.foreground,
+    marginBottom: 20,
   },
   input: {
-    marginBottom: 8,
+    marginBottom: 12,
+    backgroundColor: colors.card,
+  },
+  inputOutline: {
+    borderRadius: 12,
+  },
+  buttonContent: {
+    minHeight: 52,
+  },
+  buttonLabel: {
+    fontFamily: fonts.displayBold,
+    fontSize: 16,
+  },
+  footnote: {
+    marginTop: 'auto',
+    paddingTop: 24,
+    textAlign: 'center',
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.mutedForeground,
   },
 });
