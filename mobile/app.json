@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Hope",
-    "slug": "hope-mobile",
-    "scheme": "hope",
+    "name": "LotIAdo",
+    "slug": "lotiado-mobile",
+    "scheme": "lotiado",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#442C22",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -25,7 +25,13 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FDFAF4"
+        }
+      ]
     ]
   }
 }
