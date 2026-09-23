@@ -1,4 +1,4 @@
-# Design System do App Hope (mobile + web)
+# Design System do App LotIAdo (mobile + web)
 
 ✅ **Decidido.** Biblioteca de componentes: (A) React Native Paper (D9 em [03-decisoes-tecnicas.md](../03-decisoes-tecnicas.md)). Identidade visual (cor/tipografia/componentes): gerada no Lovable a partir de [lovable-brief.md](lovable-brief.md) e mapeada em detalhe em **[lovable-mapeamento.md](lovable-mapeamento.md) — fonte de verdade dos tokens**. Este documento cobre a decisão de biblioteca e como ela recebe os tokens do Lovable.
 

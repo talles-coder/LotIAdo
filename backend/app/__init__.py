@@ -1,1 +1,1 @@
-"""Hope backend application."""
+"""LotIAdo backend application."""

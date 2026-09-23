@@ -1,7 +1,7 @@
 {
 	"info": {
-		"name": "Hope",
-		"description": "Coleção Postman das rotas expostas pela API do Hope (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id, reserva_id: preenchidos automaticamente pelos requests de criação correspondentes\n- invitation_token, membership_id: preenchidos automaticamente por 'Convidar Usuário'",
+		"name": "LotIAdo",
+		"description": "Coleção Postman das rotas expostas pela API do LotIAdo (backend FastAPI). Atualize esta coleção sempre que uma rota for adicionada, alterada ou removida — ver CLAUDE.md.\n\nVariáveis usadas:\n- base_url: URL base da API (default http://localhost:8000)\n- access_token: preenchido automaticamente pelo teste do request de Login\n- cliente_id, corretor_id, loteamento_id, lote_id, reserva_id: preenchidos automaticamente pelos requests de criação correspondentes\n- invitation_token, membership_id: preenchidos automaticamente por 'Convidar Usuário'",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -822,6 +822,24 @@
 							"path": ["reservas"]
 						},
 						"description": "Reserva um lote disponível para um cliente do tenant autenticado (move o lote para \"reservado\"). `corretor_id` é opcional. Salva o id criado na variável de coleção `reserva_id`. Gera automaticamente entradas em audit_log para o lote (transição de status) e para a reserva (criação)."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Reserva/Venda Atual por Lote",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas/atual-por-lote/{{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "atual-por-lote", "{{lote_id}}"]
+						},
+						"description": "Retorna a reserva/venda atual (não cancelada) de um lote do tenant autenticado — cobre tanto uma reserva em aberto quanto uma venda já concretizada. 404 se o lote nunca teve reserva/venda ou se a única que teve foi cancelada."
 					},
 					"response": []
 				},

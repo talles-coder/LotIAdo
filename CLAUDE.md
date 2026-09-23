@@ -2,7 +2,9 @@
 
 ## Projeto
 
-**Hope:** Sistema SaaS multitenant para gestão de loteamentos, imóveis e negociações imobiliárias. Monólito modular (FastAPI) + app Expo único (mobile + web backoffice) + PostgreSQL + IA (RAG + agentes LangGraph).
+**LotIAdo:** Sistema SaaS multitenant para gestão de loteamentos, imóveis e negociações imobiliárias. Monólito modular (FastAPI) + app Expo único (mobile + web backoffice) + PostgreSQL + IA (RAG + agentes LangGraph).
+
+> Nota: "Hope" foi um nome de trabalho usado nas fases iniciais — ainda aparece como nome do board no Jira (`SCRUM`), mas o produto/app é **LotIAdo**. Não reintroduzir "Hope" em código, docs ou skills novas.
 
 ## Fonte da Verdade
 

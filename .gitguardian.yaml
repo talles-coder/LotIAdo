@@ -3,7 +3,7 @@
 # Todas as senhas abaixo são fixtures de teste hardcoded de propósito — usadas só
 # contra o Postgres de teste local (docker-compose), nunca contra um serviço real.
 # É convenção repetida em quase todo `backend/tests/*.py` (ver hash_password("senha123")
-# e o corpo de request `{"password": "senha123"}` no Hope.postman_collection.json como
+# e o corpo de request `{"password": "senha123"}` no LotIAdo.postman_collection.json como
 # exemplo de payload da doc da API) — não são segredos vazados.
 version: 2
 secret:
