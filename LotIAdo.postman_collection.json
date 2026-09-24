@@ -196,6 +196,30 @@
 					"response": []
 				},
 				{
+					"name": "Listar Memberships",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/memberships",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "memberships"]
+						},
+						"description": "Lista os membros (ativos e desativados) do tenant autenticado, com e-mail/nome do usuário (requer permissão 'usuarios:gerenciar')."
+					},
+					"response": []
+				},
+				{
 					"name": "Desativar Membership",
 					"request": {
 						"method": "POST",

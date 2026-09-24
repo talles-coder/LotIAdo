@@ -48,3 +48,12 @@ class InvitationAcceptResponse(BaseModel):
     full_name: str | None
 
     model_config = {"from_attributes": True}
+
+
+class MembershipResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    email: EmailStr
+    full_name: str | None
+    role: str
+    is_active: bool

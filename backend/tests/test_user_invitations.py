@@ -277,6 +277,56 @@ async def test_desativar_membership_de_outro_tenant_retorna_404(client: AsyncCli
 
 
 @pytest.mark.asyncio
+async def test_listar_memberships_retorna_membros_do_tenant(client: AsyncClient, db_session: AsyncSession):
+    """Listar memberships devolve os membros do tenant (ativos e desativados), com dados do usuário."""
+    admin_token, admin, tenant = await _criar_usuario_com_papel(db_session, "tenant-listar-membros", "admin")
+
+    inativo = User(email="inativo@test.com", hashed_password=hash_password("x"), full_name="Inativo")
+    db_session.add(inativo)
+    await db_session.flush()
+    db_session.add(
+        UserTenantMembership(user_id=inativo.id, tenant_id=tenant.id, role="corretor", is_active=False)
+    )
+    await db_session.commit()
+
+    response = await client.get("/auth/memberships", headers=_auth_headers(admin_token))
+
+    assert response.status_code == 200
+    membros = {m["email"]: m for m in response.json()}
+    assert membros[admin.email]["role"] == "admin"
+    assert membros[admin.email]["is_active"] is True
+    assert membros["inativo@test.com"]["is_active"] is False
+
+
+@pytest.mark.asyncio
+async def test_listar_memberships_isola_por_tenant(client: AsyncClient, db_session: AsyncSession):
+    """Um tenant não vê os membros de outro tenant na listagem."""
+    admin_a_token, _admin_a, _tenant_a = await _criar_usuario_com_papel(
+        db_session, "tenant-listar-membros-a", "admin"
+    )
+    _admin_b_token, admin_b, _tenant_b = await _criar_usuario_com_papel(
+        db_session, "tenant-listar-membros-b", "admin"
+    )
+
+    response = await client.get("/auth/memberships", headers=_auth_headers(admin_a_token))
+
+    assert response.status_code == 200
+    assert admin_b.email not in {m["email"] for m in response.json()}
+
+
+@pytest.mark.asyncio
+async def test_listar_memberships_sem_permissao_retorna_403(client: AsyncClient, db_session: AsyncSession):
+    """Um corretor (sem 'usuarios:gerenciar') não pode listar os membros do tenant."""
+    corretor_token, _corretor, _tenant = await _criar_usuario_com_papel(
+        db_session, "tenant-listar-membros-sem-permissao", "corretor"
+    )
+
+    response = await client.get("/auth/memberships", headers=_auth_headers(corretor_token))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_reconvidar_usuario_desativado_e_aceitar_reativa_a_membership(
     client: AsyncClient, db_session: AsyncSession
 ):
