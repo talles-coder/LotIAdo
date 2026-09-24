@@ -1,4 +1,6 @@
 """Testes de integração do módulo loteamentos_lotes (CRUD e transição de status)."""
+import json
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -242,6 +244,133 @@ async def test_loteamentos_sem_token_retorna_401(client: AsyncClient):
     response = await client.get("/loteamentos")
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_preview_importacao_csv_retorna_cabecalhos(client: AsyncClient, db_session: AsyncSession):
+    """O preview de um CSV retorna os cabeçalhos encontrados, na ordem em que aparecem no arquivo."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-import-preview")
+    loteamento_id = await _criar_loteamento(client, token)
+
+    csv_content = "Preço,Identificação,Quadra\n150000,L1,Q1\n"
+    response = await client.post(
+        f"/loteamentos/{loteamento_id}/lotes/importar/preview",
+        files={"arquivo": ("lotes.csv", csv_content, "text/csv")},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["colunas"] == ["Preço", "Identificação", "Quadra"]
+
+
+@pytest.mark.asyncio
+async def test_confirmar_importacao_csv_cria_lotes_com_colunas_em_ordem_arbitraria(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Um CSV com colunas em ordem/nome arbitrário é importado corretamente após o mapeamento."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-import-confirma")
+    loteamento_id = await _criar_loteamento(client, token)
+
+    csv_content = "preco,id_lote,setor,tamanho\n150000.00,L1,Q1,300.5\n200000.00,L2,Q2,250\n"
+    mapeamento = {
+        "identificacao": "id_lote",
+        "quadra": "setor",
+        "area_m2": "tamanho",
+        "preco": "preco",
+    }
+
+    response = await client.post(
+        f"/loteamentos/{loteamento_id}/lotes/importar",
+        files={"arquivo": ("lotes.csv", csv_content, "text/csv")},
+        data={"mapeamento": json.dumps(mapeamento)},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["total_linhas"] == 2
+    assert body["importados"] == 2
+    assert body["erros"] == []
+
+    listagem = await client.get(f"/loteamentos/{loteamento_id}/lotes", headers=_auth_headers(token))
+    lotes = {lote["identificacao"]: lote for lote in listagem.json()}
+    assert lotes["L1"]["quadra"] == "Q1"
+    assert lotes["L1"]["area_m2"] == "300.50"
+    assert lotes["L1"]["preco"] == "150000.00"
+    assert lotes["L2"]["area_m2"] == "250.00"
+
+
+@pytest.mark.asyncio
+async def test_confirmar_importacao_csv_reporta_linhas_invalidas_sem_abortar_o_restante(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Linhas inválidas (identificação vazia, preço não numérico) são reportadas, sem abortar o import."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-import-erros")
+    loteamento_id = await _criar_loteamento(client, token)
+
+    csv_content = (
+        "id_lote,preco\n"
+        "L1,150000.00\n"
+        ",200000.00\n"
+        "L3,nao-e-numero\n"
+        "L4,180000.00\n"
+    )
+    mapeamento = {"identificacao": "id_lote", "preco": "preco"}
+
+    response = await client.post(
+        f"/loteamentos/{loteamento_id}/lotes/importar",
+        files={"arquivo": ("lotes.csv", csv_content, "text/csv")},
+        data={"mapeamento": json.dumps(mapeamento)},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["total_linhas"] == 4
+    assert body["importados"] == 2
+    linhas_com_erro = {erro["linha"] for erro in body["erros"]}
+    assert linhas_com_erro == {3, 4}
+
+    listagem = await client.get(f"/loteamentos/{loteamento_id}/lotes", headers=_auth_headers(token))
+    identificacoes = {lote["identificacao"] for lote in listagem.json()}
+    assert identificacoes == {"L1", "L4"}
+
+
+@pytest.mark.asyncio
+async def test_confirmar_importacao_csv_com_mapeamento_sem_identificacao_retorna_400(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Mapeamento sem a coluna obrigatória 'identificacao' é rejeitado antes de importar qualquer linha."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-import-mapeamento-invalido")
+    loteamento_id = await _criar_loteamento(client, token)
+
+    csv_content = "id_lote,preco\nL1,150000.00\n"
+    response = await client.post(
+        f"/loteamentos/{loteamento_id}/lotes/importar",
+        files={"arquivo": ("lotes.csv", csv_content, "text/csv")},
+        data={"mapeamento": json.dumps({"preco": "preco"})},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_confirmar_importacao_csv_em_loteamento_inexistente_retorna_404(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Importar um CSV em um loteamento inexistente (ou de outro tenant) retorna 404."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-import-404")
+
+    csv_content = "id_lote\nL1\n"
+    response = await client.post(
+        "/loteamentos/00000000-0000-0000-0000-000000000000/lotes/importar",
+        files={"arquivo": ("lotes.csv", csv_content, "text/csv")},
+        data={"mapeamento": json.dumps({"identificacao": "id_lote"})},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
