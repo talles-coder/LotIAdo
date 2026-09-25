@@ -1,4 +1,5 @@
 """Loteamento e Lote domain models."""
+from geoalchemy2 import Geometry
 from sqlalchemy import Column, DateTime, ForeignKey, JSON, Numeric, String, UUID
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
@@ -17,6 +18,8 @@ class Loteamento(BaseModel):
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     nome = Column(String(255), nullable=False)
     descricao = Column(String(1000), nullable=True)
+    # Contorno do loteamento (SRID 4326/WGS84 em todo o sistema; ver FASE4-EST-01).
+    geometria = Column(Geometry("POLYGON", srid=4326), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     tenant = relationship("Tenant")
@@ -55,6 +58,7 @@ class Lote(BaseModel):
     caracteristicas = Column(JSON, nullable=True, default=dict)
     corretor_id = Column(UUID(as_uuid=True), ForeignKey("corretores.id"), nullable=True)
     cliente_id = Column(UUID(as_uuid=True), ForeignKey("clientes.id"), nullable=True)
+    geometria = Column(Geometry("POLYGON", srid=4326), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     tenant = relationship("Tenant")
