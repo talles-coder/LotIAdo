@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native-paper';
-import { ChevronRight, LogOut, MapPin, Sparkles } from 'lucide-react-native';
+import { ChevronRight, LogOut, MapPin, Sparkles, UserCog, Users } from 'lucide-react-native';
 
 import { clearSession } from '../src/auth/session';
 import { obterUsuarioAtual } from '../src/api/auth';
@@ -140,6 +140,37 @@ export default function HomeScreen() {
             })}
           </View>
         )}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Gestão</Text>
+        </View>
+
+        <View style={styles.recentList}>
+          <Pressable
+            style={({ pressed }) => [shared.cardSurface, styles.recentCard, pressed && styles.recentCardPressed]}
+            onPress={() => router.push('/corretores')}
+          >
+            <View style={styles.gestaoIconWrap}>
+              <Users size={18} color={colors.mutedForeground} />
+            </View>
+            <View style={styles.recentCardText}>
+              <Text style={styles.recentTitle}>Corretores</Text>
+            </View>
+            <ChevronRight size={18} color={colors.mutedForeground} />
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [shared.cardSurface, styles.recentCard, pressed && styles.recentCardPressed]}
+            onPress={() => router.push('/usuarios')}
+          >
+            <View style={styles.gestaoIconWrap}>
+              <UserCog size={18} color={colors.mutedForeground} />
+            </View>
+            <View style={styles.recentCardText}>
+              <Text style={styles.recentTitle}>Usuários</Text>
+            </View>
+            <ChevronRight size={18} color={colors.mutedForeground} />
+          </Pressable>
+        </View>
       </ScrollView>
 
       <BottomNav />
@@ -294,6 +325,14 @@ const styles = StyleSheet.create({
   },
   recentStat: {
     alignItems: 'flex-end',
+  },
+  gestaoIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   recentStatValue: {
     fontFamily: fonts.displayBold,

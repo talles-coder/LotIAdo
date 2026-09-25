@@ -110,3 +110,10 @@ async def save_lote(db: AsyncSession, lote: Lote) -> Lote:
     """Persist changes made to an existing lote. Ver nota em `create_loteamento()`."""
     await db.commit()
     return lote
+
+
+async def create_lotes_em_lote(db: AsyncSession, lotes: list[Lote]) -> list[Lote]:
+    """Persist multiple new lotes in a single commit (bulk import). Ver nota em `create_loteamento()`."""
+    db.add_all(lotes)
+    await db.commit()
+    return lotes

@@ -59,3 +59,18 @@ class LoteResponse(BaseModel):
     cliente_id: UUID | None
 
     model_config = {"from_attributes": True}
+
+
+class ImportacaoCsvPreviewResponse(BaseModel):
+    colunas: list[str]
+
+
+class ImportacaoErroLinha(BaseModel):
+    linha: int
+    erro: str
+
+
+class ImportacaoLoteResponse(BaseModel):
+    total_linhas: int
+    importados: int
+    erros: list[ImportacaoErroLinha]

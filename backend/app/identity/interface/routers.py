@@ -31,6 +31,7 @@ from app.identity.interface.schemas import (
     InvitationResponse,
     LoginRequest,
     LoginResponse,
+    MembershipResponse,
     UserMeResponse,
 )
 
@@ -118,6 +119,28 @@ async def aceitar_convite(
     except InvitationExpiradoError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Convite expirado")
     return InvitationAcceptResponse.model_validate(user)
+
+
+@router.get("/memberships", response_model=list[MembershipResponse])
+async def listar_memberships(
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(require_permission("usuarios:gerenciar")),
+) -> list[MembershipResponse]:
+    """Lista os membros (ativos e desativados) do tenant autenticado."""
+    service = MembershipService(db)
+    memberships = await service.listar(tenant_id)
+    return [
+        MembershipResponse(
+            id=membership.id,
+            user_id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            role=membership.role,
+            is_active=membership.is_active,
+        )
+        for membership, user in memberships
+    ]
 
 
 @router.post("/memberships/{membership_id}/deactivate", status_code=status.HTTP_204_NO_CONTENT)
