@@ -46,7 +46,7 @@ Identificados, mas **fora do escopo atual** — não são bloqueantes para come�
 | RLS + pool de conexões assíncrono (FastAPI/SQLAlchemy async) | É fácil configurar RLS errado e vazar dados entre tenants, ou quebrar silenciosamente com connection pooling | Task de estudo dedicada antes da implementação (Fase 0); testes automatizados de isolamento de tenant desde a Fase 2 |
 | Consultas vetoriais (pgvector) sem filtro de tenant | RLS cobre tabelas relacionais, mas uma query vetorial mal escrita pode vazar contexto de outro tenant para o RAG | Filtro de tenant explícito em toda query vetorial, como defesa em profundidade, independente da RLS |
 | Complexidade simultânea (GIS + IA + mobile + offline + observabilidade) para 2 devs | Risco de dispersão, aprendizado raso em tudo | Roadmap incremental por fases (ver 04-roadmap.md), just-in-time study antes de cada fase, escopo deliberadamente simplificado onde possível (ver seção 7) |
-| Bibliotecas nativas do mobile não funcionam automaticamente no Expo for Web (D2) | `expo-secure-store` e `react-native-maps`, por exemplo, não têm implementação web nativa — mapa e armazenamento de sessão precisam de uma implementação por plataforma | Abstrações por arquivo de plataforma (`.native.tsx`/`.web.tsx`) desde a Fase 3 (storage) e Fase 5 (mapa), mantendo a mesma interface/API para o resto do app — ver D2 e D8 em [03-decisoes-tecnicas.md](03-decisoes-tecnicas.md) |
+| Bibliotecas nativas do mobile não funcionam automaticamente no Expo for Web (D2) | `expo-secure-store` e `@maplibre/maplibre-react-native`, por exemplo, não têm implementação web nativa — mapa e armazenamento de sessão precisam de uma implementação por plataforma | Abstrações por arquivo de plataforma (`.native.tsx`/`.web.tsx`) desde a Fase 3 (storage) e Fase 5 (mapa), mantendo a mesma interface/API para o resto do app — ver D2 e D8 em [03-decisoes-tecnicas.md](03-decisoes-tecnicas.md) |
 
 ## 5. Riscos de produto
 
@@ -74,7 +74,7 @@ Identificados, mas **fora do escopo atual** — não são bloqueantes para come�
 
 - Georreferenciar plantas/imagens não georreferenciadas exige um passo manual de calibração (pontos de referência), não é resolvível só com IA — ver seção 4.
 - "Lote de esquina" e "proximidade de área verde" só funcionam se ruas e áreas verdes também existirem como geometrias no banco, não apenas os lotes — isso é um requisito de modelagem de dados a não esquecer na Fase 4 (GIS).
-- SRID consistente (WGS84/4326) em todo o sistema — o Google Maps é camada de visualização, o PostGIS é fonte de verdade; nunca inferir geometria a partir do que é mostrado no mapa.
+- SRID consistente (WGS84/4326) em todo o sistema — o mapa (MapLibre/OSM) é camada de visualização, o PostGIS é fonte de verdade; nunca inferir geometria a partir do que é mostrado no mapa.
 
 ## 9. Desafios de IA específicos
 
