@@ -1,18 +1,25 @@
-"""Membership use cases: deactivating a user's access to a tenant."""
+"""Membership use cases: listing tenant members and deactivating a user's access."""
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.identity.domain.exceptions import MembershipNaoEncontradaError
-from app.identity.domain.models import UserTenantMembership
-from app.identity.infrastructure.repository import get_membership_by_id_and_tenant
+from app.identity.domain.models import User, UserTenantMembership
+from app.identity.infrastructure.repository import (
+    get_membership_by_id_and_tenant,
+    list_memberships_by_tenant,
+)
 
 
 class MembershipService:
-    """Orchestrates deactivating a membership, scoped to a tenant."""
+    """Orchestrates listing and deactivating memberships, scoped to a tenant."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def listar(self, tenant_id: UUID) -> list[tuple[UserTenantMembership, User]]:
+        """List every membership (active and inactive) of the tenant, joined with its user."""
+        return await list_memberships_by_tenant(self.db, tenant_id)
 
     async def desativar(self, tenant_id: UUID, membership_id: UUID) -> UserTenantMembership:
         """Deactivate a membership: the user keeps their history but can no longer act in the tenant.

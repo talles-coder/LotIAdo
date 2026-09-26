@@ -10,6 +10,11 @@ class LoteNaoEncontradoError(Exception):
     """Raised when a lote id does not match an active lote in the tenant."""
 
 
+class MapeamentoDeImportacaoInvalidoError(Exception):
+    """Raised when the column mapping for a CSV import is missing required fields
+    or references columns that don't exist in the file."""
+
+
 class TransicaoDeStatusInvalidaError(Exception):
     """Raised when a lote status transition is not allowed by the state machine."""
 

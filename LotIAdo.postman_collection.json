@@ -196,6 +196,30 @@
 					"response": []
 				},
 				{
+					"name": "Listar Memberships",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/memberships",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "memberships"]
+						},
+						"description": "Lista os membros (ativos e desativados) do tenant autenticado, com e-mail/nome do usuário (requer permissão 'usuarios:gerenciar')."
+					},
+					"response": []
+				},
+				{
 					"name": "Desativar Membership",
 					"request": {
 						"method": "POST",
@@ -701,6 +725,59 @@
 							"path": ["loteamentos", "{{loteamento_id}}", "lotes"]
 						},
 						"description": "Lista os lotes ativos de um loteamento do tenant autenticado."
+					},
+					"response": []
+				},
+				{
+					"name": "Preview Importação CSV de Lotes",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "arquivo", "type": "file", "src": []}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes/importar/preview",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes", "importar", "preview"]
+						},
+						"description": "Recebe um CSV de lotes e retorna os cabeçalhos encontrados (na ordem do arquivo), para o usuário mapear manualmente cada coluna a um campo do sistema antes de confirmar a importação."
+					},
+					"response": []
+				},
+				{
+					"name": "Confirmar Importação CSV de Lotes",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "arquivo", "type": "file", "src": []},
+								{
+									"key": "mapeamento",
+									"type": "text",
+									"value": "{\"identificacao\": \"id_lote\", \"quadra\": \"setor\", \"area_m2\": \"tamanho\", \"preco\": \"preco\"}"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes/importar",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes", "importar"]
+						},
+						"description": "Persiste em lote os lotes do CSV a partir do mapeamento coluna->campo confirmado pelo usuário (chaves aceitas: identificacao, quadra, area_m2, preco; identificacao é obrigatória). Linhas inválidas (ex.: identificação vazia, preço não numérico) são reportadas por número de linha em `erros`, sem abortar o restante da importação."
 					},
 					"response": []
 				},

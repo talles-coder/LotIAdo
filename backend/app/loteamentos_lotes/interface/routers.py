@@ -1,18 +1,27 @@
 """Loteamentos_lotes module HTTP routes."""
+import json
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.identity.interface.dependencies import get_current_tenant_id, require_permission
+from app.loteamentos_lotes.application.lote_import_service import (
+    LoteImportService,
+    extrair_cabecalhos,
+)
 from app.loteamentos_lotes.application.lote_service import LoteService
 from app.loteamentos_lotes.application.loteamento_service import LoteamentoService
 from app.loteamentos_lotes.domain.exceptions import (
     LoteamentoNaoEncontradoError,
     LoteNaoEncontradoError,
+    MapeamentoDeImportacaoInvalidoError,
     TransicaoDeStatusInvalidaError,
 )
 from app.loteamentos_lotes.interface.schemas import (
+    ImportacaoCsvPreviewResponse,
+    ImportacaoErroLinha,
+    ImportacaoLoteResponse,
     LoteamentoCreateRequest,
     LoteamentoResponse,
     LoteamentoUpdateRequest,
@@ -141,6 +150,72 @@ async def listar_lotes(
     service = LoteService(db)
     lotes = await service.listar(tenant_id, loteamento_id)
     return [LoteResponse.model_validate(lote) for lote in lotes]
+
+
+@router.post(
+    "/loteamentos/{loteamento_id}/lotes/importar/preview",
+    response_model=ImportacaoCsvPreviewResponse,
+)
+async def pre_visualizar_importacao_csv(
+    loteamento_id: UUID,
+    arquivo: UploadFile = File(...),
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
+) -> ImportacaoCsvPreviewResponse:
+    """Retorna os cabeçalhos de um CSV para o usuário mapear manualmente as colunas."""
+    loteamento_service = LoteamentoService(db)
+    try:
+        await loteamento_service.obter(tenant_id, loteamento_id)
+    except LoteamentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loteamento não encontrado")
+
+    conteudo = (await arquivo.read()).decode("utf-8-sig")
+    colunas = extrair_cabecalhos(conteudo)
+    if not colunas:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV vazio ou sem cabeçalho")
+    return ImportacaoCsvPreviewResponse(colunas=colunas)
+
+
+@router.post(
+    "/loteamentos/{loteamento_id}/lotes/importar",
+    response_model=ImportacaoLoteResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def confirmar_importacao_csv(
+    loteamento_id: UUID,
+    arquivo: UploadFile = File(...),
+    mapeamento: str = Form(..., description="JSON {campo: nome_da_coluna_no_csv}"),
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
+) -> ImportacaoLoteResponse:
+    """Persiste em lote os lotes de um CSV, a partir do mapeamento de colunas confirmado pelo usuário."""
+    loteamento_service = LoteamentoService(db)
+    try:
+        await loteamento_service.obter(tenant_id, loteamento_id)
+    except LoteamentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loteamento não encontrado")
+
+    try:
+        mapeamento_dict = json.loads(mapeamento)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Mapeamento inválido: não é um JSON válido"
+        )
+
+    conteudo = (await arquivo.read()).decode("utf-8-sig")
+    import_service = LoteImportService(db)
+    try:
+        resultado = await import_service.importar(tenant_id, loteamento_id, conteudo, mapeamento_dict)
+    except MapeamentoDeImportacaoInvalidoError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    return ImportacaoLoteResponse(
+        total_linhas=resultado.total_linhas,
+        importados=resultado.importados,
+        erros=[ImportacaoErroLinha(linha=erro.linha, erro=erro.erro) for erro in resultado.erros],
+    )
 
 
 @router.get("/lotes/{lote_id}", response_model=LoteResponse)

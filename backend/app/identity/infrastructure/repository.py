@@ -93,6 +93,19 @@ async def get_invitation_by_token(db: AsyncSession, token: str) -> Invitation | 
     return result.scalar_one_or_none()
 
 
+async def list_memberships_by_tenant(
+    db: AsyncSession, tenant_id: UUID
+) -> list[tuple[UserTenantMembership, User]]:
+    """List every membership (active and inactive) of a tenant, joined with its user."""
+    result = await db.execute(
+        select(UserTenantMembership, User)
+        .join(User, User.id == UserTenantMembership.user_id)
+        .where(UserTenantMembership.tenant_id == tenant_id)
+        .order_by(User.email)
+    )
+    return [(row.UserTenantMembership, row.User) for row in result.all()]
+
+
 async def get_active_membership_for_email_and_tenant(
     db: AsyncSession, email: str, tenant_id: UUID
 ) -> UserTenantMembership | None:
