@@ -3,7 +3,7 @@ import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Button } from 'react-native-paper';
-import { ArrowLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, Map as MapIcon } from 'lucide-react-native';
 
 import { listarLotes, obterLoteamento, type Lote, type LoteStatus } from '../../src/api/loteamentos';
 import { formatArea, formatBRL } from '../../src/lib/format';
@@ -58,6 +58,9 @@ export default function LotesDoLoteamentoScreen() {
             {loteamentoQuery.data?.nome ?? 'Loteamento'}
           </Text>
         </View>
+        <Pressable onPress={() => router.push(`/loteamentos/${id}/mapa`)} style={styles.backButton} hitSlop={8}>
+          <MapIcon size={20} color={colors.foreground} />
+        </Pressable>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={styles.filtersContent}>
