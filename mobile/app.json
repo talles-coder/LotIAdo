@@ -17,6 +17,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "package": "com.lotiado.mobile",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -26,9 +27,11 @@
       "expo-router",
       "expo-secure-store",
       "expo-font",
+      "@maplibre/maplibre-react-native",
       [
         "expo-splash-screen",
         {
+          "image": "./assets/splash-icon.png",
           "backgroundColor": "#FDFAF4"
         }
       ]
