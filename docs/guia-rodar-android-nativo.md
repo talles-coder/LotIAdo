@@ -80,15 +80,17 @@ Armadilhas vistas:
 - O botão flutuante "Tools" do Expo Go aparece nos prints; feche/ignore ou recorte.
 - Login de teste: `mapa@test.com` / `senha123` (tenant `mapa-demo`).
 
-## Limitação conhecida: Google Maps no Expo Go
+## Mapa: precisa de development build (não roda no Expo Go)
 
-O **Expo Go não renderiza o mapa do Google** hoje: a chave embutida nele é rejeitada (`adb logcat | grep "Google Maps Android API"` mostra "Ensure that the Google Maps Android API v2 is enabled ... host.exp.exponent"). Resultado: o `MapView` aparece com fundo liso e logo "Google", **sem tiles e sem polígonos**. Para ver o mapa real é preciso:
+O mapa usa MapLibre + tiles do OpenStreetMap (decisão D10): **sem conta e sem chave de API**, mas o módulo é nativo, então o Expo Go não serve para a tela de mapa. Gere e instale um development build no emulador:
 
-1. Uma chave da Google Maps Platform com **Maps SDK for Android** habilitado (do dono do projeto — não criar por conta própria);
-2. Configurá-la em `app.json` → `android.config.googleMaps.apiKey` (ou via `app.config.js` lendo env, sem commitar a chave);
-3. Um **development build** (`npx expo prebuild --platform android` + `npx expo run:android`, usando o JDK/SDK acima), não o Expo Go.
+```bash
+cd mobile
+npx expo prebuild --platform android      # gera mobile/android (ignorado pelo git)
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 npx expo run:android   # compila (~10 min na 1ª vez) e instala no emulador
+```
 
-Sem a chave, para PR use o stand-in web descartável descrito abaixo e diga isso no PR.
+Precisa de `JAVA_HOME` (JDK 17) e `ANDROID_HOME` exportados e do emulador já de pé. Depois do 1º build, `npx expo start --dev-client` basta para iterar em JS. Deep link: `lotiado://loteamentos/<id>/mapa`.
 
 ## Alternativa: captura via web (sem emulador)
 
