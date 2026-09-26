@@ -92,12 +92,11 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 npx expo run:android   # compila (~10 m
 
 Precisa de `JAVA_HOME` (JDK 17) e `ANDROID_HOME` exportados e do emulador já de pé. Depois do 1º build, `npx expo start --dev-client` basta para iterar em JS. Deep link: `lotiado://loteamentos/<id>/mapa`.
 
-## Alternativa: captura via web (sem emulador)
+## Web (Expo for Web, SCRUM-74)
 
-Rota mais rápida para prints de telas que não dependem de biblioteca nativa (usada no SCRUM-70):
-- `npm install --no-save react-native-web@~0.21.0` em `mobile/` (o `expo start --web` precisa dele);
-- shims **descartáveis, nunca commitados**: `src/storage/tokenStorage.web.ts` (localStorage) e, se houver mapa, `src/components/LoteamentoMap.web.tsx` (stand-in SVG com as mesmas props);
-- o backend não tem CORS: rode um wrapper local (`from app.main import app; app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:8081"], ...)`) com `uvicorn cors_app:app --app-dir <pasta>` — **não** abra o Chrome com `--disable-web-security` (é bloqueado);
-- Playwright (Python) + `C:\Program Files\Google\Chrome\Application\chrome.exe` com viewport 390x844 e `device_scale_factor=2`.
+O target web agora é oficial (`react-native-web` nas dependências, `tokenStorage.web.ts` com `localStorage`, `LoteamentoMap.web.tsx` como stand-in até FASE5-IMPL-03):
+- `cd mobile && EXPO_PUBLIC_API_URL=http://localhost:8000 npx expo start --web --port 8081`;
+- o backend libera CORS para `localhost:8081`/`19006` (`cors_origins` em `app/config.py`; sobrescreva via `CORS_ORIGINS` no `.env`);
+- Playwright (Python) para dirigir o navegador; use `page.locator("input")` em vez de `get_by_label` (o Paper duplica o label).
 
 iOS não é possível nesta máquina (Windows).
