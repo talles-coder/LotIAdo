@@ -11,10 +11,12 @@ import { listarLoteamentos, listarLotes } from '../src/api/loteamentos';
 import { saudacao } from '../src/lib/greeting';
 import { Logo } from '../src/components/Logo';
 import { BottomNav } from '../src/components/BottomNav';
+import { useIsDesktop } from '../src/lib/useIsDesktop';
 import { colors, fonts } from '../src/theme/tokens';
 import { shared } from '../src/theme/shared';
 
 export default function HomeScreen() {
+  const desktop = useIsDesktop();
   const meQuery = useQuery({ queryKey: ['auth', 'me'], queryFn: obterUsuarioAtual });
   const loteamentosQuery = useQuery({ queryKey: ['loteamentos'], queryFn: listarLoteamentos });
   const loteamentos = loteamentosQuery.data ?? [];
@@ -57,12 +59,14 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Logo size="sm" />
-          <Pressable onPress={handleLogout} style={styles.iconButton} hitSlop={8}>
-            <LogOut size={20} color={colors.mutedForeground} />
-          </Pressable>
-        </View>
+        {desktop ? null : (
+          <View style={styles.header}>
+            <Logo size="sm" />
+            <Pressable onPress={handleLogout} style={styles.iconButton} hitSlop={8}>
+              <LogOut size={20} color={colors.mutedForeground} />
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.greeting}>
           <Text style={styles.greetingLabel}>{saudacao()}</Text>
@@ -110,13 +114,13 @@ export default function HomeScreen() {
         {loteamentosQuery.isLoading ? (
           <ActivityIndicator color={colors.primary} />
         ) : (
-          <View style={styles.recentList}>
+          <View style={[styles.recentList, desktop && shared.grid]}>
             {loteamentos.slice(0, 3).map((l) => {
               const disponibilidade = disponibilidadePorLoteamento.get(l.id);
               return (
                 <Pressable
                   key={l.id}
-                  style={({ pressed }) => [shared.cardSurface, styles.recentCard, pressed && styles.recentCardPressed]}
+                  style={({ pressed }) => [shared.cardSurface, styles.recentCard, desktop && shared.gridItem, pressed && styles.recentCardPressed]}
                   onPress={() => router.push(`/loteamentos/${l.id}`)}
                 >
                   <View style={styles.recentCardText}>
@@ -145,9 +149,9 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Gestão</Text>
         </View>
 
-        <View style={styles.recentList}>
+        <View style={[styles.recentList, desktop && shared.grid]}>
           <Pressable
-            style={({ pressed }) => [shared.cardSurface, styles.recentCard, pressed && styles.recentCardPressed]}
+            style={({ pressed }) => [shared.cardSurface, styles.recentCard, desktop && shared.gridItem, pressed && styles.recentCardPressed]}
             onPress={() => router.push('/corretores')}
           >
             <View style={styles.gestaoIconWrap}>
@@ -159,7 +163,7 @@ export default function HomeScreen() {
             <ChevronRight size={18} color={colors.mutedForeground} />
           </Pressable>
           <Pressable
-            style={({ pressed }) => [shared.cardSurface, styles.recentCard, pressed && styles.recentCardPressed]}
+            style={({ pressed }) => [shared.cardSurface, styles.recentCard, desktop && shared.gridItem, pressed && styles.recentCardPressed]}
             onPress={() => router.push('/usuarios')}
           >
             <View style={styles.gestaoIconWrap}>

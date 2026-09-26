@@ -9,8 +9,10 @@ import { listarLoteamentos, listarLotes, type Loteamento } from '../../src/api/l
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { BottomNav } from '../../src/components/BottomNav';
+import { useIsDesktop } from '../../src/lib/useIsDesktop';
 
 export default function LoteamentosScreen() {
+  const desktop = useIsDesktop();
   const [search, setSearch] = useState('');
   const query = useQuery({ queryKey: ['loteamentos'], queryFn: listarLoteamentos });
 
@@ -80,6 +82,9 @@ export default function LoteamentosScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         style={styles.listFlex}
+        key={desktop ? 'grid' : 'list'}
+        numColumns={desktop ? 2 : 1}
+        columnWrapperStyle={desktop ? shared.flatGridRow : undefined}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -98,7 +103,7 @@ export default function LoteamentosScreen() {
 
           return (
             <Pressable
-              style={({ pressed }) => [shared.cardSurface, styles.card, pressed && styles.cardPressed]}
+              style={({ pressed }) => [shared.cardSurface, styles.card, desktop && shared.flatGridItem, pressed && styles.cardPressed]}
               onPress={() => router.push(`/loteamentos/${item.id}`)}
             >
               <View style={styles.cardHeader}>

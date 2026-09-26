@@ -11,6 +11,7 @@ import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
 import { BottomNav } from '../../src/components/BottomNav';
+import { useIsDesktop } from '../../src/lib/useIsDesktop';
 
 const FILTROS: { key: LoteStatus | 'todos'; label: string }[] = [
   { key: 'todos', label: 'Todos' },
@@ -21,6 +22,7 @@ const FILTROS: { key: LoteStatus | 'todos'; label: string }[] = [
 ];
 
 export default function LotesDoLoteamentoScreen() {
+  const desktop = useIsDesktop();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [filtro, setFiltro] = useState<LoteStatus | 'todos'>('todos');
 
@@ -98,6 +100,9 @@ export default function LotesDoLoteamentoScreen() {
           data={lotesFiltrados}
           keyExtractor={(item) => item.id}
           style={styles.listFlex}
+          key={desktop ? 'grid' : 'list'}
+          numColumns={desktop ? 2 : 1}
+          columnWrapperStyle={desktop ? shared.flatGridRow : undefined}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
@@ -113,6 +118,7 @@ export default function LotesDoLoteamentoScreen() {
               style={({ pressed }) => [
                 shared.cardSurface,
                 styles.card,
+                desktop && shared.flatGridItem,
                 { borderLeftColor: colors.status[item.status].text },
                 pressed && styles.cardPressed,
               ]}

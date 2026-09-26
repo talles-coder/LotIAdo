@@ -8,9 +8,11 @@ import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { login } from '../src/api/auth';
 import { setSession } from '../src/auth/session';
 import { Logo } from '../src/components/Logo';
+import { useIsDesktop } from '../src/lib/useIsDesktop';
 import { colors, fonts } from '../src/theme/tokens';
 
 export default function LoginScreen() {
+  const desktop = useIsDesktop();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +38,11 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      style={[styles.flex, desktop && styles.flexDesktop]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.hero}>
-        <Svg style={StyleSheet.absoluteFill} opacity={0.15}>
+      <View style={[styles.hero, desktop && styles.heroDesktop]}>
+        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" opacity={0.15}>
           <Defs>
             <Pattern id="grid" width={24} height={24} patternUnits="userSpaceOnUse">
               <Path d="M24 0H0V24" fill="none" stroke={colors.earthForeground} strokeWidth={1} />
@@ -52,7 +54,11 @@ export default function LoginScreen() {
         <Text style={styles.tagline}>Seus loteamentos, na palma da mão.</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={desktop && styles.formPaneDesktop}
+        contentContainerStyle={[styles.form, desktop && styles.formDesktop]}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.welcome}>Bem-vindo de volta</Text>
 
         <TextInput
@@ -90,7 +96,7 @@ export default function LoginScreen() {
           Entrar
         </Button>
 
-        <Text style={styles.footnote}>
+        <Text style={[styles.footnote, desktop && styles.footnoteDesktop]}>
           Acesso restrito a corretores e gestores cadastrados pela sua imobiliária.
         </Text>
       </ScrollView>
@@ -102,6 +108,24 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  flexDesktop: {
+    flexDirection: 'row',
+  },
+  heroDesktop: {
+    flex: 1,
+    height: 'auto',
+    paddingHorizontal: 64,
+    paddingBottom: 64,
+  },
+  formPaneDesktop: {
+    flex: 1,
+  },
+  formDesktop: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
   hero: {
     height: 224,
@@ -142,6 +166,9 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontFamily: fonts.displayBold,
     fontSize: 16,
+  },
+  footnoteDesktop: {
+    marginTop: 0,
   },
   footnote: {
     marginTop: 'auto',

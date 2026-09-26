@@ -12,6 +12,7 @@ import { initSession } from '../src/auth/session';
 import { colors } from '../src/theme/tokens';
 import { paperTheme } from '../src/theme/paperTheme';
 import { SplashAnimation } from '../src/components/SplashAnimation';
+import { WebShell } from '../src/components/WebShell';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,7 +52,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <PaperProvider theme={paperTheme}>
           <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <Slot />
+            <WebShell>
+              <Slot />
+            </WebShell>
             {showLogoAnimation && <SplashAnimation onFinish={handleAnimationFinish} />}
           </View>
         </PaperProvider>
