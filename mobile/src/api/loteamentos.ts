@@ -2,6 +2,12 @@ import { apiClient } from './client';
 
 export type LoteStatus = 'disponivel' | 'reservado' | 'vendido' | 'indisponivel';
 
+/** GeoJSON Polygon (SRID 4326): `coordinates[0]` é o anel externo, em pares `[lng, lat]`. */
+export interface GeoJsonPolygon {
+  type: 'Polygon';
+  coordinates: number[][][];
+}
+
 export interface Loteamento {
   id: string;
   nome: string;
@@ -19,6 +25,7 @@ export interface Lote {
   caracteristicas: Record<string, unknown> | null;
   corretor_id: string | null;
   cliente_id: string | null;
+  geometria: GeoJsonPolygon | null;
 }
 
 export async function listarLoteamentos(): Promise<Loteamento[]> {

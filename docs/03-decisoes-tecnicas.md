@@ -113,22 +113,34 @@ O usuário optou por já usar Redis com uma fila de jobs real desde que houver a
 
 **Recomendação:** (B). Usar Ragas para avaliação de RAG e promptfoo (ou equivalente) para comparação de prompts/modelos; logging estruturado próprio (latência, tokens, custo) continua sendo construído manualmente, pois é simples e específico do domínio.
 
-## D8 — Biblioteca de mapa multiplataforma (native + web)
+## D8 — Biblioteca de mapa multiplataforma (native + web) — ✅ Revisada: MapLibre nas duas plataformas (ver D10)
 
-Nova decisão, consequência direta de D2 (Expo for Web): `react-native-maps`, usado no mobile desde a Fase 4, não tem implementação web própria.
+Consequência direta de D2 (Expo for Web): `react-native-maps`, cogitado inicialmente para o mobile, não tem implementação web própria. A versão original desta decisão (wrapper comunitário do `react-native-maps` sobre a API JS do Google Maps, com Leaflet como plano B) foi **substituída** pela D10, porque o Google Maps Platform exige conta de faturamento (cartão) mesmo dentro do free tier.
+
+**Resultado:** o mapa é isolado em `LoteamentoMap` (props: lista de polígonos + callback de seleção). O nativo usa `@maplibre/maplibre-react-native`; a Fase 5 adiciona `LoteamentoMap.web.tsx` com `maplibre-gl` (mesmo motor e mesmo estilo de mapa), sem wrapper comunitário do `react-native-maps`. A interface de props continua idêntica nas duas plataformas.
+
+## D10 — Provedor de mapa: MapLibre + tiles do OpenStreetMap (sem Google Maps) — ✅ Decidido
+
+Motivação: a chave do Google Maps (SCRUM-70) exigia conta de faturamento com cartão de crédito; o projeto é de portfólio/aprendizado e deve rodar sem custo nem cadastro pago.
 
 **Opções:**
-- (A) Wrapper comunitário que reimplementa a API do `react-native-maps` sobre a API JavaScript do Google Maps para o alvo web (ex.: `@teovilla/react-native-web-maps`), mantendo os mesmos componentes (`MapView`, `Polygon`) nas duas plataformas via arquivo `.web.tsx`.
-- (B) Biblioteca de mapa própria da web (ex.: `react-leaflet`), sem tentar unificar a API com o mobile — cada plataforma com sua própria implementação de tela de mapa, sem componente compartilhado.
+- (A) Google Maps Platform (`react-native-maps` + API JS na web).
+- (B) MapLibre (open source) com tiles raster do OpenStreetMap — **escolhida**.
+- (C) Mapbox (SDK próprio, exige token e tem free tier condicionado a conta).
 
-| | (A) Wrapper unificado (Google Maps) | (B) Biblioteca web própria (Leaflet) |
-|---|---|---|
-| Vantagens | Mesmo provider (Google Maps) e mesma API de componente nas duas plataformas; menos código de tela duplicado | Leaflet é open source, maduro, bem documentado; não depende da maturidade de um wrapper comunitário menor |
-| Desvantagens | Wrapper comunitário é menos maduro/mantido que o `react-native-maps` oficial; ainda exige cuidado nas props não suportadas | Duas implementações de mapa (mobile e web) com APIs diferentes — tela de mapa não é 100% compartilhada, ainda que a lógica de negócio em volta seja |
-| Custo | Zero (Google Maps JS API tem free tier generoso) | Zero |
-| Impacto no aprendizado | Alto — reforça o padrão de abstração por plataforma já necessário para storage (D2) | Médio — aprende Leaflet, mas não aprofunda o padrão de abstração multiplataforma |
+| | (A) Google Maps | (B) MapLibre + OSM | (C) Mapbox |
+|---|---|---|---|
+| Custo / cadastro | Exige faturamento (cartão) | Zero, sem conta nem chave | Token + conta |
+| Nativo + web | `react-native-maps` + wrapper web instável | `@maplibre/maplibre-react-native` + `maplibre-gl` (mesmo motor) | SDK equivalente |
+| Expo Go | Não renderiza (chave embutida rejeitada) | Não (módulo nativo) — exige development build | Não |
+| Vantagens | Imagens de satélite de alta qualidade | Open source, sem lock-in, estilo trocável por URL | Bom visual |
+| Desvantagens | Custo/cartão; wrapper web menos maduro | Tiles públicos do OSM têm política de uso justo (ok para dev/demo) | Conta + token |
 
-**Recomendação:** (A). Mantém consistência com a decisão de usar Google Maps como camada de visualização (briefing original) e reaproveita ao máximo o componente de mapa entre mobile e web — a tela de edição de polígono da Fase 5 adiciona só a camada de desenho por cima do mesmo `MapView` web. Se o wrapper comunitário se mostrar instável durante a Fase 5, cair para (B) como plano B, registrando a mudança aqui.
+**Consequências:**
+- Estilo do mapa é um objeto/URL de estilo; trocar de provedor de tiles (MapTiler, Stadia, tiles próprios em produção/Fase 11) é mudar uma constante. Uso em produção com tráfego real exige um provedor de tiles próprio ou pago — os tiles `tile.openstreetmap.org` são só para desenvolvimento/demonstração e exigem atribuição "© OpenStreetMap contributors" (exibida pelo componente).
+- Sem imagem de satélite por padrão (mapa base de ruas). Se o satélite for necessário, adicionar como nova camada de tiles com provedor licenciado.
+- PostGIS continua sendo a fonte de verdade geográfica; o mapa é só visualização.
+- Requer **development build** (`expo prebuild` + `expo run:android`); Expo Go não serve mais para a tela de mapa (não serve nem com Google, ver guia).
 
 ## D9 — Biblioteca de componentes multiplataforma (mobile + web) — ✅ Decidido: (A) React Native Paper
 

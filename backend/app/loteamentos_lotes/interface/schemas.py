@@ -2,7 +2,10 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel
+from geoalchemy2.elements import WKBElement
+from geoalchemy2.shape import to_shape
+from pydantic import BaseModel, field_validator
+from shapely.geometry import mapping
 
 from app.loteamentos_lotes.domain.state_machine import LoteStatus
 
@@ -57,8 +60,17 @@ class LoteResponse(BaseModel):
     caracteristicas: dict | None
     corretor_id: UUID | None
     cliente_id: UUID | None
+    # GeoJSON Polygon (SRID 4326, coordenadas [lng, lat]); None enquanto o lote não foi desenhado.
+    geometria: dict | None = None
 
     model_config = {"from_attributes": True}
+
+    @field_validator("geometria", mode="before")
+    @classmethod
+    def _geometria_para_geojson(cls, value):
+        if isinstance(value, WKBElement):
+            return mapping(to_shape(value))
+        return value
 
 
 class ImportacaoCsvPreviewResponse(BaseModel):
