@@ -94,7 +94,7 @@ Precisa de `JAVA_HOME` (JDK 17) e `ANDROID_HOME` exportados e do emulador já de
 
 ## Web (Expo for Web, SCRUM-74)
 
-O target web agora é oficial (`react-native-web` nas dependências, `tokenStorage.web.ts` com `localStorage`, `LoteamentoMap.web.tsx` como stand-in até FASE5-IMPL-03):
+O target web agora é oficial (`react-native-web` nas dependências, `WebShell.web.tsx` com sidebar em tela larga, `tokenStorage.web.ts` com `localStorage`, `LoteamentoMap.web.tsx` como stand-in até FASE5-IMPL-03):
 - `cd mobile && EXPO_PUBLIC_API_URL=http://localhost:8000 npx expo start --web --port 8081`;
 - o backend libera CORS para `localhost:8081`/`19006` (`cors_origins` em `app/config.py`; sobrescreva via `CORS_ORIGINS` no `.env`);
 - Playwright (Python) para dirigir o navegador; use `page.locator("input")` em vez de `get_by_label` (o Paper duplica o label).
