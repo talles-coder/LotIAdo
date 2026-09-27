@@ -66,6 +66,8 @@ Esta Skill valida:
 - ✅ Mudanças relacionadas agrupadas (ou sugerir split)
 - ✅ Mensagem clara e significativa
 - ✅ Rota adicionada/alterada/removida em `app/*/interface/routers.py`? `LotIAdo.postman_collection.json` (raiz do repo) precisa estar atualizado no mesmo commit — adicione/edite/remova o request correspondente antes de commitar (ver nota no próprio arquivo)
+- ✅ A task explorou a fundo ou alterou a superfície pública (serviço, método, exception) de um módulo? Crie/atualize o arquivo correspondente em `docs/contexto-modulos/` (ver `docs/contexto-modulos/README.md`) no mesmo commit — não deixe esse contexto só na conversa
+- ✅ A task tinha um item de backlog (`SCRUM-XXX`/`FASE-N-IMPL-XX`)? Adicione a subseção `#### Handoff (SCRUM-XXX)` logo abaixo dela em `docs/backlog/fase-N-*.md` antes de commitar (ver seção "Backlog & Fases" do `CLAUDE.md`)
 
 ## Quando invocar
 
@@ -107,3 +109,5 @@ $ /commit
 - [ ] Nenhum arquivo acidental (`.env`, `__pycache__`, `.pyc`)
 - [ ] Mensagem vai descrever claramente a mudança
 - [ ] Se o diff adiciona/altera/remove uma rota, `LotIAdo.postman_collection.json` foi atualizado junto
+- [ ] Se a task explorou/alterou a superfície pública de um módulo, `docs/contexto-modulos/<módulo>.md` está criado/atualizado
+- [ ] Se a task tem item de backlog, o handoff (`#### Handoff (SCRUM-XXX)`) foi adicionado em `docs/backlog/fase-N-*.md`

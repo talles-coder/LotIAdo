@@ -9,6 +9,7 @@
 ## Fonte da Verdade
 
 - **`docs/`** — Especificação completa: análise de requisitos, arquitetura, decisões técnicas, roadmap, backlog detalhado por fase.
+- **`docs/contexto-modulos/`** — Mapa vivo (classes de serviço, métodos, exceptions, padrão de teste) para não repetir exploração de código já feita numa task anterior. Ver `docs/contexto-modulos/README.md` para a convenção. Consulte antes de explorar um módulo do zero; atualize antes de commitar se mexeu na superfície pública de um módulo já mapeado.
 - **Não replique documentação** — Este arquivo é operacional, não substituto de `docs/`.
 
 ## Objetivo do Produto
@@ -91,15 +92,18 @@ Arquivo: `docs/backlog/` (um por fase: `fase-0-fundamentos.md`, `fase-1-mvp-domi
 
 Cada phase é entrega funcional demonstrável.
 
+**Handoff ao terminar uma task:** ao concluir a implementação de uma task do backlog (antes de commitar), adicione uma subseção `#### Handoff (SCRUM-XXX)` logo abaixo da task correspondente no arquivo `docs/backlog/fase-N-*.md`, com 3-5 linhas: o que foi decidido/descoberto que não estava óbvio na descrição original da task, e paths dos arquivos-chave criados/alterados. Objetivo: quem pegar a próxima task dependente gasta menos tokens re-descobrindo o que essa task já resolveu. Isso é complementar (não substitui) a atualização de `docs/contexto-modulos/` — o handoff é específico da task, o contexto-modulos é o mapa vivo do módulo.
+
 ## Navegação de Contexto por Tarefa
 
 Ao receber uma tarefa (ex: "implementar login"):
 
 1. **Localizar task no backlog** — Ex: `FASE0-IMPL-05` em `backlog/fase-0-fundamentos.md`.
 2. **Ler só a task** — Objetivo, descrição, pré-requisitos, dependências, critérios de aceite.
-3. **Ler documentação referenciada** — Se menciona `01-analise-requisitos.md` seção X, leia só essa seção.
-4. **Ler código existente do módulo** — Se estendendo um módulo existente, procure patterns já estabelecidos.
-5. **Expandir contexto se novo conceito** — Ex: "RLS não implementado antes"? Leia `docs/01-analise-requisitos.md` (risk D3) + a seção relevante de `02-arquitetura.md`.
+3. **Checar `docs/contexto-modulos/`** — Se o(s) módulo(s) envolvidos já têm um arquivo lá, leia-o antes de explorar o código do zero (grep/leitura de vários arquivos já foi feita numa task anterior).
+4. **Ler documentação referenciada** — Se menciona `01-analise-requisitos.md` seção X, leia só essa seção.
+5. **Ler código existente do módulo** — Se estendendo um módulo existente, procure patterns já estabelecidos (ou confirme que o que está em `docs/contexto-modulos/` ainda bate com o código).
+6. **Expandir contexto se novo conceito** — Ex: "RLS não implementado antes"? Leia `docs/01-analise-requisitos.md` (risk D3) + a seção relevante de `02-arquitetura.md`.
 
 **Princípio:** Context local first, breadth only when needed. Não carregue todo `docs/` automaticamente.
 
