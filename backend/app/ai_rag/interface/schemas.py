@@ -22,3 +22,25 @@ class ChunkResultado(BaseModel):
     score: float
 
     model_config = {"from_attributes": True}
+
+
+class PerguntaRequest(BaseModel):
+    pergunta: str = Field(min_length=1)
+    loteamento_id: UUID | None = None
+    lote_id: UUID | None = None
+    top_k: int = Field(default=TOP_K_PADRAO, ge=1, le=20)
+
+
+class FonteResposta(BaseModel):
+    documento_id: UUID
+    documento_nome: str
+    trecho: str
+
+    model_config = {"from_attributes": True}
+
+
+class PerguntaResponse(BaseModel):
+    resposta: str
+    fontes: list[FonteResposta]
+
+    model_config = {"from_attributes": True}
