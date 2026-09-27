@@ -13,8 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.ai_rag as ai_rag
 from app.ai_agents.application.tools import (
+    alterar_preco_lote,
+    alterar_responsavel_lote,
     buscar_documentos,
     buscar_lotes,
+    cancelar_reserva,
     consultar_clientes,
     consultar_condicoes_comerciais,
     consultar_corretores,
@@ -27,8 +30,11 @@ from app.ai_agents.application.tools import (
     lotes_proximos_de,
 )
 from app.ai_agents.domain.schemas import (
+    AlterarPrecoLoteInput,
+    AlterarResponsavelLoteInput,
     BuscarDocumentosInput,
     BuscarLotesInput,
+    CancelarReservaInput,
     ConsultarClientesInput,
     ConsultarCondicoesComerciaisInput,
     ConsultarCorretoresInput,
@@ -349,3 +355,74 @@ async def test_consultar_condicoes_comerciais(db_session: AsyncSession):
     assert resultado.encontrado is True
     assert resultado.preco == 120000
     assert resultado.caracteristicas == {"aceita_financiamento": True}
+
+
+@pytest.mark.asyncio
+async def test_cancelar_reserva(db_session: AsyncSession):
+    """Tool de ação (FASE9-IMPL-03): chamada direta (fora do grafo/confirmação) só valida o formato de saída."""
+    tenant = await _criar_tenant(db_session, "tools-cancelar-reserva")
+    usuario = await _criar_usuario(db_session, "tools-cancelar-reserva")
+    loteamento = await _criar_loteamento(db_session, tenant)
+    lote = Lote(tenant_id=tenant.id, loteamento_id=loteamento.id, identificacao="L1", status=LoteStatus.RESERVADO)
+    cliente = Cliente(tenant_id=tenant.id, nome="Maria", documento="123", contato="maria@test.com")
+    db_session.add_all([lote, cliente])
+    await db_session.flush()
+    with contexto_auditoria(usuario_id=usuario.id, tenant_id=tenant.id):
+        reserva = ReservaVenda(
+            tenant_id=tenant.id, lote_id=lote.id, cliente_id=cliente.id,
+            tipo=TipoReservaVenda.RESERVA, status=StatusReservaVenda.RESERVADO,
+        )
+        db_session.add(reserva)
+        await db_session.commit()
+
+        cancelada = await cancelar_reserva(db_session, tenant.id, CancelarReservaInput(reserva_id=reserva.id))
+    inexistente = await cancelar_reserva(db_session, tenant.id, CancelarReservaInput(reserva_id=uuid4()))
+
+    assert cancelada.encontrado is True
+    assert cancelada.reserva.status == StatusReservaVenda.CANCELADA
+    assert inexistente.encontrado is False
+
+
+@pytest.mark.asyncio
+async def test_alterar_preco_lote(db_session: AsyncSession):
+    tenant = await _criar_tenant(db_session, "tools-alterar-preco")
+    usuario = await _criar_usuario(db_session, "tools-alterar-preco")
+    loteamento = await _criar_loteamento(db_session, tenant)
+    lote = Lote(tenant_id=tenant.id, loteamento_id=loteamento.id, identificacao="L1", preco=100000)
+    db_session.add(lote)
+    await db_session.commit()
+
+    with contexto_auditoria(usuario_id=usuario.id, tenant_id=tenant.id):
+        alterado = await alterar_preco_lote(db_session, tenant.id, AlterarPrecoLoteInput(lote_id=lote.id, preco=150000))
+    inexistente = await alterar_preco_lote(db_session, tenant.id, AlterarPrecoLoteInput(lote_id=uuid4(), preco=1))
+
+    assert alterado.encontrado is True
+    assert alterado.lote.preco == 150000
+    assert inexistente.encontrado is False
+
+
+@pytest.mark.asyncio
+async def test_alterar_responsavel_lote(db_session: AsyncSession):
+    tenant = await _criar_tenant(db_session, "tools-alterar-responsavel")
+    usuario = await _criar_usuario(db_session, "tools-alterar-responsavel")
+    loteamento = await _criar_loteamento(db_session, tenant)
+    lote = Lote(tenant_id=tenant.id, loteamento_id=loteamento.id, identificacao="L1")
+    corretor = Corretor(tenant_id=tenant.id, nome="João", contato="joao@test.com")
+    db_session.add_all([lote, corretor])
+    await db_session.commit()
+
+    with contexto_auditoria(usuario_id=usuario.id, tenant_id=tenant.id):
+        alterado = await alterar_responsavel_lote(
+            db_session, tenant.id, AlterarResponsavelLoteInput(lote_id=lote.id, corretor_id=corretor.id)
+        )
+    corretor_inexistente = await alterar_responsavel_lote(
+        db_session, tenant.id, AlterarResponsavelLoteInput(lote_id=lote.id, corretor_id=uuid4())
+    )
+    lote_inexistente = await alterar_responsavel_lote(
+        db_session, tenant.id, AlterarResponsavelLoteInput(lote_id=uuid4(), corretor_id=corretor.id)
+    )
+
+    assert alterado.encontrado is True
+    assert alterado.lote.corretor_id == corretor.id
+    assert corretor_inexistente.encontrado is False
+    assert lote_inexistente.encontrado is False

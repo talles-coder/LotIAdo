@@ -16,3 +16,16 @@ class AcaoAuditoria(StrEnum):
     VENDA = "venda"
     ALTERACAO_PRECO = "alteracao_preco"
     ALTERACAO_RESPONSAVEL = "alteracao_responsavel"
+
+
+class OrigemAuditoria(StrEnum):
+    """De onde partiu a mudança que gerou a entrada de auditoria.
+
+    Introduzida em FASE9-IMPL-03: o usuário autenticado (`usuario_id`) já é
+    sempre quem confirmou a ação, mesmo quando ela foi proposta pelo agente
+    de IA — `origem` é o que distingue "usuário mudou isso na tela" de
+    "usuário aprovou isso quando o agente propôs".
+    """
+
+    USUARIO = "usuario"
+    AGENTE = "agente"

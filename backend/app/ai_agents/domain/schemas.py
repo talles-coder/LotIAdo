@@ -1,9 +1,13 @@
-"""Pydantic schemas de entrada/saída das tools de consulta do agente (FASE9-IMPL-01).
+"""Pydantic schemas de entrada/saída das tools do agente (FASE9-IMPL-01/03).
 
 Este é o contrato combinado com FASE9-IMPL-02: o grafo do agente pode mockar
 as tools a partir destes schemas enquanto é desenvolvido em paralelo. Toda
 tool "não encontrado" retorna `encontrado=False` + `mensagem` em vez de
 propagar exceção — o agente informa que não achou o dado, não inventa.
+
+As tools de **ação** (a partir de `CancelarReservaInput`) seguem o mesmo
+contrato de entrada/saída das de consulta — o que as torna sensíveis é
+`ToolSpec.acao=True` no `tool_registry`, não o shape do schema.
 """
 from datetime import datetime
 from decimal import Decimal
@@ -24,6 +28,7 @@ class LoteResumo(BaseModel):
     preco: Decimal | None = None
     status: LoteStatus
     caracteristicas: dict
+    corretor_id: UUID | None = None
 
     model_config = {"from_attributes": True}
 
@@ -200,4 +205,39 @@ class ConsultarCondicoesComerciaisOutput(BaseModel):
     preco: Decimal | None = None
     area_m2: Decimal | None = None
     caracteristicas: dict | None = None
+    mensagem: str | None = None
+
+
+# --- cancelar_reserva (ação, FASE9-IMPL-03) ---
+class CancelarReservaInput(BaseModel):
+    reserva_id: UUID
+
+
+class CancelarReservaOutput(BaseModel):
+    encontrado: bool
+    reserva: ReservaResumo | None = None
+    mensagem: str | None = None
+
+
+# --- alterar_preco_lote (ação, FASE9-IMPL-03) ---
+class AlterarPrecoLoteInput(BaseModel):
+    lote_id: UUID
+    preco: Decimal
+
+
+class AlterarPrecoLoteOutput(BaseModel):
+    encontrado: bool
+    lote: LoteResumo | None = None
+    mensagem: str | None = None
+
+
+# --- alterar_responsavel_lote (ação, FASE9-IMPL-03) ---
+class AlterarResponsavelLoteInput(BaseModel):
+    lote_id: UUID
+    corretor_id: UUID
+
+
+class AlterarResponsavelLoteOutput(BaseModel):
+    encontrado: bool
+    lote: LoteResumo | None = None
     mensagem: str | None = None
