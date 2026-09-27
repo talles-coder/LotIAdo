@@ -1,6 +1,6 @@
 # 03 — Decisões Técnicas (Etapa 3)
 
-Formato por decisão: opções, vantagens, desvantagens, custo, impacto no aprendizado, recomendação. As 4 decisões bloqueantes (backoffice web, isolamento multi-tenant, ambiente de IA, offline) já foram fechadas com o usuário e estão em [01-analise-requisitos.md](01-analise-requisitos.md) — não repetidas aqui. **D1–D7 abaixo já foram decididas com o usuário** (resultado marcado em cada uma); D6 fica deliberadamente em aberto até o estudo prático. D8 foi adicionada como consequência direta da decisão D2.
+Formato por decisão: opções, vantagens, desvantagens, custo, impacto no aprendizado, recomendação. As 4 decisões bloqueantes (backoffice web, isolamento multi-tenant, ambiente de IA, offline) já foram fechadas com o usuário e estão em [01-analise-requisitos.md](01-analise-requisitos.md) — não repetidas aqui. **D1–D18 abaixo já foram decididas com o usuário** (resultado marcado em cada uma), exceto D6, D15 e D18, que ficam deliberadamente em aberto até o momento indicado em cada uma (D6 depende de estudo prático na Fase 7; D15 e D18 dependem de teste prático nas Fases 16 e 26). D8 foi adicionada como consequência direta da decisão D2; D11–D18 vieram da análise competitiva/expansão de roadmap em [05-analise-competitiva.md](05-analise-competitiva.md), com D11–D14, D16 e D17 fechadas em 2026-09-27.
 
 ## D1 — Autenticação e RBAC — ✅ Decidido: (A) Construir mínimo
 
@@ -173,6 +173,81 @@ A descrição original da task previa um helper (`registrar_auditoria(...)`) cha
 **Por quê:** o objetivo é auditoria que não dependa de nenhum dev lembrar de chamar algo — um `git grep` por chamadas de auditoria nunca deveria ser necessário para saber se uma ação sensível está coberta. Não existe (deliberadamente) uma via de escape manual: hoje toda ação sensível listada na task (transição de status, criação/cancelamento de reserva, venda, alteração de preço, alteração de responsável) é expressável como "um ou mais campos de um model mudaram"; um helper manual paralelo seria código sem uso real. Se isso deixar de ser verdade (ex.: precisar registrar um motivo digitado pelo usuário, que não é uma coluna), a via de escape deve ser adicionada então — não antes.
 
 **Impacto para o Dev 1 (FASE1-IMPL-01/03):** ao criar `Lote` e `ReservaVenda`, decorar com `@rastrear_auditoria(entidade=..., acao_criacao=..., campos_sensiveis={...})` em vez de chamar uma função ao final do service. Ver exemplos em `app/audit/infrastructure/tracking.py` e `backend/tests/test_audit_tracking.py`.
+
+## D11 — Provedor de pagamento/boleto — ✅ Decidido: (A) Asaas
+
+**Opções:**
+- (A) Asaas — **escolhida**.
+- (B) Iugu.
+- (C) Gerencianet/Efí.
+- (D) Pagar.me.
+
+Todas oferecem boleto/PIX via API com free tier ou custo baixo por transação, suficiente para demonstração. **Decidido pelo critério combinado (2026-09-27): "escolher a de maior qualidade entre as que dão pra testar em sandbox sem gastar"** — Asaas tem sandbox gratuito sem exigir CNPJ ativo, documentação de API considerada a mais direta do grupo, e é a opção mais usada por SaaS/startups brasileiras nesse porte (mais exemplos/comunidade para apoiar o aprendizado). Abstraída atrás de um `PaymentProvider`, no mesmo padrão de `LLMProvider` (D1 em `01-analise-requisitos.md`) e da abstração de storage (D4) — trocar de provedor não deve exigir mudar lógica de negócio.
+
+## D12 — Provedor de assinatura eletrônica — ✅ Decidido: (C) Autentique
+
+**Opções:**
+- (A) Clicksign.
+- (B) D4Sign.
+- (C) Autentique — **escolhida**.
+
+**Decidido pelo mesmo critério de D11 (2026-09-27)**: Autentique tem um nível gratuito de verdade (não só trial por tempo limitado) suficiente para o volume de demonstração do portfólio, com API bem documentada — evita a necessidade de contrato comercial só para exercitar a Fase 13. Integração via API do provedor, não implementação própria de assinatura com validade jurídica (ICP-Brasil) — fora de escopo de portfólio.
+
+## D13 — Biblioteca de i18n para o app Expo — ✅ Decidido: (A) `i18next` + `react-i18next`
+
+**Opções:**
+- (A) `i18next` + `react-i18next` (padrão de mercado, funciona em RN e web) — **escolhida**.
+- (B) `expo-localization` + solução própria simples de dicionário de strings.
+
+**Decidido (2026-09-27)**: mais robusto (pluralização, interpolação, fallback de idioma) e evita reinventar isso na mão quando mais telas/campos forem adicionados (Fase 22 já aumenta bastante o volume de texto). A Fase 18 (`FASE18-EST-01`) continua existindo como estudo de como configurar `i18next` especificamente no Expo, não mais como comparação entre opções.
+
+## D14 — Estratégia de versionamento de API — ✅ Decidido: (B) Versionamento por header
+
+**Opções:**
+- (A) Versionamento por path (`/v1/...`, `/v2/...`).
+- (B) Versionamento por header (`Accept: application/vnd.lotiado.v2+json`) — **escolhida**.
+
+**Decidido (2026-09-27)**: mesmo sendo mais disciplinado de testar/documentar do que o path, é a abordagem que o usuário preferiu. A Fase 19 (`FASE19-IMPL-01/02`) muda de "criar `/v1/`, `/v2/` como prefixo de rota" para "o mesmo conjunto de rotas responde formatos diferentes conforme o header `Accept`", usando `Depends` do FastAPI para resolver a versão a partir do header e despachar para o serializador correto — a lógica de negócio (service) continua única, só a camada de interface (schema de resposta) varia por versão.
+
+## D15 — Biblioteca de gráficos multiplataforma (native + web) — 🔓 Em aberto (deliberadamente — resolução por teste prático)
+
+Mesmo dilema de D8/D9 (nativo + Expo for Web no mesmo código): a maioria das libs de gráfico React Native não tem suporte web maduro.
+
+**Opções:**
+- (A) `victory-native` (nativo) + `victory` (web) — mesma API declarativa, pacotes irmãos.
+- (B) `react-native-gifted-charts` (nativo) com fallback próprio simples em SVG para web.
+- (C) Componente de gráfico próprio em SVG (`react-native-svg`, já eventualmente presente via mapa) para os poucos tipos de gráfico necessários (linha de vendas, barra de sazonalidade).
+
+**Critério de decisão confirmado (2026-09-27)**: nada de escolher por trade-off teórico — `FASE16-EST-01` implementa o **mesmo gráfico de teste nas três opções**, nas duas plataformas (native + web), e a escolha final é por resultado prático: menos erro/limitação encontrada durante a implementação e melhor resultado visual. Sem empate técnico previsto — o exercício decide, não uma tabela de vantagens.
+
+## D17 — Biblioteca de validação de formulário no mobile — ✅ Decidido: (A) `Zod` + `react-hook-form`
+
+Levantamento de código (2026-09-27) confirmou: hoje não existe Zod/Yup/nenhuma lib de validação no mobile — cada tela faz só `campo.trim() !== ''` manualmente (`mobile/app/clientes/novo.tsx`, `mobile/app/corretores/novo.tsx`).
+
+**Opções:**
+- (A) `Zod` + `react-hook-form` (schema declarativo, integra bem com TypeScript) — **escolhida**.
+- (B) `Yup` + `react-hook-form` (alternativa mais antiga, API similar).
+- (C) Continuar sem lib, só funções de validação próprias por campo (CPF, CRECI, telefone, etc.) chamadas manualmente.
+
+**Decidido (2026-09-27)**: Zod centraliza a regra de validação num schema só, reaproveitável entre criar/editar, e escala bem com o número de campos novos da Fase 22. `FASE22-EST-01` continua existindo como estudo de como aplicar Zod especificamente aos formulários já existentes, não mais como comparação entre opções.
+
+## D16 — Framework de teste E2E do mobile — ✅ Decidido: (B) Maestro, com fallback para (A) Detox
+
+**Opções:**
+- (A) Detox (E2E nativo, roda no device/emulador real, mantido pela Wix) — fallback.
+- (B) Maestro (E2E declarativo em YAML, mais simples de escrever, CLI própria) — **escolhida como padrão**.
+- (C) Playwright só para a versão web (Expo for Web) + teste manual guiado no nativo.
+
+**Decidido (2026-09-27)**: Maestro é o ponto de partida por ser mais rápido de configurar (sem build nativo dedicado); `FASE23-EST-02` valida se ele atende o fluxo crítico da Fase 23 (login → criar cliente → criar reserva) — se alguma limitação real aparecer (ex.: interação que o Maestro não consegue automatizar de forma confiável), a fase cai para Detox em vez de forçar o Maestro a resolver algo fora do seu ponto forte.
+
+## D18 — Biblioteca de animação/partículas para microinterações — 🔓 Em aberto (deliberadamente — resolução por teste prático)
+
+**Opções:**
+- (A) `react-native-reanimated` (animação declarativa na UI thread).
+- (B) Lottie (`lottie-react-native`, animação vetorial exportada do After Effects/Bodymovin).
+- (C) `react-native-skia` (motor de desenho 2D, mais flexível pra partícula customizada, curva de aprendizado maior).
+
+**Critério de decisão confirmado (2026-09-27), mesmo padrão de D15**: testar as 3 (não só 2) e escolher a que funcionar melhor (sem erro/travamento) e ficar mais bonita — curva de aprendizado de nenhuma delas é motivo pra eliminar antes de testar. `FASE26-EST-01` implementa a mesma animação de teste nas 3, nas duas plataformas (mobile + Expo for Web), e a decisão é por resultado prático.
 
 ### Nomenclatura de migrations Alembic — decidido: revision ID com timestamp
 

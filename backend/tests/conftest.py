@@ -26,6 +26,7 @@ PERMISSOES_SEED = (
     "clientes:gerenciar",
     "corretores:gerenciar",
     "loteamentos_lotes:gerenciar",
+    "documentos:gerenciar",
 )
 PAPEIS_SEED = ("admin", "gestor", "corretor")
 
