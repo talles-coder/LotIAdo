@@ -82,6 +82,20 @@ class ImportacaoCsvPreviewResponse(BaseModel):
     colunas: list[str]
 
 
+class SugestaoMapeamentoRequest(BaseModel):
+    colunas: list[str]
+
+
+class SugestaoCampoResponse(BaseModel):
+    coluna: str
+    confianca: float
+
+
+class SugestaoMapeamentoResponse(BaseModel):
+    # Só contém entradas para campos com uma coluna sugerida pelo LLM; o usuário sempre confirma.
+    sugestoes: dict[str, SugestaoCampoResponse]
+
+
 class ImportacaoErroLinha(BaseModel):
     linha: int
     erro: str

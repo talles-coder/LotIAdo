@@ -41,6 +41,25 @@ export async function previewImportacaoCsv(loteamentoId: string, asset: Document
   return data.colunas;
 }
 
+export interface SugestaoCampo {
+  coluna: string;
+  confianca: number;
+}
+
+export type SugestaoMapeamento = Partial<Record<CampoLote, SugestaoCampo>>;
+
+/**
+ * Sugestão de mapeamento via LLM (FASE8-IMPL-01/SCRUM-97) — só um palpite editável para
+ * pré-preencher os selects; nunca aplicado sem a confirmação manual do usuário.
+ */
+export async function sugerirMapeamentoCsv(loteamentoId: string, colunas: string[]): Promise<SugestaoMapeamento> {
+  const { data } = await apiClient.post<{ sugestoes: SugestaoMapeamento }>(
+    `/loteamentos/${loteamentoId}/lotes/importar/sugerir-mapeamento`,
+    { colunas },
+  );
+  return data.sugestoes;
+}
+
 export async function confirmarImportacaoCsv(
   loteamentoId: string,
   asset: DocumentPickerAsset,
