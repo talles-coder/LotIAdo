@@ -1,29 +1,16 @@
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Map, NavigationControl, type MapOptions } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode, type GeoJSONStoreFeatures } from 'terra-draw';
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
 
 import type { GeoJsonPolygon } from '../api/loteamentos';
-import { colors } from '../theme/tokens';
+import { alternarCamadaBase, MAPA_ESTILO, type CamadaMapaBase } from '../lib/mapStyle';
+import { colors, fonts } from '../theme/tokens';
 import type { PoligonoEditorMapaProps } from './PoligonoEditorMapa';
 
 type StyleSpecification = NonNullable<MapOptions['style']>;
-
-const MAP_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-};
 
 const CENTRO_PADRAO: [number, number] = [-47.9292, -15.7801]; // Brasília, só um fallback sem loteamento georreferenciado ainda.
 
@@ -47,9 +34,11 @@ export function PoligonoEditorMapa({
   onGeometriaChange,
 }: PoligonoEditorMapaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<Map | null>(null);
   const drawRef = useRef<TerraDraw | null>(null);
   const onChangeRef = useRef(onGeometriaChange);
   onChangeRef.current = onGeometriaChange;
+  const [camadaBase, setCamadaBase] = useState<CamadaMapaBase>('ruas');
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -59,10 +48,11 @@ export function PoligonoEditorMapa({
 
     const map = new Map({
       container: containerRef.current,
-      style: MAP_STYLE,
+      style: MAPA_ESTILO as unknown as StyleSpecification,
       center: centroInicial,
       zoom: poligonoInicial || imagemOverlay ? 18 : 15,
     });
+    mapRef.current = map;
     map.addControl(new NavigationControl(), 'top-right');
 
     const draw = new TerraDraw({
@@ -117,14 +107,24 @@ export function PoligonoEditorMapa({
     return () => {
       draw.stop();
       map.remove();
+      mapRef.current = null;
       drawRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function alternar() {
+    const proxima = camadaBase === 'ruas' ? 'satelite' : 'ruas';
+    setCamadaBase(proxima);
+    if (mapRef.current) alternarCamadaBase(mapRef.current, proxima);
+  }
+
   return (
     <View style={styles.map}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <Pressable style={styles.camadaBotao} onPress={alternar}>
+        <Text style={styles.camadaBotaoTexto}>{camadaBase === 'ruas' ? 'Satélite' : 'Ruas'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -133,5 +133,21 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  camadaBotao: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  camadaBotaoTexto: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.foreground,
   },
 });

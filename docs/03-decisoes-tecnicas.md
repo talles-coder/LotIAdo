@@ -138,9 +138,10 @@ Motivação: a chave do Google Maps (SCRUM-70) exigia conta de faturamento com c
 
 **Consequências:**
 - Estilo do mapa é um objeto/URL de estilo; trocar de provedor de tiles (MapTiler, Stadia, tiles próprios em produção/Fase 11) é mudar uma constante. Uso em produção com tráfego real exige um provedor de tiles próprio ou pago — os tiles `tile.openstreetmap.org` são só para desenvolvimento/demonstração e exigem atribuição "© OpenStreetMap contributors" (exibida pelo componente).
-- Sem imagem de satélite por padrão (mapa base de ruas). Se o satélite for necessário, adicionar como nova camada de tiles com provedor licenciado.
 - PostGIS continua sendo a fonte de verdade geográfica; o mapa é só visualização.
 - Requer **development build** (`expo prebuild` + `expo run:android`); Expo Go não serve mais para a tela de mapa (não serve nem com Google, ver guia).
+
+**Atualização (SCRUM-100, FASE8-IMPL-02):** camada de satélite adicionada como toggle — `Esri World Imagery` (`server.arcgisonline.com/.../World_Imagery`), serviço público gratuito, sem conta nem chave (mesmo padrão de uso do OSM, ver `mobile/src/lib/mapStyle.ts`). Motivado por precisar conferir visualmente se um polígono sugerido pela IA (extração de imagem) cai sobre o lote/casa certo — mapa só de ruas não mostra construções. Hoje só na versão web (`LoteamentoMap.web.tsx`, `PoligonoEditorMapa.web.tsx`), via botão que alterna a visibilidade da camada (não troca o `style` inteiro, pra não derrubar overlays desenhados por cima); nativo (`LoteamentoMap.tsx`) importa o mesmo style compartilhado mas ainda sem o toggle — nenhuma tela nativa hoje precisa dele.
 
 ## D9 — Biblioteca de componentes multiplataforma (mobile + web) — ✅ Decidido: (A) React Native Paper
 
