@@ -1,4 +1,4 @@
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Button } from 'react-native-paper';
@@ -183,6 +183,18 @@ export default function LoteDetalheScreen() {
           >
             Cadastrar novo cliente
           </Button>
+
+          {Platform.OS === 'web' && (
+            <Button
+              mode="outlined"
+              onPress={() => router.push(`/lotes/${id}/geometria`)}
+              style={styles.section}
+              contentStyle={styles.actionButtonContent}
+              labelStyle={styles.actionButtonLabel}
+            >
+              Editar geometria no mapa
+            </Button>
+          )}
         </ScrollView>
       )}
 
