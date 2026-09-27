@@ -13,6 +13,10 @@ class DocumentoResponse(BaseModel):
     loteamento_id: UUID | None
     lote_id: UUID | None
     status_indexacao: str
+    # Sugestão de extração de imagem (FASE8-IMPL-02/SCRUM-100): None até ser pedida (nem todo
+    # documento é uma planta); depois pendente -> processando -> concluido | falhou.
+    status_extracao_imagem: str | None
+    resultado_extracao_imagem: dict | None
 
     model_config = {"from_attributes": True}
 

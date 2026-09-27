@@ -27,6 +27,14 @@ make up
 docker exec lotiado-ollama ollama pull nomic-embed-text
 docker exec lotiado-ollama ollama pull llama3.2
 
+# 1c. Tesseract OCR (necessário para o job de extração de imagem de planta, Fase 8+) — o
+# serviço `worker` do docker-compose (infra/worker/Dockerfile) já vem com o binário; só
+# instale localmente (ex. Windows: `winget install UB-Mannheim.TesseractOCR`, adicionando a
+# pasta de instalação ao PATH) se for chamar o pipeline de extração fora do container, ex.
+# validar `app/documentos/infrastructure/extracao_imagem.py` num shell Python direto. O
+# pacote de idioma "por" não vem por padrão nesse instalador — o código já cai para "eng"
+# nesse caso, então não é bloqueante.
+
 # 2. Backend
 cd backend
 cp .env.example .env        # ajuste se necessário

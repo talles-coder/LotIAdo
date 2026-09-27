@@ -21,3 +21,6 @@ langchain-text-splitters==0.3.2
 rq==1.16.2
 redis==5.0.8
 pgvector==0.3.6
+opencv-python-headless==4.10.0.84
+pytesseract==0.3.13
+numpy==1.26.4

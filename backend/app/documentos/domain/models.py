@@ -1,5 +1,5 @@
 """Documento domain model."""
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UUID
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import relationship
 
 from app.common.models import BaseModel
@@ -29,6 +29,13 @@ class Documento(BaseModel):
     # pendente -> processando -> concluido | falhou. Setado para "pendente"
     # no upload e atualizado pelo worker RQ (app/ai_rag/application/ingestao_service.py).
     status_indexacao = Column(String(20), nullable=False, default="pendente", server_default="pendente")
+    # Sugestão de extração (OCR + contornos, FASE8-IMPL-02): NULL até o usuário pedir a sugestão
+    # (nem todo documento é uma planta) -> pendente -> processando -> concluido | falhou, via job RQ
+    # (app/documentos/application/extracao_imagem_service.py). `resultado_extracao_imagem` guarda
+    # identificações/contornos em coordenadas de pixel, nunca geometria real — a persistência real
+    # só acontece depois da calibração manual (tela FASE5-IMPL-03).
+    status_extracao_imagem = Column(String(20), nullable=True)
+    resultado_extracao_imagem = Column(JSON, nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     tenant = relationship("Tenant")
