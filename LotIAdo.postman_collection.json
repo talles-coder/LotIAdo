@@ -1103,6 +1103,39 @@
 						"description": "Busca semântica (FASE7-IMPL-03): gera o embedding da pergunta e retorna os `top_k` chunks mais similares do tenant autenticado, filtrando por `tenant_id` explicitamente na query (defesa em profundidade além da RLS) e, se informados, `loteamento_id`/`lote_id`. Resposta: lista ordenada por relevância de `{chunk_id, documento_id, documento_nome, texto, ordem, score}`."
 					},
 					"response": []
+				},
+				{
+					"name": "Perguntar (RAG com citação de fonte)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pergunta\": \"Qual o prazo de entrega do loteamento?\",\n  \"loteamento_id\": null,\n  \"lote_id\": null,\n  \"top_k\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rag/perguntar",
+							"host": ["{{base_url}}"],
+							"path": ["rag", "perguntar"]
+						},
+						"description": "Geração de resposta com citação de fonte (FASE7-IMPL-04): busca os chunks mais relevantes do tenant autenticado, monta um prompt com a pergunta + o contexto recuperado e chama `LLMProvider.generate()`. Se nenhum chunk relevante for encontrado, retorna uma mensagem informando que não há informação disponível, sem inventar resposta. Resposta: `{resposta, fontes: [{documento_id, documento_nome, trecho}]}`."
+					},
+					"response": []
 				}
 			]
 		},
