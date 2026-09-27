@@ -144,7 +144,7 @@ async def get_lot(db: AsyncSession, lote_id: UUID, tenant_id: UUID) -> Lote:
 
 | Decisão | O que fazer | Por que | Exceção |
 |---|---|---|---|
-| Backoffice web = Expo for Web | Nunca crie templates server-rendered (Jinja2) | Backend é API pura, frontend é app Expo único | Nenhuma (Fase 11 cloud pode divergir, mas core mantém isso) |
+| Backoffice web = Expo for Web | Nunca crie templates server-rendered (Jinja2) | Backend é API pura, frontend é app Expo único | Nenhuma (Fase 24 cloud pode divergir, mas core mantém isso) |
 | Monólito modular | Organize por domínio (vertical), não por camada (horizontal) | Coesão domínio > acoplamento técnico | Infra compartilhada (BD, Redis) vive em `shared/` |
 | Offline só leitura | Nunca implemente fila de sincronização | MVP deliberado, simplifica dados e conflitos | Fase 11 pode evoluir |
 | RLS sem exceção | RLS ativado Fase 2, antes: filtro em toda query | Evita vazamento de tenant em futuro | Nenhuma — é rule-of-the-road |

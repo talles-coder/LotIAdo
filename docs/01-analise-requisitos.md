@@ -15,19 +15,19 @@ Essas decisões estão detalhadas com opções/trade-offs em [03-decisoes-tecnic
 
 ## 2. Requisitos ausentes no briefing original
 
-Identificados, mas **fora do escopo atual** — não são bloqueantes para começar; ficam registrados para não serem esquecidos e podem virar épicos futuros:
+Identificados, mas **fora do escopo atual** — não são bloqueantes para começar; ficam registrados para não serem esquecidos. Os que ganharam fase definida após a análise competitiva (`05-analise-competitiva.md`, 2026-09-27) já apontam para ela; os demais seguem em aberto:
 
-- Modelo de planos/limites do próprio SaaS (quantos usuários/loteamentos por plano, billing da imobiliária).
-- Fluxo financeiro completo da venda: parcelamento, boleto, assinatura eletrônica de contrato.
-- Cálculo e pagamento de comissão de corretores.
-- Notificações (push/email/SMS) para eventos como reserva prestes a expirar ou novo lote disponível.
-- Regra de negócio explícita de prazo/expiração de reserva (quanto tempo um lote fica "reservado" antes de voltar a "disponível").
-- LGPD/compliance para dados pessoais de clientes (CPF, telefone, etc.) — relevante por ser um produto brasileiro.
-- Política de backup/disaster recovery do banco de dados.
-- CRM/funil de leads antes da reserva (captação e qualificação de interessados).
-- Internacionalização/moeda — o briefing assume BRL e português; não declarado explicitamente mas implícito nos exemplos.
-- Versionamento de API para lidar com apps mobile desatualizados em campo.
-- SLA/uptime-alvo (não é crítico para um projeto de portfólio, mas vale declarar "não definido" em vez de ignorar).
+- ~~Modelo de planos/limites do próprio SaaS (quantos usuários/loteamentos por plano, billing da imobiliária).~~ → **Fase 21** (Billing do SaaS & Autocadastro de Tenant).
+- ~~Fluxo financeiro completo da venda: parcelamento, boleto, assinatura eletrônica de contrato.~~ → **Fase 13** (Financeiro & Cobrança).
+- Cálculo e pagamento de comissão de corretores — ainda em aberto, sem fase.
+- ~~Notificações (push/email/SMS) para eventos como reserva prestes a expirar ou novo lote disponível.~~ → **Fase 12** (Comunicação & Engajamento, via WhatsApp/favoritos).
+- Regra de negócio explícita de prazo/expiração de reserva (quanto tempo um lote fica "reservado" antes de voltar a "disponível") — ainda em aberto, sem fase.
+- ~~LGPD/compliance para dados pessoais de clientes (CPF, telefone, etc.) — relevante por ser um produto brasileiro.~~ → parcialmente coberto pela **Fase 17** (documentação explícita de privacidade/dado local via Ollama); o restante de compliance formal segue em aberto.
+- Política de backup/disaster recovery do banco de dados — ainda em aberto, sem fase.
+- ~~CRM/funil de leads antes da reserva (captação e qualificação de interessados).~~ → **Fase 11** (CRM Comercial & Funil de Vendas).
+- ~~Internacionalização/moeda — o briefing assume BRL e português; não declarado explicitamente mas implícito nos exemplos.~~ → **Fase 18** (Internacionalização & Localização).
+- ~~Versionamento de API para lidar com apps mobile desatualizados em campo.~~ → **Fase 19** (Versionamento de API).
+- SLA/uptime-alvo — avaliado e **deliberadamente sem fase**: é compromisso de negócio para cliente pagante, não uma feature de engenharia; não crítico para um projeto de portfólio. Fica declarado "não definido" em vez de ignorado.
 
 ## 3. Ambiguidades do briefing
 

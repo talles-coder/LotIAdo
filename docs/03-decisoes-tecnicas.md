@@ -1,6 +1,6 @@
 # 03 — Decisões Técnicas (Etapa 3)
 
-Formato por decisão: opções, vantagens, desvantagens, custo, impacto no aprendizado, recomendação. As 4 decisões bloqueantes (backoffice web, isolamento multi-tenant, ambiente de IA, offline) já foram fechadas com o usuário e estão em [01-analise-requisitos.md](01-analise-requisitos.md) — não repetidas aqui. **D1–D7 abaixo já foram decididas com o usuário** (resultado marcado em cada uma); D6 fica deliberadamente em aberto até o estudo prático. D8 foi adicionada como consequência direta da decisão D2.
+Formato por decisão: opções, vantagens, desvantagens, custo, impacto no aprendizado, recomendação. As 4 decisões bloqueantes (backoffice web, isolamento multi-tenant, ambiente de IA, offline) já foram fechadas com o usuário e estão em [01-analise-requisitos.md](01-analise-requisitos.md) — não repetidas aqui. **D1–D10 abaixo já foram decididas com o usuário** (resultado marcado em cada uma), exceto D6, D11, D12, D13, D14, D15, D16 e D17, que ficam deliberadamente em aberto até o momento indicado em cada uma. D8 foi adicionada como consequência direta da decisão D2; D11–D17 vieram da análise competitiva/expansão de roadmap em [05-analise-competitiva.md](05-analise-competitiva.md) e serão fechadas nas Fases 13, 18, 19, 16, 23 e 22 respectivamente.
 
 ## D1 — Autenticação e RBAC — ✅ Decidido: (A) Construir mínimo
 
@@ -173,6 +173,72 @@ A descrição original da task previa um helper (`registrar_auditoria(...)`) cha
 **Por quê:** o objetivo é auditoria que não dependa de nenhum dev lembrar de chamar algo — um `git grep` por chamadas de auditoria nunca deveria ser necessário para saber se uma ação sensível está coberta. Não existe (deliberadamente) uma via de escape manual: hoje toda ação sensível listada na task (transição de status, criação/cancelamento de reserva, venda, alteração de preço, alteração de responsável) é expressável como "um ou mais campos de um model mudaram"; um helper manual paralelo seria código sem uso real. Se isso deixar de ser verdade (ex.: precisar registrar um motivo digitado pelo usuário, que não é uma coluna), a via de escape deve ser adicionada então — não antes.
 
 **Impacto para o Dev 1 (FASE1-IMPL-01/03):** ao criar `Lote` e `ReservaVenda`, decorar com `@rastrear_auditoria(entidade=..., acao_criacao=..., campos_sensiveis={...})` em vez de chamar uma função ao final do service. Ver exemplos em `app/audit/infrastructure/tracking.py` e `backend/tests/test_audit_tracking.py`.
+
+## D11 — Provedor de pagamento/boleto — 🔓 Em aberto (deliberadamente)
+
+**Opções:**
+- (A) Asaas.
+- (B) Iugu.
+- (C) Gerencianet/Efí.
+- (D) Pagar.me.
+
+Todas oferecem boleto/PIX via API com free tier ou custo baixo por transação, suficiente para demonstração. **Decisão adiada para a Fase 13**: abstrair atrás de um `PaymentProvider`, no mesmo padrão de `LLMProvider` (D1 em `01-analise-requisitos.md`) e da abstração de storage (D4) — trocar de provedor não deve exigir mudar lógica de negócio. Critério de escolha na hora: qualidade da documentação da API e sandbox gratuito sem necessidade de CNPJ ativo para testar.
+
+## D12 — Provedor de assinatura eletrônica — 🔓 Em aberto (deliberadamente)
+
+**Opções:**
+- (A) Clicksign.
+- (B) D4Sign.
+- (C) Autentique.
+
+**Decisão adiada para a Fase 13**: integração via API do provedor, não implementação própria de assinatura com validade jurídica (ICP-Brasil) — fora de escopo de portfólio. Critério de escolha: sandbox/free tier disponível para teste sem contrato comercial.
+
+## D13 — Biblioteca de i18n para o app Expo — 🔓 Em aberto (deliberadamente)
+
+**Opções:**
+- (A) `i18next` + `react-i18next` (padrão de mercado, funciona em RN e web).
+- (B) `expo-localization` + solução própria simples de dicionário de strings.
+
+**Decisão adiada para a Fase 18**: `i18next` é mais robusto (pluralização, interpolação, fallback de idioma) mas adiciona dependência; para só dois idiomas (PT-BR/EN) uma solução própria pode ser suficiente. Critério de escolha na hora: se a solução própria começar a duplicar lógica de pluralização/formatação, migrar para `i18next`.
+
+## D14 — Estratégia de versionamento de API — 🔓 Em aberto (deliberadamente)
+
+**Opções:**
+- (A) Versionamento por path (`/v1/...`, `/v2/...`).
+- (B) Versionamento por header (`Accept: application/vnd.lotiado.v2+json`).
+
+**Decisão adiada para a Fase 19**: (A) é mais simples de testar/documentar (rotas explícitas no FastAPI, visível na URL) e mais comum no mercado brasileiro; (B) é mais "correto" segundo HTTP mas exige mais disciplina de client/testes. Tendência é (A), mas fica em aberto até o exercício real de uma mudança incompatível na Fase 19 mostrar se compensa a complexidade extra.
+
+## D15 — Biblioteca de gráficos multiplataforma (native + web) — 🔓 Em aberto (deliberadamente)
+
+Mesmo dilema de D8/D9 (nativo + Expo for Web no mesmo código): a maioria das libs de gráfico React Native não tem suporte web maduro.
+
+**Opções:**
+- (A) `victory-native` (nativo) + `victory` (web) — mesma API declarativa, pacotes irmãos.
+- (B) `react-native-gifted-charts` (nativo) com fallback próprio simples em SVG para web.
+- (C) Componente de gráfico próprio em SVG (`react-native-svg`, já eventualmente presente via mapa) para os poucos tipos de gráfico necessários (linha de vendas, barra de sazonalidade).
+
+**Decisão adiada para a Fase 16**: critério de escolha é o mesmo de D9 — se (A)/(B) exigirem contornar limitação de web incomum, (C) é aceitável dado que o escopo de gráficos do projeto é pequeno (2-3 tipos, não um dashboard genérico).
+
+## D17 — Biblioteca de validação de formulário no mobile — 🔓 Em aberto (deliberadamente)
+
+Levantamento de código (2026-09-27) confirmou: hoje não existe Zod/Yup/nenhuma lib de validação no mobile — cada tela faz só `campo.trim() !== ''` manualmente (`mobile/app/clientes/novo.tsx`, `mobile/app/corretores/novo.tsx`).
+
+**Opções:**
+- (A) `Zod` + `react-hook-form` (schema declarativo, integra bem com TypeScript).
+- (B) `Yup` + `react-hook-form` (alternativa mais antiga, API similar).
+- (C) Continuar sem lib, só funções de validação próprias por campo (CPF, CRECI, telefone, etc.) chamadas manualmente.
+
+**Decisão adiada para a Fase 22**: (C) evita dependência nova mas não escala bem com o número de campos que vão ser adicionados aos formulários de cliente/corretor; (A)/(B) centralizam a regra de validação num schema só, reaproveitável entre criar/editar. Critério de escolha: se o formulário de cliente ultrapassar ~8 campos (o que vai acontecer na Fase 22), (A) provavelmente compensa.
+
+## D16 — Framework de teste E2E do mobile — 🔓 Em aberto (deliberadamente)
+
+**Opções:**
+- (A) Detox (E2E nativo, roda no device/emulador real, mantido pela Wix).
+- (B) Maestro (E2E declarativo em YAML, mais simples de escrever, CLI própria).
+- (C) Playwright só para a versão web (Expo for Web) + teste manual guiado no nativo.
+
+**Decisão adiada para a Fase 23**: Detox é mais robusto mas tem setup mais pesado (build nativo específico para teste); Maestro é mais rápido de adotar mas o ecossistema é menor. Critério de escolha na hora: tempo de setup gasto no exercício da fase — se Detox não subir em menos de meio dia de tentativa, cai para Maestro.
 
 ### Nomenclatura de migrations Alembic — decidido: revision ID com timestamp
 
