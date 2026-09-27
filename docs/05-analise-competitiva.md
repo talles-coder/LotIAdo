@@ -77,6 +77,20 @@ Quatro itens abaixo não vieram do levantamento de concorrentes, vieram de feedb
 - **Robustez de formulários de cadastro** (Fase 22): usuário notou que os formulários de cliente/corretor/lote parecem simples demais (poucos campos) e pediu auditoria de quais campos faltam e se as validações existentes (CPF, etc.) são de fato robustas (dígito verificador, não só formato).
 - **Auditoria de segurança** (Fase 25): usuário pediu uma fase dedicada a buscar vulnerabilidades e más práticas **depois que tudo mais existir**, incluindo o deploy em nuvem da Fase 24 — não substitui as práticas de segurança já aplicadas ao longo do roadmap (RLS desde a Fase 2, filtro de tenant explícito em busca vetorial, proibição de texto-para-SQL na Fase 17), é uma revisão final.
 
+## Adendo 2 (2026-09-27): revisão de detalhe pelo usuário, sete pontos
+
+Depois de revisar o roadmap expandido, o usuário pediu sete ajustes de detalhe, todos incorporados nas fases correspondentes:
+
+1. **White-label não tinha task de configuração**: `FASE14-IMPL-04` só aplicava tema, ninguém coletava logo/nome/cor. Criada `FASE14-IMPL-05` (tela de configuração de identidade visual), reaproveitada no autocadastro (`FASE21-IMPL-02`).
+2. **Animações/partículas na tela de login**: nova **Fase 26** (Polimento Visual & Microinterações), com portão de aprovação humana explícita via GIF antes de qualquer integração real — pedido explícito de cautela do usuário.
+3. **Termo de uso**: `FASE21-IMPL-05`, aceite obrigatório no autocadastro, com nota de que o texto jurídico em si não substitui revisão de advogado se isso virar produto real.
+4. **Preços dos planos**: seção "Planos propostos" em `fase-21-billing-saas.md`, calibrada por levantamento de mercado (CRMs imobiliários genéricos brasileiros, já que concorrentes diretos do nicho não publicam preço).
+5. **Autocomplete de CEP/selects fechados/foto de usuário**: `FASE22-IMPL-05` (ViaCEP + IBGE + select de UF/país) e `FASE22-IMPL-06` (avatar do usuário, distinto do logo do tenant).
+6. **Painel de notificações (sino)**: `FASE12-IMPL-04`, histórico persistido além do push, reaproveitando o mesmo formato de notificação já usado no canal WhatsApp/push.
+7. **Botão de ajuda/suporte com IA**: `FASE17-IMPL-07`, escopo deliberadamente separado do copiloto de negócio (`FASE17-IMPL-02`) para não confundir "dúvida sobre o app" com "dúvida sobre o loteamento".
+
+Nessa mesma revisão o usuário também fechou as decisões D11–D14, D16 e D17 (ver `03-decisoes-tecnicas.md`), incluindo uma mudança real de abordagem em D14 (versionamento por **header**, não path, como o rascunho original sugeria) — o backlog da Fase 19 foi reescrito para refletir isso.
+
 ## Consequência em outros documentos
 
 - `01-analise-requisitos.md`, seção 2: itens que estavam listados como "fora do escopo atual" (fluxo financeiro, CRM/funil, notificações, LGPD) agora apontam para a fase correspondente.

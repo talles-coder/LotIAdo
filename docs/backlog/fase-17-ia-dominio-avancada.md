@@ -1,6 +1,6 @@
 # Fase 17 — IA de Domínio Avançada
 
-Entrega desta fase: agente de due diligence documental, copiloto "pergunte ao loteamento" isolado por tenant, tool de relatório em linguagem natural (nunca texto-para-SQL direto), e um assistente de negociação de menor prioridade. Nenhuma tecnologia fundamentalmente nova — extensão direta do RAG (Fase 7) e do agente LangGraph (Fase 9); por isso não há tasks de estudo novas.
+Entrega desta fase: agente de due diligence documental, copiloto "pergunte ao loteamento" isolado por tenant, tool de relatório em linguagem natural (nunca texto-para-SQL direto), um assistente de negociação de menor prioridade, e um botão de ajuda/suporte com IA (dúvida de uso do app, não de negócio — escalona pra suporte humano quando não resolve). Nenhuma tecnologia fundamentalmente nova — extensão direta do RAG (Fase 7) e do agente LangGraph (Fase 9); por isso não há tasks de estudo novas.
 
 ## Épico E17.1 — Due diligence documental
 
@@ -58,8 +58,22 @@ Entrega desta fase: agente de due diligence documental, copiloto "pergunte ao lo
 - **Paralelizável:** Sim, com as demais tasks da fase — é a de menor prioridade, pode ficar para o fim se o tempo apertar.
 - **Conhecimentos novos introduzidos:** nenhum além do já coberto.
 
+## Épico E17.5 — Botão de ajuda / suporte
+
+### FASE17-IMPL-07 — Botão de ajuda com assistente de suporte (IA responde, escalona pra suporte humano)
+- **Tipo:** Implementação
+- **Dev responsável:** Dev 2
+- **Objetivo:** usuário com dúvida (não sobre o domínio de negócio, e sim sobre como usar o próprio app) tem um caminho direto de ajuda, sem precisar procurar contato de suporte solto em outro lugar.
+- **Descrição:** botão de ajuda visível em qualquer tela (ex. ícone de "?" persistente); ao acionar, agente responde dúvidas comuns e pré-cadastradas sobre uso do app (reaproveitando RAG da Fase 7 sobre uma base de conhecimento própria de suporte — não a mesma base de documentos do tenant, é conteúdo genérico do produto, mesmo para todos os tenants); se a pergunta não é sobre uso do app (é dúvida de negócio) ou o agente não tem confiança na resposta, oferece escalar para o suporte humano (equipe de devs do projeto) — nesta fase, escalar = abrir um formulário simples que registra a dúvida (nome, contato, mensagem, contexto da tela onde foi acionado) para o time responder depois; **não é chat ao vivo com humano**, é ticket assíncrono.
+- **Pré-requisitos:** nenhum estudo novo.
+- **Dependências:** FASE7 (RAG), FASE9 (agente).
+- **Resultado esperado:** pergunta comum de teste (ex. "como eu cadastro um cliente novo?") é respondida pelo agente; pergunta fora do escopo de suporte de produto oferece escalar para ticket.
+- **Critérios de aceite:** teste garante que o agente de suporte nunca tenta responder pergunta de negócio específica do tenant (isso é escopo do copiloto de `FASE17-IMPL-02`, não deste botão) — os dois ficam claramente separados na UI, para o usuário não confundir "ajuda sobre o app" com "pergunta sobre o meu loteamento".
+- **Paralelizável:** Sim, com as demais tasks da fase.
+- **Conhecimentos novos introduzidos:** nenhum além do já coberto em RAG/Agentes.
+
 ## Divisão de trabalho e sincronização
 
 - **Dev 1:** FASE17-IMPL-01 (due diligence) → FASE17-IMPL-03 (relatório).
-- **Dev 2:** FASE17-IMPL-02 (copiloto) → FASE17-IMPL-04 (assistente de negociação, menor prioridade — pode ser adiada).
-- **Pontos de sincronização:** nenhum bloqueante — as quatro tools são independentes entre si, todas plugam no mesmo agente da Fase 9.
+- **Dev 2:** FASE17-IMPL-02 (copiloto) → FASE17-IMPL-04 (assistente de negociação, menor prioridade — pode ser adiada) → FASE17-IMPL-07 (botão de ajuda).
+- **Pontos de sincronização:** nenhum bloqueante — as tools são independentes entre si, todas plugam no mesmo agente da Fase 9. Único cuidado de design: `FASE17-IMPL-07` (ajuda sobre o app) e `FASE17-IMPL-02` (copiloto sobre o loteamento do tenant) precisam ficar visualmente distintos na UI para não confundir o usuário sobre o escopo de cada um.

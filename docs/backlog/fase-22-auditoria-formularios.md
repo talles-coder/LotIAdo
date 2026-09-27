@@ -9,18 +9,18 @@ Confirmado por leitura direta do repositório antes de escrever esta fase:
 - **Cliente** (`mobile/app/clientes/novo.tsx`, sem tela de edição): campos `nome`, `documento` (rotulado "CPF ou CNPJ", `keyboardType="numeric"`, sem máscara), `contato` (aceita telefone OU e-mail livremente). Validação = só `.trim() !== ''` nos três campos. Backend (`backend/app/clientes/interface/schemas.py`, `ClienteCreateRequest`/`ClienteUpdateRequest`) espelha exatamente isso: três `str` sem nenhum `validator`/`constr`. **CPF é coletado mas nunca validado por dígito verificador, em nenhuma das duas pontas.**
 - **Corretor** (`mobile/app/corretores/novo.tsx` + `[id].tsx` para edição): campos `nome`, `contato` (mesma validação frouxa); `usuario_id` existe no schema mas não aparece no formulário. Backend (`backend/app/corretores/interface/schemas.py`) igualmente sem validators. **Não coleta CPF nem CRECI.**
 - **Lote/Loteamento**: não têm formulário manual de cadastro (população via import de CSV/shapefile, Fase 4/8) — fora do escopo desta fase.
-- Nenhuma lib de validação (Zod/Yup) existe no mobile hoje — decisão D17 em `03-decisoes-tecnicas.md` fecha isso nesta fase.
+- Nenhuma lib de validação (Zod/Yup) existe no mobile hoje — decisão D17 em `03-decisoes-tecnicas.md`, já fechada em 2026-09-27: **Zod + react-hook-form**.
 
 ## Épico E22.1 — Fundamentos
 
-### FASE22-EST-01-D1 / FASE22-EST-01-D2 — Estudo: validação de formulário declarativa no Expo (Zod/Yup + react-hook-form)
+### FASE22-EST-01-D1 / FASE22-EST-01-D2 — Estudo: validação de formulário com Zod + react-hook-form no Expo
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** decidir entre schema declarativo (D17) e validação manual, e entender como integrar com os componentes de formulário já existentes (`Field`, React Native Paper).
+- **Objetivo:** entender como aplicar Zod (D17, já decidida) e integrar com os componentes de formulário já existentes (`Field`, React Native Paper).
 - **Conceitos a entender:** schema de validação (Zod: `.refine()` para regra customizada como dígito verificador de CPF); `react-hook-form` + `zodResolver` para ligar schema a inputs controlados; mensagens de erro por campo; validação em `onBlur` vs. `onSubmit`.
 - **Material recomendado:** documentação oficial do Zod; documentação do `react-hook-form` (integração com Zod).
-- **Exercício prático:** validar um formulário de teste com 3-4 campos (incluindo um campo com regra customizada, ex. CEP) usando a opção escolhida.
-- **Critério de conclusão:** formulário de teste rejeita entrada inválida com mensagem de erro por campo; D17 registrada como decidida.
+- **Exercício prático:** validar um formulário de teste com 3-4 campos (incluindo um campo com regra customizada, ex. CEP) usando Zod + react-hook-form.
+- **Critério de conclusão:** formulário de teste rejeita entrada inválida com mensagem de erro por campo.
 - **Paralelizável:** Sim.
 
 ## Épico E22.2 — Validação de documento e contato
@@ -77,8 +77,34 @@ Confirmado por leitura direta do repositório antes de escrever esta fase:
 - **Paralelizável:** Sim, com FASE22-IMPL-03.
 - **Conhecimentos novos introduzidos:** nenhum.
 
+## Épico E22.5 — Autopreenchimento, seleção fechada e mídia
+
+### FASE22-IMPL-05 — Autocomplete de CEP (ViaCEP) e campos de seleção fechada (estado, cidade, país)
+- **Tipo:** Implementação
+- **Dev responsável:** Dev 1
+- **Objetivo:** o usuário digita só o CEP e rua/número/bairro/cidade/UF vêm preenchidos sozinhos; estado, cidade e país deixam de ser texto livre (fonte de erro de digitação/inconsistência) e viram seleção fechada.
+- **Descrição:** ao digitar um CEP válido (8 dígitos), chamada à API pública gratuita ViaCEP (`viacep.com.br`, sem autenticação, sem custo) preenche rua/bairro/cidade/UF automaticamente, deixando número e complemento para o usuário digitar; campo de UF vira select fechado (27 opções); campo de cidade vira autocomplete alimentado pela API de localidades do IBGE (gratuita, sem autenticação) filtrado pela UF já selecionada — não é uma lista fechada hardcoded de ~5.570 municípios, é busca dinâmica; campo de país vira select fechado com "Brasil" como única opção por ora (modelado como lista extensível, não hardcoded no componente, para não exigir retrabalho se o produto um dia expandir). Falha da API (CEP não encontrado ou serviço fora do ar) não bloqueia o formulário — usuário pode preencher manualmente, o autocomplete é um atalho, não uma exigência.
+- **Pré-requisitos:** nenhum estudo novo (é integração de API REST simples, já dominada desde a Fase 0).
+- **Dependências:** FASE22-IMPL-03 (campo de endereço do cliente), FASE22-IMPL-04 (campo de endereço do corretor).
+- **Resultado esperado:** digitar um CEP válido de teste preenche os campos de endereço corretamente; CEP inválido/inexistente não trava o formulário.
+- **Critérios de aceite:** teste com CEP conhecido confere os campos preenchidos; teste com a API indisponível (mockada como erro) confirma que o formulário continua editável manualmente.
+- **Paralelizável:** Sim, com FASE22-IMPL-06.
+- **Conhecimentos novos introduzidos:** integração com ViaCEP e API de localidades do IBGE.
+
+### FASE22-IMPL-06 — Foto de perfil do usuário (avatar)
+- **Tipo:** Implementação
+- **Dev responsável:** Dev 2
+- **Objetivo:** cada usuário (corretor, gestor, cliente) pode ter uma foto de perfil própria, além do logo da imobiliária (que é do tenant, não do usuário — ver `FASE14-IMPL-05`).
+- **Descrição:** campo de avatar no perfil do usuário (não no cadastro de cliente/corretor como entidade de negócio, e sim no `User` — Fase 0), upload reaproveitando o storage já abstraído (MinIO/S3, Fase 5); exibido nas telas onde o usuário aparece (ex. responsável pelo lead na Fase 11, autor de mensagem no histórico da Fase 12); fallback para iniciais do nome quando não há foto (nunca ícone genérico quebrado).
+- **Pré-requisitos:** nenhum estudo novo.
+- **Dependências:** FASE5 (storage).
+- **Resultado esperado:** usuário de teste consegue subir/trocar/remover a própria foto, visível nas telas relevantes.
+- **Critérios de aceite:** upload de arquivo que não é imagem é rejeitado com mensagem clara; usuário sem foto mostra iniciais, nunca quebra o layout.
+- **Paralelizável:** Sim, com FASE22-IMPL-05.
+- **Conhecimentos novos introduzidos:** nenhum além do já coberto em storage (Fase 5).
+
 ## Divisão de trabalho e sincronização
 
-- **Dev 1:** FASE22-EST-01 → FASE22-IMPL-01 (documento) → FASE22-IMPL-03 (campos de cliente).
-- **Dev 2:** FASE22-EST-01 → FASE22-IMPL-02 (contato) → FASE22-IMPL-04 (campos de corretor).
-- **Pontos de sincronização:** a função de validação de documento (FASE22-IMPL-01) e de contato (FASE22-IMPL-02) precisam estar prontas (ou ao menos com assinatura combinada) antes de FASE22-IMPL-03/04 as reaproveitarem nos novos campos de CPF/telefone secundário.
+- **Dev 1:** FASE22-EST-01 → FASE22-IMPL-01 (documento) → FASE22-IMPL-03 (campos de cliente) → FASE22-IMPL-05 (CEP/selects).
+- **Dev 2:** FASE22-EST-01 → FASE22-IMPL-02 (contato) → FASE22-IMPL-04 (campos de corretor) → FASE22-IMPL-06 (avatar).
+- **Pontos de sincronização:** a função de validação de documento (FASE22-IMPL-01) e de contato (FASE22-IMPL-02) precisam estar prontas (ou ao menos com assinatura combinada) antes de FASE22-IMPL-03/04 as reaproveitarem nos novos campos de CPF/telefone secundário; estrutura de campo de endereço (FASE22-IMPL-03/04) combinada antes de FASE22-IMPL-05 poder ligar o autocomplete a ela.

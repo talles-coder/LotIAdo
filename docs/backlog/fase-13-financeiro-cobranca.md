@@ -1,27 +1,27 @@
 # Fase 13 — Financeiro & Cobrança
 
-Entrega desta fase: emissão de boleto/PIX por parcela de venda via gateway de pagamento abstrato, cobrança automática de parcela vencida, assinatura eletrônica de contrato via provedor terceirizado, e um simulador (não uma operação financeira real) de antecipação de recebíveis. Fecha as decisões D11 (provedor de pagamento) e D12 (provedor de assinatura eletrônica) de `03-decisoes-tecnicas.md`.
+Entrega desta fase: emissão de boleto/PIX por parcela de venda via **Asaas** (D11), cobrança automática de parcela vencida, assinatura eletrônica de contrato via **Autentique** (D12), e um simulador (não uma operação financeira real) de antecipação de recebíveis. Fecha as decisões D11 e D12 de `03-decisoes-tecnicas.md` — já resolvidas em 2026-09-27, as tasks de estudo abaixo são sobre a API do provedor escolhido, não mais uma comparação entre opções.
 
 ## Épico E13.1 — Fundamentos
 
-### FASE13-EST-01-D1 / FASE13-EST-01-D2 — Estudo: gateway de pagamento (boleto/PIX) via API
+### FASE13-EST-01-D1 / FASE13-EST-01-D2 — Estudo: gateway de pagamento Asaas (boleto/PIX) via API
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** entender o fluxo de emissão e confirmação de cobrança via um gateway de pagamento brasileiro (Asaas, Iugu, Gerencianet/Efí ou Pagar.me — decisão D11), usando sandbox gratuito.
-- **Conceitos a entender:** criação de cobrança (boleto e/ou PIX) via API; webhook de confirmação de pagamento (evento assíncrono, não polling); ambiente sandbox vs. produção; idempotência (não gerar duas cobranças para a mesma parcela).
-- **Material recomendado:** documentação oficial do provedor escolhido (comparar 2 antes de decidir, conforme D11).
-- **Exercício prático:** criar uma cobrança de teste no sandbox do provedor escolhido, simular pagamento (a maioria dos sandboxes tem endpoint para isso) e receber o webhook de confirmação em endpoint local.
-- **Critério de conclusão:** cobrança de teste emitida e confirmação recebida via webhook; D11 registrada como decidida em `03-decisoes-tecnicas.md`.
+- **Objetivo:** entender o fluxo de emissão e confirmação de cobrança via a API do Asaas (D11), usando sandbox gratuito.
+- **Conceitos a entender:** criação de cobrança (boleto e/ou PIX) via API do Asaas; webhook de confirmação de pagamento (evento assíncrono, não polling); ambiente sandbox vs. produção; idempotência (não gerar duas cobranças para a mesma parcela).
+- **Material recomendado:** documentação oficial da API do Asaas (sandbox/ambiente de testes).
+- **Exercício prático:** criar uma cobrança de teste no sandbox do Asaas, simular pagamento (o sandbox tem endpoint para isso) e receber o webhook de confirmação em endpoint local.
+- **Critério de conclusão:** cobrança de teste emitida e confirmação recebida via webhook.
 - **Paralelizável:** Sim.
 
-### FASE13-EST-02-D1 / FASE13-EST-02-D2 — Estudo: assinatura eletrônica via API de terceiro
+### FASE13-EST-02-D1 / FASE13-EST-02-D2 — Estudo: assinatura eletrônica via API do Autentique
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** entender o fluxo de envio de documento para assinatura e confirmação de conclusão via API (Clicksign, D4Sign ou Autentique — decisão D12), sem implementar assinatura com validade jurídica própria.
-- **Conceitos a entender:** upload de documento e definição de signatário(s) via API; link de assinatura enviado ao signatário; webhook de assinatura concluída; documento assinado (PDF final) disponibilizado para download.
-- **Material recomendado:** documentação oficial do provedor escolhido.
-- **Exercício prático:** enviar um documento de teste para assinatura no sandbox/trial do provedor e receber o webhook de conclusão.
-- **Critério de conclusão:** documento de teste assinado de ponta a ponta; D12 registrada como decidida.
+- **Objetivo:** entender o fluxo de envio de documento para assinatura e confirmação de conclusão via a API do Autentique (D12), sem implementar assinatura com validade jurídica própria.
+- **Conceitos a entender:** upload de documento e definição de signatário(s) via API do Autentique; link de assinatura enviado ao signatário; webhook de assinatura concluída; documento assinado (PDF final) disponibilizado para download.
+- **Material recomendado:** documentação oficial da API do Autentique.
+- **Exercício prático:** enviar um documento de teste para assinatura no nível gratuito do Autentique e receber o webhook de conclusão.
+- **Critério de conclusão:** documento de teste assinado de ponta a ponta.
 - **Paralelizável:** Sim.
 
 ## Épico E13.2 — Emissão e cobrança

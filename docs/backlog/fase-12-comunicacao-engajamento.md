@@ -67,5 +67,19 @@ Entrega desta fase: notificação de lead/negociação via WhatsApp, e favoritos
 ## Divisão de trabalho e sincronização
 
 - **Dev 1:** FASE12-EST-01/02 → FASE12-IMPL-01 (WhatsApp saída) → FASE12-IMPL-03 (favoritos/push).
-- **Dev 2:** FASE12-EST-01/02 → FASE12-IMPL-02 (WhatsApp entrada/webhook).
-- **Pontos de sincronização:** formato de `WhatsAppNotifier`/canal de notificação combinado entre Dev 1 e Dev 2 antes de FASE12-IMPL-01/03, já que os dois reaproveitam a mesma abstração de disparo de notificação.
+- **Dev 2:** FASE12-EST-01/02 → FASE12-IMPL-02 (WhatsApp entrada/webhook) → FASE12-IMPL-04 (painel de notificações).
+- **Pontos de sincronização:** formato de `WhatsAppNotifier`/canal de notificação combinado entre Dev 1 e Dev 2 antes de FASE12-IMPL-01/03, já que os dois reaproveitam a mesma abstração de disparo de notificação; esse mesmo formato é a base do registro persistido em `FASE12-IMPL-04`.
+
+## Épico E12.4 — Painel de notificações
+
+### FASE12-IMPL-04 — Sino de notificações com histórico persistido
+- **Tipo:** Implementação
+- **Dev responsável:** Dev 2
+- **Objetivo:** corretor/gestor não depende só do push (que pode não chegar, ser dispensado sem ler, ou ter sido enviado enquanto o app estava fechado) — existe um painel dentro do app com o histórico de eventos relevantes.
+- **Descrição:** toda notificação disparada (push da Fase 12, alerta de favorito, WhatsApp recebido, mudança de estágio de lead da Fase 11, parcela vencida da Fase 13, etc.) também é persistida como registro de notificação in-app, associada ao usuário/tenant; ícone de sino no cabeçalho do app com contador de não-lidas; painel lista as notificações mais recentes primeiro, com marcação de lida/não-lida (individual e "marcar todas como lidas"); toda notificação nova de fase futura (financeiro, IA, etc.) reaproveita este mesmo mecanismo em vez de inventar um canal próprio — é o ponto único de "algo relevante aconteceu" dentro do app.
+- **Pré-requisitos:** nenhum estudo novo.
+- **Dependências:** FASE12-IMPL-01/03 (primeiras fontes reais de notificação a alimentar o painel).
+- **Resultado esperado:** notificação disparada de teste aparece no painel, com contador do sino atualizado; marcar como lida reflete imediatamente.
+- **Critérios de aceite:** notificação de um tenant nunca aparece no sino de usuário de outro tenant (mesma defesa de isolamento já aplicada em todo o resto do sistema); contador do sino bate com a contagem real de não-lidas após qualquer ação (ler uma, marcar todas).
+- **Paralelizável:** Não pode ser finalizada sem FASE12-IMPL-01 (ou stub do formato de notificação combinado antes).
+- **Conhecimentos novos introduzidos:** nenhum além do já coberto na fase.

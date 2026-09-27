@@ -1,17 +1,17 @@
 # Fase 18 — Internacionalização & Localização
 
-Entrega desta fase: todo texto do app extraído para arquivos de tradução (PT-BR padrão, EN como segundo idioma de prova), seletor de idioma persistido, e formatação de moeda/data por locale. Fecha a decisão D13 (biblioteca de i18n) de `03-decisoes-tecnicas.md`. Entra só depois de todo o domínio+comercial estar pronto (Fases 0–17), para não duplicar esforço de extração de texto a cada fase nova.
+Entrega desta fase: todo texto do app extraído para arquivos de tradução (PT-BR padrão, EN como segundo idioma de prova), seletor de idioma persistido, e formatação de moeda/data por locale. Fecha a decisão D13 (biblioteca de i18n) de `03-decisoes-tecnicas.md` — **`i18next` + `react-i18next`**, já decidido em 2026-09-27. Entra só depois de todo o domínio+comercial estar pronto (Fases 0–17), para não duplicar esforço de extração de texto a cada fase nova.
 
 ## Épico E18.1 — Fundamentos
 
-### FASE18-EST-01-D1 / FASE18-EST-01-D2 — Estudo: i18n em React Native/Expo
+### FASE18-EST-01-D1 / FASE18-EST-01-D2 — Estudo: i18n com `i18next`/`react-i18next` no Expo
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** entender extração de string, pluralização e fallback de idioma, e decidir entre `i18next`/`react-i18next` ou solução própria (decisão D13).
+- **Objetivo:** entender extração de string, pluralização e fallback de idioma usando `i18next`/`react-i18next` (D13, já decidida).
 - **Conceitos a entender:** arquivos de tradução por idioma (chave → texto); interpolação de variável dentro de uma string traduzida (ex.: "Você tem {{n}} lotes"); pluralização (regras diferentes por idioma); fallback (se uma chave não existe no idioma ativo, cai para PT-BR); detecção do idioma do dispositivo (`expo-localization`) vs. escolha manual do usuário.
 - **Material recomendado:** documentação oficial do `i18next`/`react-i18next`; documentação do `expo-localization`.
-- **Exercício prático:** extrair 5-10 strings de uma tela de exemplo do próprio projeto para PT-BR/EN e alternar entre os dois manualmente.
-- **Critério de conclusão:** tela de teste troca de idioma corretamente; D13 registrada como decidida.
+- **Exercício prático:** extrair 5-10 strings de uma tela de exemplo do próprio projeto para PT-BR/EN e alternar entre os dois manualmente usando `i18next`.
+- **Critério de conclusão:** tela de teste troca de idioma corretamente.
 - **Paralelizável:** Sim.
 
 ## Épico E18.2 — Extração e chaveamento

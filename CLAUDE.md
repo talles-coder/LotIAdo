@@ -86,7 +86,8 @@ Arquivo: `docs/backlog/` (um por fase: `fase-0-fundamentos.md`, `fase-1-mvp-domi
 - **Fase 22:** Auditoria e robustez de formulários de cadastro.
 - **Fase 23:** Estrutura de testes (unit/integration/E2E).
 - **Fase 24:** Cloud/produção (AWS).
-- **Fase 25:** Segurança — auditoria e correção de vulnerabilidades (última fase, de propósito).
+- **Fase 25:** Segurança — auditoria e correção de vulnerabilidades.
+- **Fase 26:** Polimento visual & microinterações (última fase — cosmética, com portão de aprovação humana via GIF).
 
 Cada phase é entrega funcional demonstrável.
 

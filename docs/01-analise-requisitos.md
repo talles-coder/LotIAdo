@@ -22,7 +22,7 @@ Identificados, mas **fora do escopo atual** — não são bloqueantes para come�
 - Cálculo e pagamento de comissão de corretores — ainda em aberto, sem fase.
 - ~~Notificações (push/email/SMS) para eventos como reserva prestes a expirar ou novo lote disponível.~~ → **Fase 12** (Comunicação & Engajamento, via WhatsApp/favoritos).
 - Regra de negócio explícita de prazo/expiração de reserva (quanto tempo um lote fica "reservado" antes de voltar a "disponível") — ainda em aberto, sem fase.
-- ~~LGPD/compliance para dados pessoais de clientes (CPF, telefone, etc.) — relevante por ser um produto brasileiro.~~ → parcialmente coberto pela **Fase 17** (documentação explícita de privacidade/dado local via Ollama); o restante de compliance formal segue em aberto.
+- ~~LGPD/compliance para dados pessoais de clientes (CPF, telefone, etc.) — relevante por ser um produto brasileiro.~~ → parcialmente coberto pela **Fase 17** (documentação explícita de privacidade/dado local via Ollama) e pela **Fase 21** (termo de uso/política de privacidade, `FASE21-IMPL-05`); compliance formal completo (ex. DPO, relatório de impacto) segue em aberto — fora do escopo de portfólio.
 - Política de backup/disaster recovery do banco de dados — ainda em aberto, sem fase.
 - ~~CRM/funil de leads antes da reserva (captação e qualificação de interessados).~~ → **Fase 11** (CRM Comercial & Funil de Vendas).
 - ~~Internacionalização/moeda — o briefing assume BRL e português; não declarado explicitamente mas implícito nos exemplos.~~ → **Fase 18** (Internacionalização & Localização).

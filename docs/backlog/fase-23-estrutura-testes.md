@@ -21,14 +21,14 @@ Confirmado por leitura direta do repositório antes de escrever esta fase:
 - **Critério de conclusão:** teste de componente de exemplo passa rodando `jest` na linha de comando.
 - **Paralelizável:** Sim.
 
-### FASE23-EST-02-D1 / FASE23-EST-02-D2 — Estudo: framework de E2E mobile (Detox/Maestro)
+### FASE23-EST-02-D1 / FASE23-EST-02-D2 — Estudo: E2E mobile com Maestro (fallback Detox)
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** decidir e validar o framework de E2E do mobile (decisão D16).
-- **Conceitos a entender:** diferença entre teste de componente (roda em Node, sem app real) e E2E (roda o app de verdade num emulador/device); Detox (build de teste específico, sincronização automática com a UI) vs. Maestro (YAML declarativo, CLI própria, sem necessidade de build especial); trade-off de tempo de setup vs. robustez.
-- **Material recomendado:** documentação oficial do Detox; documentação oficial do Maestro.
-- **Exercício prático:** rodar um fluxo E2E mínimo (abrir o app, navegar para uma tela, verificar texto) com a ferramenta candidata.
-- **Critério de conclusão:** fluxo de teste E2E de exemplo passa contra o app real num emulador; D16 registrada como decidida.
+- **Objetivo:** validar Maestro como framework de E2E do mobile (D16, decisão padrão) — só cair para Detox se alguma limitação real aparecer.
+- **Conceitos a entender:** diferença entre teste de componente (roda em Node, sem app real) e E2E (roda o app de verdade num emulador/device); Maestro (YAML declarativo, CLI própria, sem build nativo dedicado) como ferramenta principal; Detox (build de teste específico, sincronização automática com a UI) como plano B, só se o Maestro não conseguir automatizar de forma confiável alguma interação do fluxo crítico (Épico E23.4).
+- **Material recomendado:** documentação oficial do Maestro; documentação oficial do Detox (só como referência de fallback).
+- **Exercício prático:** rodar um fluxo E2E mínimo (abrir o app, navegar para uma tela, verificar texto) com o Maestro.
+- **Critério de conclusão:** fluxo de teste E2E de exemplo passa contra o app real num emulador com o Maestro; se não passar por limitação real da ferramenta (não por erro de configuração), documentar o motivo e repetir o exercício com Detox antes de prosseguir para `FASE23-IMPL-05`.
 - **Paralelizável:** Sim.
 
 ## Épico E23.2 — Backend: unit/integration + cobertura

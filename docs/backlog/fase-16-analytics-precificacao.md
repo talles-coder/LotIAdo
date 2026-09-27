@@ -4,14 +4,14 @@ Entrega desta fase: dashboard de velocidade de vendas/sazonalidade por loteament
 
 ## Épico E16.1 — Fundamentos
 
-### FASE16-EST-01-D1 / FASE16-EST-01-D2 — Estudo: biblioteca de gráficos multiplataforma (native + web)
+### FASE16-EST-01-D1 / FASE16-EST-01-D2 — Estudo: biblioteca de gráficos multiplataforma — teste comparativo das 3 opções
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
-- **Objetivo:** decidir e validar a biblioteca de gráfico usada no dashboard, considerando o mesmo dilema nativo+web já resolvido para mapa (D8/D10) e componentes (D9).
-- **Conceitos a entender:** as opções de D15 (`victory-native`+`victory`, `react-native-gifted-charts` com fallback, ou SVG próprio via `react-native-svg`); trade-off de manter a mesma API declarativa nas duas plataformas vs. aceitar implementação distinta por plataforma (`.native.tsx`/`.web.tsx`, mesmo padrão já usado para mapa/storage).
-- **Material recomendado:** documentação da(s) biblioteca(s) candidata(s); os próprios `03-decisoes-tecnicas.md` (D8/D9) como referência de critério já usado no projeto.
-- **Exercício prático:** renderizar um gráfico de linha simples (dado fixo) nas duas plataformas (mobile e Expo for Web) com a opção escolhida.
-- **Critério de conclusão:** gráfico de teste renderiza corretamente nas duas plataformas; D15 registrada como decidida.
+- **Objetivo:** decidir a biblioteca de gráfico do dashboard **por resultado prático**, não por tabela de trade-off — critério confirmado pelo usuário (2026-09-27): implementar o mesmo gráfico nas 3 opções e escolher a que rodar sem erro e ficar mais bonita.
+- **Conceitos a entender:** as opções de D15 (`victory-native`+`victory`, `react-native-gifted-charts` com fallback, ou SVG próprio via `react-native-svg`); mesmo dilema nativo+web já resolvido para mapa (D8/D10) e componentes (D9) — mas aqui a resolução é empírica, não por comparação de documentação.
+- **Material recomendado:** documentação das 3 bibliotecas candidatas.
+- **Exercício prático:** implementar o **mesmo gráfico de linha** (dado fixo, ex. vendas por mês) nas 3 opções, cada uma nas duas plataformas (mobile e Expo for Web) — 6 renderizações no total. Registrar para cada uma: erro de setup/renderização encontrado (se houver) e avaliação visual comparativa (side-by-side, print ou GIF).
+- **Critério de conclusão:** as 3 opções testadas nas duas plataformas; D15 fechada com a que teve menos erro e melhor resultado visual — decisão registrada em `03-decisoes-tecnicas.md` com o motivo objetivo (não "achei melhor" sem critério).
 - **Paralelizável:** Sim.
 
 ## Épico E16.2 — Dashboard

@@ -1,6 +1,6 @@
 # Fase 21 — Billing do SaaS & Autocadastro de Tenant
 
-Entrega desta fase: uma imobiliária se autocadastra como tenant escolhendo um plano, o plano define limites de uso (usuários/loteamentos), e a assinatura do próprio plano é cobrada recorrentemente via o mesmo `PaymentProvider` já construído na Fase 13 — sem criar uma segunda integração de pagamento. Fecha o item "Modelo de planos/limites do próprio SaaS", registrado como fora de escopo em `01-analise-requisitos.md` (seção 2) desde a análise inicial.
+Entrega desta fase: uma imobiliária se autocadastra como tenant escolhendo um plano, ganha **7 dias de teste gratuito (sempre, em qualquer plano)**, o plano define limites de uso (usuários/loteamentos), e a assinatura do próprio plano é cobrada recorrentemente via o mesmo `PaymentProvider` já construído na Fase 13 — sem criar uma segunda integração de pagamento e **sem cobrar ninguém sem confirmação explícita** de que quer continuar depois do período de teste. Fecha o item "Modelo de planos/limites do próprio SaaS", registrado como fora de escopo em `01-analise-requisitos.md` (seção 2) desde a análise inicial.
 
 ## Planos propostos (preços em BRL)
 
@@ -20,11 +20,11 @@ Notas de calibragem: preço abaixo do Starter (ex. R$ 50-80) tende a não cobrir
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 1
 - **Objetivo:** todo tenant tem um plano associado, e o plano define limites objetivos (nº de usuários, nº de loteamentos, nº de lotes).
-- **Descrição:** entidade `Plano` (nome, preço, limites) e relação 1:1 com `Tenant` (Fase 0); planos iniciais cadastrados via seed/migration com os valores da seção "Planos propostos" acima (Starter/Pro/Enterprise) — sem UI de administração de planos nesta fase, só o modelo de dados e os valores fixos.
+- **Descrição:** entidade `Plano` (nome, preço, limites) e relação 1:1 com `Tenant` (Fase 0); planos iniciais cadastrados via seed/migration com os valores da seção "Planos propostos" acima (Starter/Pro/Enterprise) — sem UI de administração de planos nesta fase, só o modelo de dados e os valores fixos. Tenant ganha os campos `trial_ends_at` (data de criação + 7 dias, sempre, independente do plano escolhido) e `status_assinatura` (`trial` / `ativo` / `aguardando_confirmacao` / `suspenso`).
 - **Pré-requisitos:** nenhum estudo novo.
 - **Dependências:** FASE0-IMPL-04 (modelo de `Tenant`).
-- **Resultado esperado:** tenant de teste tem plano associado com limites consultáveis via API.
-- **Critérios de aceite:** consulta ao tenant retorna o plano e seus limites corretamente.
+- **Resultado esperado:** tenant de teste tem plano associado com limites consultáveis via API, e `trial_ends_at` calculado automaticamente na criação.
+- **Critérios de aceite:** consulta ao tenant retorna o plano, seus limites e a data de fim do período de teste corretamente.
 - **Paralelizável:** Sim, com FASE21-IMPL-04 (que consome este modelo, mas pode ser desenhada em paralelo com contrato combinado).
 - **Conhecimentos novos introduzidos:** nenhum.
 
@@ -34,23 +34,23 @@ Notas de calibragem: preço abaixo do Starter (ex. R$ 50-80) tende a não cobrir
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 2
 - **Objetivo:** uma imobiliária nova se cadastra sozinha no sistema, sem depender de um admin criar o tenant manualmente, escolhendo um dos planos disponíveis.
-- **Descrição:** fluxo público de cadastro (fora de qualquer tenant autenticado) que cria `Tenant` + `Plano` escolhido + primeiro usuário administrador do tenant, reaproveitando o cadastro de usuário já existente (Fase 0/2); tela de seleção de plano no app (mobile/web) mostrando os planos e seus limites (valores da seção "Planos propostos"); ao final do cadastro, oferece (como etapa opcional, "pular por agora") a mesma tela de identidade visual de `FASE14-IMPL-05` (logo/nome de exibição/cor), para a imobiliária já sair com o app com a cara dela desde o primeiro acesso; aceite obrigatório do termo de uso (`FASE21-IMPL-05`) antes de concluir.
+- **Descrição:** fluxo público de cadastro (fora de qualquer tenant autenticado) que cria `Tenant` + `Plano` escolhido + primeiro usuário administrador do tenant, reaproveitando o cadastro de usuário já existente (Fase 0/2); tela de seleção de plano no app (mobile/web) mostrando os planos e seus limites (valores da seção "Planos propostos"), deixando claro que **os 7 dias de teste gratuito valem pra qualquer plano escolhido, sem pedir dado de pagamento no cadastro**; ao final do cadastro, oferece (como etapa opcional, "pular por agora") a mesma tela de identidade visual de `FASE14-IMPL-05` (logo/nome de exibição/cor), para a imobiliária já sair com o app com a cara dela desde o primeiro acesso; aceite obrigatório do termo de uso (`FASE21-IMPL-05`) antes de concluir.
 - **Pré-requisitos:** nenhum estudo novo.
 - **Dependências:** FASE21-IMPL-01, FASE2 (RBAC/convite de usuário), FASE14-IMPL-05 (tela de identidade visual, reaproveitada aqui), FASE21-IMPL-05 (termo de uso).
-- **Resultado esperado:** cadastro de teste cria tenant novo, plano associado e usuário admin funcional, sem intervenção manual; opcionalmente já com logo/cor configurados.
-- **Critérios de aceite:** tenant recém-criado já está isolado (RLS) e funcional para login imediato do admin criado; pular a etapa de identidade visual não bloqueia o cadastro (fallback visual padrão aplicado).
+- **Resultado esperado:** cadastro de teste cria tenant novo com `status_assinatura = trial` e `trial_ends_at` = +7 dias, plano associado e usuário admin funcional, sem intervenção manual; opcionalmente já com logo/cor configurados; nenhum dado de pagamento é pedido nesta etapa.
+- **Critérios de aceite:** tenant recém-criado já está isolado (RLS) e funcional para login imediato do admin criado; pular a etapa de identidade visual não bloqueia o cadastro (fallback visual padrão aplicado); `trial_ends_at` bate com a data de criação + 7 dias exatos.
 - **Paralelizável:** Não pode ser finalizada sem FASE21-IMPL-01.
 - **Conhecimentos novos introduzidos:** nenhum além do já coberto em multi-tenancy (Fase 2).
 
-### FASE21-IMPL-03 — Cobrança recorrente da assinatura do plano
+### FASE21-IMPL-03 — Fim do período de teste: confirmação obrigatória antes da primeira cobrança
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 1
-- **Objetivo:** a mensalidade do plano do tenant é cobrada automaticamente, reaproveitando o gateway de pagamento já integrado.
-- **Descrição:** job periódico que gera uma cobrança (boleto/PIX) via `PaymentProvider` (Fase 13) para cada tenant ativo, no valor do plano escolhido; webhook de confirmação (já existente na Fase 13) atualiza o status de pagamento da assinatura do tenant.
+- **Objetivo:** ninguém é cobrado automaticamente só porque o teste gratuito acabou — o tenant precisa confirmar explicitamente que quer continuar (e ser cliente pagante) antes da primeira cobrança real.
+- **Descrição:** job diário verifica tenants com `trial_ends_at` vencendo (ex.: aviso 2 dias antes, no dia, e no vencimento) e muda `status_assinatura` para `aguardando_confirmacao` quando o trial vence sem confirmação; usuário admin do tenant vê um aviso persistente (reaproveitando o painel de notificações da Fase 12, `FASE12-IMPL-04`) com botão explícito "continuar e assinar o plano X por RY/mês" — só esse clique aciona a primeira cobrança via `PaymentProvider` (Fase 13); tenant que não confirma em N dias (configurável, ex. 7 dias de carência após o vencimento) tem o acesso degradado para somente leitura (nunca exclusão de dado), até confirmar ou os dados serem removidos por política de retenção (fora do escopo desta task). Depois da primeira confirmação, cobranças seguintes (mês 2 em diante) passam a ser automáticas de fato — a confirmação explícita é só a barreira da **primeira** cobrança após o trial, não de todo mês.
 - **Pré-requisitos:** nenhum estudo novo.
-- **Dependências:** FASE21-IMPL-01, FASE13-IMPL-01/02 (`PaymentProvider` e webhook já existentes).
-- **Resultado esperado:** cobrança mensal de teste gerada e confirmada via sandbox, atualizando o status de assinatura do tenant.
-- **Critérios de aceite:** dois tenants com planos diferentes geram cobranças com valores corretos correspondentes a cada plano.
+- **Dependências:** FASE21-IMPL-01 (`trial_ends_at`/`status_assinatura`), FASE13-IMPL-01/02 (`PaymentProvider` e webhook já existentes), FASE12-IMPL-04 (painel de notificações, para o aviso).
+- **Resultado esperado:** tenant de teste com trial vencido não é cobrado até confirmar explicitamente; confirmar gera a primeira cobrança real via sandbox; tenant que não confirma cai para acesso somente leitura após a carência.
+- **Critérios de aceite:** nenhuma cobrança é criada para um tenant em `status_assinatura = aguardando_confirmacao` sem o clique de confirmação; dois tenants com planos diferentes, ambos confirmando, geram cobranças com valores corretos correspondentes a cada plano.
 - **Paralelizável:** Sim, com FASE21-IMPL-04.
 - **Conhecimentos novos introduzidos:** nenhum além do já coberto em pagamento (Fase 13).
 
@@ -84,7 +84,7 @@ Notas de calibragem: preço abaixo do Starter (ex. R$ 50-80) tende a não cobrir
 
 - **Dev 1:** FASE21-IMPL-01 (modelo de plano) → FASE21-IMPL-03 (cobrança recorrente).
 - **Dev 2:** FASE21-IMPL-05 (termo de uso, pode começar em paralelo) → FASE21-IMPL-02 (autocadastro, depende do modelo do Dev 1 e do termo) → FASE21-IMPL-04 (enforcement de limite).
-- **Pontos de sincronização:** schema de `Plano` (campos de limite, nomes dos planos) combinado antes de FASE21-IMPL-02 e FASE21-IMPL-04 avançarem em paralelo com o Dev 1; formato de dado de identidade visual combinado com quem implementar `FASE14-IMPL-05` antes de `FASE21-IMPL-02` reaproveitá-lo.
+- **Pontos de sincronização:** schema de `Plano` (campos de limite, nomes dos planos, `trial_ends_at`/`status_assinatura`) combinado antes de FASE21-IMPL-02 e FASE21-IMPL-04 avançarem em paralelo com o Dev 1; formato de dado de identidade visual combinado com quem implementar `FASE14-IMPL-05` antes de `FASE21-IMPL-02` reaproveitá-lo; formato de notificação da Fase 12 (`FASE12-IMPL-04`) combinado antes de `FASE21-IMPL-03` reaproveitá-lo para o aviso de fim de trial.
 
 ## Nota de rastreabilidade
 
