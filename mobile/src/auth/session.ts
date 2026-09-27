@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { clearToken, getToken, setToken } from '../storage/tokenStorage';
+import { clearOfflineCache } from '../storage/offlineCache';
 
 type Listener = () => void;
 
@@ -30,6 +31,8 @@ export async function setSession(newToken: string): Promise<void> {
 export async function clearSession(): Promise<void> {
   token = null;
   await clearToken();
+  // Evita que o cache offline de um tenant vaze para o próximo login no mesmo dispositivo.
+  await clearOfflineCache();
   notify();
 }
 

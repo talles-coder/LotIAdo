@@ -9,6 +9,7 @@ import { listarLoteamentos, listarLotes, type Loteamento } from '../../src/api/l
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { BottomNav } from '../../src/components/BottomNav';
+import { StalenessNotice } from '../../src/components/StalenessNotice';
 import { useIsDesktop } from '../../src/lib/useIsDesktop';
 
 export default function LoteamentosScreen() {
@@ -66,6 +67,7 @@ export default function LoteamentosScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Loteamentos</Text>
+      <StalenessNotice updatedAt={query.dataUpdatedAt} style={styles.staleness} />
 
       <View style={styles.searchWrapper}>
         <Search size={18} color={colors.mutedForeground} style={styles.searchIcon} />
@@ -163,6 +165,10 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     paddingHorizontal: 20,
     marginBottom: 12,
+  },
+  staleness: {
+    paddingHorizontal: 20,
+    marginTop: -8,
   },
   searchWrapper: {
     marginHorizontal: 16,
