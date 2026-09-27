@@ -61,6 +61,38 @@ async def enviar_documento(
     return DocumentoResponse.model_validate(documento)
 
 
+@router.put("/documentos/{documento_id}", response_model=DocumentoResponse)
+async def substituir_documento(
+    documento_id: UUID,
+    arquivo: UploadFile = File(...),
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    settings: Settings = Depends(get_settings),
+    _: None = Depends(require_permission("documentos:gerenciar")),
+) -> DocumentoResponse:
+    """Substitui o conteúdo de um documento e reindexa (FASE7-IMPL-02).
+
+    Remove os chunks antigos e dispara o pipeline de chunking/embeddings
+    (FASE7-IMPL-01) novamente — reindexação idempotente, sem acúmulo.
+    """
+    conteudo = await arquivo.read()
+    service = _service(db, settings)
+    try:
+        documento = await service.substituir(
+            tenant_id,
+            documento_id,
+            arquivo.filename or "documento",
+            conteudo,
+            arquivo.content_type or "application/octet-stream",
+        )
+    except DocumentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documento não encontrado")
+
+    enfileirar_processamento_documento(documento.id, tenant_id, settings)
+
+    return DocumentoResponse.model_validate(documento)
+
+
 @router.get("/documentos", response_model=list[DocumentoResponse])
 async def listar_documentos(
     loteamento_id: UUID | None = Query(None),

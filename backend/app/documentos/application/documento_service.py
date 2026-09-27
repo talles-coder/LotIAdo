@@ -10,6 +10,7 @@ from app.documentos.domain.exceptions import (
     LoteDoDocumentoNaoEncontradoError,
 )
 from app.documentos.domain.models import Documento
+from app.ai_rag.infrastructure.repository import delete_chunks_by_documento
 from app.documentos.infrastructure.repository import (
     create_documento,
     get_documento_by_id,
@@ -83,3 +84,26 @@ class DocumentoService:
         documento = await self.obter(tenant_id, documento_id)
         documento.deleted_at = datetime.now(timezone.utc)
         await save_documento(self.db, documento)
+
+    async def substituir(
+        self, tenant_id: UUID, documento_id: UUID, nome: str, conteudo: bytes, content_type: str
+    ) -> Documento:
+        """Substitui o conteúdo de um documento existente (mesmo `storage_key`).
+
+        Remove os `document_chunks` antigos antes de reenfileirar o
+        reprocessamento (FASE7-IMPL-01) — a exclusão explícita aqui é
+        redundante com o delete-then-insert que já roda dentro do job
+        (idempotência), mas cumpre o critério de aceite do card de não
+        deixar chunks órfãos entre a substituição e a conclusão do job.
+        """
+        documento = await self.obter(tenant_id, documento_id)
+        await self.storage.upload(documento.storage_key, conteudo, content_type)
+
+        documento.nome = nome
+        documento.content_type = content_type
+        documento.tamanho_bytes = len(conteudo)
+        documento.status_indexacao = "pendente"
+        await save_documento(self.db, documento)
+
+        await delete_chunks_by_documento(self.db, tenant_id, documento_id)
+        return documento

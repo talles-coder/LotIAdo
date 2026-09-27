@@ -159,3 +159,97 @@ async def test_remover_documento_e_remocao_logica(client: AsyncClient, db_sessio
 
     listagem = await client.get("/documentos", headers=_auth_headers(token))
     assert listagem.json() == []
+
+
+@pytest.mark.asyncio
+async def test_substituir_documento_atualiza_metadados_e_volta_a_pendente(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Substituir um documento sobrescreve o conteúdo no MinIO e reseta o status de indexação."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-documentos-substituir")
+    documento = await _enviar_documento(client, token)
+
+    substituicao = await client.put(
+        f"/documentos/{documento['id']}",
+        files={"arquivo": ("memorial-v2.pdf", b"%PDF-1.4 conteudo atualizado", "application/pdf")},
+        headers=_auth_headers(token),
+    )
+
+    assert substituicao.status_code == 200
+    body = substituicao.json()
+    assert body["id"] == documento["id"]
+    assert body["nome"] == "memorial-v2.pdf"
+    assert body["status_indexacao"] == "pendente"
+
+    url_response = await client.get(f"/documentos/{documento['id']}/url-assinada", headers=_auth_headers(token))
+    async with httpx.AsyncClient() as http:
+        baixado = await http.get(url_response.json()["url"])
+    assert baixado.content == b"%PDF-1.4 conteudo atualizado"
+
+
+@pytest.mark.asyncio
+async def test_substituir_documento_inexistente_retorna_404(client: AsyncClient, db_session: AsyncSession):
+    """Substituir um `documento_id` que não existe (ou de outro tenant) é rejeitado."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-documentos-substituir-404")
+
+    resultado = await client.put(
+        "/documentos/00000000-0000-0000-0000-000000000000",
+        files={"arquivo": ("memorial.pdf", b"%PDF-1.4", "application/pdf")},
+        headers=_auth_headers(token),
+    )
+
+    assert resultado.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_substituir_documento_duas_vezes_nao_acumula_chunks(client: AsyncClient, db_session: AsyncSession):
+    """Substituir um documento duas vezes seguidas nunca acumula chunks (critério de aceite SCRUM-89)."""
+    import contextlib
+    from unittest.mock import AsyncMock
+
+    import app.ai_rag as ai_rag
+    from app.ai_rag.application.ingestao_service import _processar_documento_async
+    from app.ai_rag.domain.models import DocumentChunk
+    from app.identity.application.security import create_access_token, hash_password
+    from app.identity.domain.models import User, UserTenantMembership
+    from app.tenancy.domain.models import Tenant
+    from sqlalchemy import select
+
+    tenant = Tenant(name="tenant-documentos-reindexacao", slug="tenant-documentos-reindexacao")
+    db_session.add(tenant)
+    await db_session.flush()
+    user = User(email="tenant-documentos-reindexacao@test.com", hashed_password=hash_password("senha123"), full_name="Test User")
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add(UserTenantMembership(user_id=user.id, tenant_id=tenant.id, role="admin"))
+    await db_session.commit()
+    token = create_access_token(user.id, tenant.id, Settings())
+
+    documento = await _enviar_documento(client, token)
+
+    mock_llm = AsyncMock()
+    mock_llm.embed.return_value = [0.1] * Settings().embedding_dimensions
+
+    for texto in (b"Um texto curto de teste.", b"Um texto diferente na segunda substituicao."):
+        substituicao = await client.put(
+            f"/documentos/{documento['id']}",
+            files={"arquivo": ("v.txt", texto, "text/plain")},
+            headers=_auth_headers(token),
+        )
+        assert substituicao.status_code == 200
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(
+                "app.ai_rag.application.ingestao_service.MinioStorage.baixar", AsyncMock(return_value=texto)
+            )
+            mp.setattr(ai_rag, "llm_provider", mock_llm)
+            mp.setattr(
+                "app.ai_rag.application.ingestao_service.async_session",
+                lambda: contextlib.nullcontext(db_session),
+            )
+            await _processar_documento_async(documento["id"], str(tenant.id))
+
+    chunks = (
+        await db_session.execute(select(DocumentChunk).where(DocumentChunk.documento_id == documento["id"]))
+    ).scalars().all()
+    assert len(chunks) == 1
