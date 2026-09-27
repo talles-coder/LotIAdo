@@ -32,9 +32,9 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import get_history
 
-from app.audit.domain.acoes import AcaoAuditoria
+from app.audit.domain.acoes import AcaoAuditoria, OrigemAuditoria
 from app.audit.domain.models import AuditLog
-from app.audit.infrastructure.context import contexto_auditoria_atual
+from app.audit.infrastructure.context import contexto_auditoria_atual, origem_auditoria_atual
 
 ResolvedorAcao = AcaoAuditoria | Callable[[Any, Any], AcaoAuditoria | None]
 
@@ -167,6 +167,7 @@ def _auditar_antes_do_flush(session: Session, flush_context: Any, instances: Any
             "AuditContextMiddleware; fora de uma request (scripts, jobs, testes), "
             "use app.audit.infrastructure.context.contexto_auditoria(...)."
         )
+    origem = origem_auditoria_atual()
 
     for config, obj, acao, payload_antes, payload_depois in mudancas:
         session.add(
@@ -177,6 +178,18 @@ def _auditar_antes_do_flush(session: Session, flush_context: Any, instances: Any
                 entidade=config.entidade,
                 entidade_id=obj.id,
                 payload_antes=payload_antes,
-                payload_depois=payload_depois,
+                payload_depois=_com_origem(payload_depois, origem),
             )
         )
+
+
+def _com_origem(payload: dict[str, Any] | None, origem: OrigemAuditoria) -> dict[str, Any] | None:
+    """Anota a origem da mudança no payload quando não for a do usuário direto.
+
+    Via de escape prevista na docstring do módulo: `origem` não vem de uma
+    coluna do model rastreado, então entra como uma chave extra no JSON de
+    `payload_depois` em vez de uma coluna nova em `audit_log`.
+    """
+    if origem == OrigemAuditoria.USUARIO or payload is None:
+        return payload
+    return {**payload, "origem": str(origem)}

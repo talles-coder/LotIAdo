@@ -1,8 +1,11 @@
-"""Registro das tools de FASE9-IMPL-01 no formato de function-calling do LLM (FASE9-IMPL-02).
+"""Registro das tools do agente no formato de function-calling do LLM (FASE9-IMPL-02/03).
 
 Cada `ToolSpec` liga o nome exposto ao modelo à função real em
 `app.ai_agents.application.tools` e ao schema Pydantic que valida os
-argumentos que o modelo propõe.
+argumentos que o modelo propõe. `acao=True` (FASE9-IMPL-03) marca uma tool
+que muda estado real (cancelar reserva, alterar preço/responsável) — o grafo
+do agente (`AgenteService`) nunca executa essas diretamente: elas pausam
+num nó de confirmação humana antes de rodar.
 """
 from dataclasses import dataclass
 from typing import Awaitable, Callable
@@ -21,6 +24,7 @@ class ToolSpec:
     descricao: str
     input_model: type[BaseModel]
     funcao: Callable[[AsyncSession, UUID, BaseModel], Awaitable[BaseModel]]
+    acao: bool = False
 
 
 TOOL_SPECS: list[ToolSpec] = [
@@ -50,6 +54,27 @@ TOOL_SPECS: list[ToolSpec] = [
         tools.consultar_condicoes_comerciais.__doc__ or "",
         schemas.ConsultarCondicoesComerciaisInput,
         tools.consultar_condicoes_comerciais,
+    ),
+    ToolSpec(
+        "cancelar_reserva",
+        tools.cancelar_reserva.__doc__ or "",
+        schemas.CancelarReservaInput,
+        tools.cancelar_reserva,
+        acao=True,
+    ),
+    ToolSpec(
+        "alterar_preco_lote",
+        tools.alterar_preco_lote.__doc__ or "",
+        schemas.AlterarPrecoLoteInput,
+        tools.alterar_preco_lote,
+        acao=True,
+    ),
+    ToolSpec(
+        "alterar_responsavel_lote",
+        tools.alterar_responsavel_lote.__doc__ or "",
+        schemas.AlterarResponsavelLoteInput,
+        tools.alterar_responsavel_lote,
+        acao=True,
     ),
 ]
 
