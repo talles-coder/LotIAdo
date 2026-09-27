@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react-native';
 
 import { listarLotes, obterLoteamento, type LoteStatus } from '../../../src/api/loteamentos';
 import { LoteamentoMap, type PoligonoMapa } from '../../../src/components/LoteamentoMap';
+import { StalenessNotice } from '../../../src/components/StalenessNotice';
 import { colors, fonts } from '../../../src/theme/tokens';
 
 const LEGENDA: { status: LoteStatus; label: string }[] = [
@@ -38,6 +39,8 @@ export default function MapaDoLoteamentoScreen() {
 
   const isLoading = loteamentoQuery.isLoading || lotesQuery.isLoading;
   const isError = loteamentoQuery.isError || lotesQuery.isError;
+  const timestamps = [loteamentoQuery.dataUpdatedAt, lotesQuery.dataUpdatedAt].filter((t) => t > 0);
+  const updatedAt = timestamps.length > 0 ? Math.min(...timestamps) : 0;
 
   return (
     <View style={styles.container}>
@@ -49,6 +52,8 @@ export default function MapaDoLoteamentoScreen() {
           {loteamentoQuery.data?.nome ?? 'Mapa'}
         </Text>
       </View>
+
+      <StalenessNotice updatedAt={updatedAt} />
 
       {isLoading ? (
         <View style={styles.center}>

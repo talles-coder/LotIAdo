@@ -11,6 +11,7 @@ import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
 import { BottomNav } from '../../src/components/BottomNav';
+import { StalenessNotice } from '../../src/components/StalenessNotice';
 import { useIsDesktop } from '../../src/lib/useIsDesktop';
 
 const FILTROS: { key: LoteStatus | 'todos'; label: string }[] = [
@@ -43,6 +44,8 @@ export default function LotesDoLoteamentoScreen() {
 
   const isLoading = loteamentoQuery.isLoading || lotesQuery.isLoading;
   const isError = loteamentoQuery.isError || lotesQuery.isError;
+  const timestamps = [loteamentoQuery.dataUpdatedAt, lotesQuery.dataUpdatedAt].filter((t) => t > 0);
+  const updatedAt = timestamps.length > 0 ? Math.min(...timestamps) : 0;
 
   function handleRefresh() {
     loteamentoQuery.refetch();
@@ -70,6 +73,8 @@ export default function LotesDoLoteamentoScreen() {
           <MapIcon size={20} color={colors.foreground} />
         </Pressable>
       </View>
+
+      <StalenessNotice updatedAt={updatedAt} />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={styles.filtersContent}>
         {FILTROS.map((f) => {
