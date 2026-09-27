@@ -12,6 +12,7 @@ Este módulo existe só para ter esse efeito colateral de import — importado
 uma vez em `app.database`, cobre todos os models existentes (e, se um novo
 módulo repetir o mesmo padrão de relationship por string, os futuros).
 """
+from app.ai_rag.domain.models import DocumentChunk  # noqa: F401
 from app.audit.domain.models import AuditLog  # noqa: F401
 from app.clientes.domain.models import Cliente  # noqa: F401
 from app.corretores.domain.models import Corretor  # noqa: F401

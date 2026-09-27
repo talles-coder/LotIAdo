@@ -38,6 +38,11 @@ class MinioStorage:
     async def excluir(self, key: str) -> None:
         await asyncio.to_thread(self.client.delete_object, Bucket=self.bucket, Key=key)
 
+    async def baixar(self, key: str) -> bytes:
+        """Baixa o conteúdo do objeto (usado pelo worker de ingestão, FASE7-IMPL-01)."""
+        objeto = await asyncio.to_thread(self.client.get_object, Bucket=self.bucket, Key=key)
+        return await asyncio.to_thread(objeto["Body"].read)
+
     async def gerar_url_assinada(self, key: str, expira_em_segundos: int = 3600) -> str:
         """Gera uma URL assinada válida por `expira_em_segundos` (padrão: 1h).
 

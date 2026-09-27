@@ -25,6 +25,10 @@ class Documento(BaseModel):
     # Chave do objeto no bucket MinIO (não a URL — assinada sob demanda, ver
     # application/documento_service.py).
     storage_key = Column(String(512), nullable=False)
+    # Status do pipeline assíncrono de chunking/embeddings (FASE7-IMPL-01):
+    # pendente -> processando -> concluido | falhou. Setado para "pendente"
+    # no upload e atualizado pelo worker RQ (app/ai_rag/application/ingestao_service.py).
+    status_indexacao = Column(String(20), nullable=False, default="pendente", server_default="pendente")
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     tenant = relationship("Tenant")

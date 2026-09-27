@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai_rag.infrastructure.queue import enfileirar_processamento_documento
 from app.config import Settings
 from app.documentos.application.documento_service import DocumentoService
 from app.documentos.domain.exceptions import (
@@ -51,6 +52,12 @@ async def enviar_documento(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loteamento não encontrado")
     except LoteDoDocumentoNaoEncontradoError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lote não encontrado")
+
+    # Enfileira o processamento (FASE7-IMPL-01) sem esperar o resultado — a
+    # rota responde assim que o upload para o MinIO termina, conforme
+    # critério de aceite do card.
+    enfileirar_processamento_documento(documento.id, tenant_id, settings)
+
     return DocumentoResponse.model_validate(documento)
 
 
