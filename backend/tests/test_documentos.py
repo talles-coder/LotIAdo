@@ -89,6 +89,24 @@ async def test_enviar_documento_e_recuperavel_via_url_assinada(client: AsyncClie
 
 
 @pytest.mark.asyncio
+async def test_enviar_documento_enfileira_processamento_e_fica_pendente(client: AsyncClient, db_session: AsyncSession):
+    """Upload enfileira o job de ingestão (SCRUM-88) sem bloquear a resposta, status inicial `pendente`."""
+    from app.ai_rag.infrastructure.queue import NOME_FILA
+    from app.config import Settings
+    import redis
+    from rq import Queue
+
+    token = await _criar_usuario_com_tenant(db_session, "tenant-documentos-fila")
+    fila = Queue(NOME_FILA, connection=redis.from_url(Settings().redis_url))
+    fila.empty()
+
+    body = await _enviar_documento(client, token)
+
+    assert body["status_indexacao"] == "pendente"
+    assert fila.count == 1
+
+
+@pytest.mark.asyncio
 async def test_listar_documentos_filtra_por_loteamento(client: AsyncClient, db_session: AsyncSession):
     """Filtro por loteamento retorna somente os documentos vinculados a ele."""
     token = await _criar_usuario_com_tenant(db_session, "tenant-documentos-filtro")
