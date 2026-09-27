@@ -10,6 +10,11 @@ import {
 } from '@maplibre/maplibre-react-native';
 
 import type { GeoJsonPolygon, LoteStatus } from '../api/loteamentos';
+// `MAPA_ESTILO` já vem com as camadas "ruas" (visível) e "satelite" (oculta) — o toggle pra
+// alternar (`alternarCamadaBase`) só existe hoje na versão web (`LoteamentoMap.web.tsx`); aqui
+// mantém-se "ruas" fixo, sem controle, até esse toggle ganhar uma versão nativa (fora de escopo
+// desta mudança — a tela que motivou o pedido, calibragem de planta, é web-only).
+import { MAPA_ESTILO } from '../lib/mapStyle';
 import { colors } from '../theme/tokens';
 
 export interface PoligonoMapa {
@@ -22,21 +27,6 @@ interface LoteamentoMapProps {
   poligonos: PoligonoMapa[];
   onSelect: (id: string) => void;
 }
-
-/** Tiles públicos do OSM: só para dev/demo (política de uso justo). Decisão D10 em docs/03-decisoes-tecnicas.md. */
-const MAP_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-};
 
 const STATUS_COLOR_EXPR = [
   'match',
@@ -72,7 +62,7 @@ export function LoteamentoMap({ poligonos, onSelect }: LoteamentoMapProps) {
   const bounds = useMemo(() => toBounds(poligonos), [poligonos]);
 
   return (
-    <Map style={styles.map} mapStyle={MAP_STYLE}>
+    <Map style={styles.map} mapStyle={MAPA_ESTILO as unknown as StyleSpecification}>
       {bounds && (
         <Camera initialViewState={{ bounds, padding: { top: 48, right: 48, bottom: 48, left: 48 } }} />
       )}

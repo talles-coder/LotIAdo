@@ -8,10 +8,12 @@ from app.ai_rag.infrastructure.queue import enfileirar_processamento_documento
 from app.config import Settings
 from app.documentos.application.documento_service import DocumentoService
 from app.documentos.domain.exceptions import (
+    DocumentoNaoEhImagemError,
     DocumentoNaoEncontradoError,
     LoteamentoDoDocumentoNaoEncontradoError,
     LoteDoDocumentoNaoEncontradoError,
 )
+from app.documentos.infrastructure.queue import enfileirar_extracao_imagem
 from app.documentos.infrastructure.storage import MinioStorage
 from app.documentos.interface.schemas import DocumentoResponse, DocumentoUrlAssinadaResponse
 from app.identity.interface.dependencies import get_current_tenant_id, get_settings, require_permission
@@ -105,6 +107,52 @@ async def listar_documentos(
     service = _service(db, settings)
     documentos = await service.listar(tenant_id, loteamento_id=loteamento_id, lote_id=lote_id)
     return [DocumentoResponse.model_validate(documento) for documento in documentos]
+
+
+@router.get("/documentos/{documento_id}", response_model=DocumentoResponse)
+async def obter_documento(
+    documento_id: UUID,
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    settings: Settings = Depends(get_settings),
+) -> DocumentoResponse:
+    """Busca um documento — usado, entre outros, para poll do status de extração de imagem (SCRUM-100)."""
+    service = _service(db, settings)
+    try:
+        documento = await service.obter(tenant_id, documento_id)
+    except DocumentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documento não encontrado")
+    return DocumentoResponse.model_validate(documento)
+
+
+@router.post(
+    "/documentos/{documento_id}/sugerir-extracao-imagem",
+    response_model=DocumentoResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def sugerir_extracao_imagem(
+    documento_id: UUID,
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    settings: Settings = Depends(get_settings),
+    _: None = Depends(require_permission("documentos:gerenciar")),
+) -> DocumentoResponse:
+    """Enfileira OCR + detecção de contornos sobre a imagem de uma planta (FASE8-IMPL-02).
+
+    Nunca persiste geometria/identificação definitiva: só preenche `resultado_extracao_imagem`
+    com sugestões em pixel, que a tela de calibração (FASE5-IMPL-03) exibe como camada "sugestão
+    da IA" editável, revisada manualmente antes de qualquer gravação real.
+    """
+    service = _service(db, settings)
+    try:
+        documento = await service.solicitar_extracao_imagem(tenant_id, documento_id)
+    except DocumentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documento não encontrado")
+    except DocumentoNaoEhImagemError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Documento não é uma imagem")
+
+    enfileirar_extracao_imagem(documento.id, tenant_id, settings)
+    return DocumentoResponse.model_validate(documento)
 
 
 @router.get("/documentos/{documento_id}/url-assinada", response_model=DocumentoUrlAssinadaResponse)
