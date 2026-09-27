@@ -12,6 +12,7 @@ from app.loteamentos_lotes.application.lote_import_service import (
 )
 from app.loteamentos_lotes.application.lote_service import LoteService
 from app.loteamentos_lotes.application.loteamento_service import LoteamentoService
+from app.loteamentos_lotes.application.mapeamento_sugestao_service import MapeamentoSugestaoService
 from app.loteamentos_lotes.domain.exceptions import (
     GeometriaInvalidaError,
     LoteamentoNaoEncontradoError,
@@ -31,6 +32,9 @@ from app.loteamentos_lotes.interface.schemas import (
     LoteResponse,
     LoteStatusUpdateRequest,
     LoteUpdateRequest,
+    SugestaoCampoResponse,
+    SugestaoMapeamentoRequest,
+    SugestaoMapeamentoResponse,
 )
 from app.tenancy.interface.dependencies import get_tenant_scoped_db
 
@@ -177,6 +181,38 @@ async def pre_visualizar_importacao_csv(
     if not colunas:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV vazio ou sem cabeçalho")
     return ImportacaoCsvPreviewResponse(colunas=colunas)
+
+
+@router.post(
+    "/loteamentos/{loteamento_id}/lotes/importar/sugerir-mapeamento",
+    response_model=SugestaoMapeamentoResponse,
+)
+async def sugerir_mapeamento_csv(
+    loteamento_id: UUID,
+    request: SugestaoMapeamentoRequest,
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
+) -> SugestaoMapeamentoResponse:
+    """Sugere, via LLM, o mapeamento coluna->campo para os cabeçalhos informados.
+
+    Nunca importa nada sozinho: a tela de mapeamento usa a sugestão apenas para
+    pré-preencher os selects, que o usuário ainda confirma ou corrige manualmente.
+    """
+    loteamento_service = LoteamentoService(db)
+    try:
+        await loteamento_service.obter(tenant_id, loteamento_id)
+    except LoteamentoNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loteamento não encontrado")
+
+    service = MapeamentoSugestaoService()
+    sugestoes = await service.sugerir(request.colunas)
+    return SugestaoMapeamentoResponse(
+        sugestoes={
+            campo: SugestaoCampoResponse(coluna=coluna, confianca=confianca)
+            for campo, (coluna, confianca) in sugestoes.items()
+        }
+    )
 
 
 @router.post(

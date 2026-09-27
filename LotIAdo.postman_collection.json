@@ -761,6 +761,28 @@
 					"response": []
 				},
 				{
+					"name": "Sugerir Mapeamento CSV de Lotes (IA)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"colunas\": [\"Identificação\", \"Quadra\", \"Preço (R$)\", \"Área (m²)\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/loteamentos/{{loteamento_id}}/lotes/importar/sugerir-mapeamento",
+							"host": ["{{base_url}}"],
+							"path": ["loteamentos", "{{loteamento_id}}", "lotes", "importar", "sugerir-mapeamento"]
+						},
+						"description": "Sugere, via LLMProvider, o mapeamento coluna->campo para os cabeçalhos informados (normalmente os mesmos retornados por 'Preview Importação CSV de Lotes'). Retorna só as entradas com uma coluna sugerida, cada uma com um nível de confiança; nunca importa nada sozinho — o usuário ainda confirma/edita o mapeamento em 'Confirmar Importação CSV de Lotes'."
+					},
+					"response": []
+				},
+				{
 					"name": "Confirmar Importação CSV de Lotes",
 					"request": {
 						"method": "POST",
