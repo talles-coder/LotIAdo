@@ -1,0 +1,4 @@
+# Scripts executados dentro de containers Linux (ex.: infra/minio/init/create-bucket.sh)
+# quebram com CRLF ("set: -: invalid option") se o checkout no Windows converter
+# automaticamente as quebras de linha — força LF independente da config local do Git.
+*.sh text eol=lf
