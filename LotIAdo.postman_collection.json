@@ -826,6 +826,28 @@
 					"response": []
 				},
 				{
+					"name": "Atualizar Geometria do Lote",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"geometria\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [\n      [\n        [\n          -47.93,\n          -15.78\n        ],\n        [\n          -47.929,\n          -15.78\n        ],\n        [\n          -47.929,\n          -15.779\n        ],\n        [\n          -47.93,\n          -15.779\n        ],\n        [\n          -47.93,\n          -15.78\n        ]\n      ]\n    ]\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lotes/{{lote_id}}/geometria",
+							"host": ["{{base_url}}"],
+							"path": ["lotes", "{{lote_id}}", "geometria"]
+						},
+						"description": "Persiste o polígono (GeoJSON, SRID 4326) desenhado/revisado no editor de mapa do backoffice web (FASE5-IMPL-03). Retorna 400 se a geometria não for um polígono válido."
+					},
+					"response": []
+				},
+				{
 					"name": "Transicionar Status do Lote",
 					"request": {
 						"method": "PATCH",

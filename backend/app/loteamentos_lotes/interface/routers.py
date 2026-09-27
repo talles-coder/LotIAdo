@@ -13,6 +13,7 @@ from app.loteamentos_lotes.application.lote_import_service import (
 from app.loteamentos_lotes.application.lote_service import LoteService
 from app.loteamentos_lotes.application.loteamento_service import LoteamentoService
 from app.loteamentos_lotes.domain.exceptions import (
+    GeometriaInvalidaError,
     LoteamentoNaoEncontradoError,
     LoteNaoEncontradoError,
     MapeamentoDeImportacaoInvalidoError,
@@ -26,6 +27,7 @@ from app.loteamentos_lotes.interface.schemas import (
     LoteamentoResponse,
     LoteamentoUpdateRequest,
     LoteCreateRequest,
+    LoteGeometriaUpdateRequest,
     LoteResponse,
     LoteStatusUpdateRequest,
     LoteUpdateRequest,
@@ -275,6 +277,25 @@ async def transicionar_status_lote(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lote não encontrado")
     except TransicaoDeStatusInvalidaError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    return LoteResponse.model_validate(lote)
+
+
+@router.put("/lotes/{lote_id}/geometria", response_model=LoteResponse)
+async def atualizar_geometria_lote(
+    lote_id: UUID,
+    request: LoteGeometriaUpdateRequest,
+    tenant_id: UUID = Depends(get_current_tenant_id),
+    db: AsyncSession = Depends(get_tenant_scoped_db),
+    _: None = Depends(require_permission("loteamentos_lotes:gerenciar")),
+) -> LoteResponse:
+    """Persiste o polígono (GeoJSON, SRID 4326) desenhado/revisado no editor de mapa web."""
+    service = LoteService(db)
+    try:
+        lote = await service.atualizar_geometria(tenant_id, lote_id, request.geometria)
+    except LoteNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lote não encontrado")
+    except GeometriaInvalidaError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     return LoteResponse.model_validate(lote)
 
 

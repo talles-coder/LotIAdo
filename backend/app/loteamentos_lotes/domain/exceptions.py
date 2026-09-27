@@ -22,3 +22,7 @@ class TransicaoDeStatusInvalidaError(Exception):
         self.atual = atual
         self.novo = novo
         super().__init__(f"Transição de '{atual.value}' para '{novo.value}' não é permitida")
+
+
+class GeometriaInvalidaError(Exception):
+    """Raised when a geometry payload is not a valid GeoJSON Polygon."""
