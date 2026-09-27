@@ -54,7 +54,8 @@ Só `obter`/`obter_atual_por_lote` são consulta; as demais mudam estado e — p
 ### BuscaService (RAG) — `backend/app/ai_rag/application/busca_service.py` (Fase 7)
 - `buscar(tenant_id, pergunta, loteamento_id=None, lote_id=None, top_k=5) -> list[ResultadoBusca]` — gera embedding via `ai_rag.llm_provider.embed()`, busca chunks similares. Levanta `LoteamentoDaBuscaNaoEncontradoError`/`LoteDaBuscaNaoEncontradoError`.
 - Endpoint `POST /rag/buscar` (`ai_rag/interface/routers.py`) só chama esse serviço — para reaproveitar em código (ex.: tool de agente), instancie `BuscaService(db)` direto, não vá por HTTP.
-- `LLMProvider` (`ai_rag/infrastructure/llm_provider.py`) é abstrato (`embed`, `generate`); instância singleton em `app/ai_rag/__init__.py` como `ai_rag.llm_provider` (hoje `OllamaLLMProvider`). Testes fazem `monkeypatch.setattr(ai_rag, "llm_provider", mock)`.
+- `LLMProvider` (`ai_rag/infrastructure/llm_provider.py`) é abstrato (`embed`, `generate`, `chat`); instância singleton em `app/ai_rag/__init__.py` como `ai_rag.llm_provider` (hoje `OllamaLLMProvider`). Testes fazem `monkeypatch.setattr(ai_rag, "llm_provider", mock)`.
+  - `chat(mensagens, tools=None) -> ChatResposta` (adicionado em FASE9-IMPL-02/SCRUM-104): tool calling via `POST /api/chat` do Ollama. `ChatResposta(conteudo, tool_calls: list[ToolCall])`, `ToolCall(id, nome, argumentos)`. Reaproveitado pelo agente (`app/ai_agents/`) — não é exclusivo do RAG, mora em `ai_rag` só porque é onde o singleton `llm_provider` já existia.
 
 ## Padrão de teste (services chamados direto, sem HTTP)
 
@@ -76,3 +77,11 @@ Para tools que chamam RAG (`BuscaService`), mocke `ai_rag.llm_provider` com `Asy
 ## Tools de agente (FASE9-IMPL-01, `app/ai_agents/`)
 
 Schemas de entrada/saída: `app/ai_agents/domain/schemas.py`. Funções: `app/ai_agents/application/tools.py`. Convenção fixada nessa task (não documentada em `docs/` antes disso): cada tool é `async def nome(db, tenant_id, entrada: XInput) -> XOutput`; exceptions de "não encontrado"/"inválido" são capturadas dentro da tool e viram `encontrado=False` + `mensagem` no output — nunca propagam para o chamador (o agente não deve receber um traceback, e sim uma resposta estruturada de "não achei").
+
+## Grafo do agente (FASE9-IMPL-02/SCRUM-104, `app/ai_agents/`)
+
+- `AgenteService` (`app/ai_agents/application/agente_service.py`) — `perguntar(tenant_id, pergunta) -> str`. `StateGraph` (LangGraph) com 3 nós: `decidir` (chama `ai_rag.llm_provider.chat` com as tools) → `executar_tool` (se o modelo pediu tool_calls) → volta a `decidir`; sem tool_calls, vai a `formatar_resposta` → `END`. Laço limitado por `MAX_CHAMADAS_TOOL` (5) para não travar se o modelo insistir em chamar tools.
+- `app/ai_agents/infrastructure/tool_registry.py` — `TOOL_SPECS`/`TOOLS_POR_NOME` ligam o nome exposto ao LLM à função em `tools.py` e ao schema de entrada; `specs_para_llm()` gera o formato `{"type": "function", "function": {...}}` esperado por `LLMProvider.chat`.
+- Endpoint `POST /agente/perguntar` (`app/ai_agents/interface/routers.py`) — só pergunta + resposta em texto; não expõe histórico de mensagens nem tool calls (isso é estado interno do grafo, recriado a cada chamada).
+- Argumentos de tool propostos pelo modelo são validados via `spec.input_model.model_validate(argumentos)`; `ValidationError` vira mensagem de tool "parâmetros inválidos" (não propaga) — mas erro de negócio real dentro da tool (ex.: falha de infra) propaga normalmente, não é mascarado.
+- Teste: `backend/tests/test_ai_agents_agente.py` — mocka só `ai_rag.llm_provider.chat` (via `AsyncMock().side_effect` com uma lista de `ChatResposta`, uma por "turno" do laço decidir→tool→decidir); tools e DB são reais, mesmo padrão de `db_session` direto do restante da suíte.
