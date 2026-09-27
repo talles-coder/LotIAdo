@@ -64,10 +64,14 @@ O primeiro `expo start --android` baixa e instala o **Expo Go** no emulador sozi
 
 ## Dados de teste
 
+**Login com dados já existentes (evita gerar loteamento/lote na mão):** `user@test.com` / `senha123`, tenant `demo` — já tem loteamentos ("Residencial Teste Mapa", "Residencial Documentos Demo") e pelo menos 1 lote com geometria. Teste sempre com esse login primeiro; só rode o seed abaixo se precisar de um tenant novo/vazio de propósito.
+
 ```bash
 cd backend
 python -m scripts.seed_user --email mapa@test.com --password senha123 --tenant-slug mapa-demo
 ```
+
+`mapa-demo` criado por esse comando **nasce vazio** (sem loteamentos) — não assuma que tem os mesmos dados de `demo` só porque o nome é parecido.
 
 Depois, com o token de `POST /auth/login`, crie loteamento e lotes pela API (`POST /loteamentos`, `POST /loteamentos/{id}/lotes`, `PATCH /lotes/{id}/status`). **Não existe endpoint para gravar `lotes.geometria`** — preencha por SQL, definindo o tenant por causa do RLS:
 
@@ -96,6 +100,14 @@ Armadilhas vistas:
 - O botão flutuante "Tools" do Expo Go aparece nos prints; feche/ignore ou recorte.
 - Login de teste: `mapa@test.com` / `senha123` (tenant `mapa-demo`).
 - **Tela preta sólida ao abrir o app (status bar ok, conteúdo RN preto)**: visto com `-gpu swiftshader_indirect` numa GPU NVIDIA via WHPX — trocar para `-gpu host` resolveu. Se persistir mesmo com `-gpu host`, é só demora: a 1ª compilação de shader/fonte custom (`@expo-google-fonts/*`) no emulador frio pode levar **15–20 s** depois do splash nativo sumir — espere mais antes de `screencap`, não assuma que travou.
+- **Tela preta e permanece preta com `npx expo run:android` (dev-client, não Expo Go)**: o log mostra `Opening lotiado://expo-development-client/?url=http%3A%2F%2F192.168.x.x%3APORT` (IP da LAN da máquina) em vez de `10.0.2.2` — o emulador não necessariamente alcança o IP da LAN do host (firewall/roteamento). Fix sem rebuildar nada:
+  ```bash
+  adb reverse tcp:PORT tcp:PORT
+  adb shell am force-stop com.lotiado.mobile
+  adb shell am start -a android.intent.action.VIEW -d "lotiado://expo-development-client/?url=http%3A%2F%2Flocalhost%3APORT"
+  ```
+  (troque `PORT` pela porta do Metro, ex. `8081`/`8082`). Depois disso o app carrega o bundle via `localhost` redirecionado pelo `adb reverse`.
+- **Porta 8081 "in use"**: quase sempre é uma sessão anterior (sua ou de outro terminal) já servindo o mesmo repo — confira com `curl -s -o /dev/null -w "%{http_code}" http://localhost:8081` antes de subir outro `expo start` numa porta alternativa. Se responder 200, **reuse-a** (evita gasto de rebuild/CORS extra); só suba em outra porta se precisar rodar dois apps diferentes ao mesmo tempo.
 
 ## Mapa: precisa de development build (não roda no Expo Go)
 
@@ -113,7 +125,42 @@ Precisa de `JAVA_HOME` (JDK 17) e `ANDROID_HOME` exportados e do emulador já de
 
 O target web agora é oficial (`react-native-web` nas dependências, `WebShell.web.tsx` com sidebar em tela larga, `tokenStorage.web.ts` com `localStorage`, `LoteamentoMap.web.tsx` como stand-in até FASE5-IMPL-03):
 - `cd mobile && EXPO_PUBLIC_API_URL=http://localhost:8000 npx expo start --web --port 8081`;
-- o backend libera CORS para `localhost:8081`/`19006` (`cors_origins` em `app/config.py`; sobrescreva via `CORS_ORIGINS` no `.env`);
-- Playwright (Python) para dirigir o navegador; use `page.locator("input")` em vez de `get_by_label` (o Paper duplica o label).
+- **use sempre a porta 8081** — o backend só libera CORS para `localhost:8081`/`19006` (`cors_origins` em `app/config.py`); subir em outra porta (ex. 8090) quebra toda chamada à API com erro de CORS silencioso no console do browser, não no terminal do Expo.
+- `page.locator("input")` em vez de `get_by_label`/`getByLabel` (o Paper duplica o label) para preencher formulários por automação.
+
+### Capturar screenshot web sem ferramenta de navegador interativa na sessão
+
+Se a sessão não tiver Claude in Chrome / built-in browser conectado (comum em ambiente não-interativo), **não pule a evidência** — use Playwright headless via Node, que já roda sem setup extra nesta máquina (Chromium do Playwright já fica cacheado em `%LOCALAPPDATA%\ms-playwright` depois do primeiro uso):
+
+```bash
+# instale playwright num diretório fora do repo (nunca em mobile/package.json — não é dependência do app)
+cd <scratchpad ou outra pasta temporária> && npm init -y >/dev/null && npm install playwright@1.63.0 --no-save
+npx --yes playwright install chromium   # no-op se já estiver cacheado
+```
+
+Script mínimo (login real + navegação + screenshot):
+```js
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ viewport: { width: 430, height: 900 } })).newPage();
+  await page.goto('http://localhost:8081/login', { waitUntil: 'networkidle' });
+  const inputs = await page.locator('input').all();
+  await inputs[0].fill('user@test.com');
+  await inputs[1].fill('senha123');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.waitForTimeout(2000); // sem waitForURL — expo-router faz navegação client-side
+  await page.goto('http://localhost:8081/loteamentos', { waitUntil: 'networkidle' });
+  await page.screenshot({ path: 'shot.png' });
+  await browser.close();
+})();
+```
+Rode com `node script.js` a partir de `mobile/` (o `page.goto` para rotas do expo-router funciona bem em navegação direta; evite `waitForURL` depois de um clique que causa navegação client-side, pode nunca resolver — use `waitForTimeout` + `page.url()` para checar).
+
+**Simular offline para telas com `useIsOnline`/`NetInfo`:** `context.setOffline(true)` sozinho **não é suficiente**. A implementação web do `@react-native-community/netinfo` prioriza a API `navigator.connection` (NetworkInformation) quando o browser suporta — e Chromium suporta — então ela escuta o evento `'change'` desse objeto, não `window online/offline`. Depois de `setOffline`, dispare manualmente:
+```js
+await page.evaluate(() => navigator.connection?.dispatchEvent(new Event('change')));
+```
+Sem isso, a UI simplesmente não reage (parece bug na feature, mas é só o teste que não notificou a lib).
 
 iOS não é possível nesta máquina (Windows).
