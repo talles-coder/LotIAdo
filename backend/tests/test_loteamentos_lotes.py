@@ -250,6 +250,75 @@ async def test_transicao_de_status_invalida_retorna_409(client: AsyncClient, db_
 
 
 @pytest.mark.asyncio
+async def test_atualizar_geometria_lote_persiste_poligono_valido(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """PUT /lotes/{id}/geometria persiste o polígono e o devolve como GeoJSON."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-lote-geometria")
+    loteamento_id = await _criar_loteamento(client, token)
+    lote = await _criar_lote(client, token, loteamento_id)
+
+    poligono = {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [0.001, 0], [0.001, 0.001], [0, 0.001], [0, 0]]],
+    }
+    response = await client.put(
+        f"/lotes/{lote['id']}/geometria", json={"geometria": poligono}, headers=_auth_headers(token)
+    )
+
+    assert response.status_code == 200
+    geometria = response.json()["geometria"]
+    assert geometria["type"] == "Polygon"
+    assert geometria["coordinates"][0][0] == [0.0, 0.0]
+
+    lote_persistido = await db_session.get(Lote, lote["id"])
+    assert lote_persistido.geometria is not None
+
+
+@pytest.mark.asyncio
+async def test_atualizar_geometria_lote_com_poligono_invalido_retorna_400(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Um GeoJSON que não é um polígono válido (auto-interseção) retorna 400."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-lote-geometria-invalida")
+    loteamento_id = await _criar_loteamento(client, token)
+    lote = await _criar_lote(client, token, loteamento_id)
+
+    # "Bowtie" self-intersecting polygon.
+    poligono_invalido = {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [1, 1], [1, 0], [0, 1], [0, 0]]],
+    }
+    response = await client.put(
+        f"/lotes/{lote['id']}/geometria",
+        json={"geometria": poligono_invalido},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_atualizar_geometria_lote_inexistente_retorna_404(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Atualizar a geometria de um lote inexistente (ou de outro tenant) retorna 404."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-lote-geometria-404")
+    poligono = {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [0.001, 0], [0.001, 0.001], [0, 0.001], [0, 0]]],
+    }
+
+    response = await client.put(
+        "/lotes/00000000-0000-0000-0000-000000000000/geometria",
+        json={"geometria": poligono},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_remover_lote_e_remocao_logica(client: AsyncClient, db_session: AsyncSession):
     """Remover um lote é lógico: some da listagem mas não é hard-delete."""
     token = await _criar_usuario_com_tenant(db_session, "tenant-lote-remover")

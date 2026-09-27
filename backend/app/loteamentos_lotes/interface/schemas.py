@@ -49,6 +49,11 @@ class LoteStatusUpdateRequest(BaseModel):
     status: LoteStatus
 
 
+class LoteGeometriaUpdateRequest(BaseModel):
+    # GeoJSON Polygon (SRID 4326, coordenadas [lng, lat]) desenhado/revisado no editor web.
+    geometria: dict
+
+
 class LoteResponse(BaseModel):
     id: UUID
     loteamento_id: UUID

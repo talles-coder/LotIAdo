@@ -47,3 +47,8 @@ export async function obterLote(loteId: string): Promise<Lote> {
   const { data } = await apiClient.get<Lote>(`/lotes/${loteId}`);
   return data;
 }
+
+export async function atualizarGeometriaLote(loteId: string, geometria: GeoJsonPolygon): Promise<Lote> {
+  const { data } = await apiClient.put<Lote>(`/lotes/${loteId}/geometria`, { geometria });
+  return data;
+}

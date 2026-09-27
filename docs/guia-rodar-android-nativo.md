@@ -1,38 +1,54 @@
-# Guia — rodar o app mobile nativo (Android) nesta máquina Windows
+# Guia — rodar o app mobile nativo (Android) em Windows, sem Android Studio
 
-Para quem for capturar telas/validar o app em nativo sem Android Studio. Testado em 2026-09-26 (Windows 11, 16 GB RAM, WHPX ativo, sem admin).
+Para quem for capturar telas/validar o app em nativo. Testado em duas máquinas Windows 11 (16 GB RAM, WHPX ativo, sem admin) — Dev 1 em 2026-09-26, Dev 2 em 2026-09-27 — reproduzido do zero na segunda sem ajuste no procedimento.
 
-## O que já está instalado (fora do repo)
+## O que precisa estar instalado (fora do repo, por usuário/máquina — não é compartilhado entre devs)
 
-Tudo em `C:\Users\User\dev-tools\` (instalação por usuário, sem admin):
+Convenção: tudo em `%USERPROFILE%\dev-tools\` (instalação por usuário, sem admin). Cada dev instala na própria máquina; os caminhos abaixo variam com o usuário do Windows.
 
 | Item | Caminho |
 |---|---|
-| JDK 17 (Temurin) | `C:\Users\User\dev-tools\jdk17` |
-| Android SDK (cmdline-tools, platform-tools, emulator, platform 35, build-tools 35.0.0, system image `android-35;google_apis;x86_64`) | `C:\Users\User\dev-tools\android-sdk` |
+| JDK 17 (Temurin) | `%USERPROFILE%\dev-tools\jdk17` |
+| Android SDK (cmdline-tools, platform-tools, emulator, platform 35, build-tools 35.0.0, system image `android-35;google_apis;x86_64`) | `%USERPROFILE%\dev-tools\android-sdk` |
 | AVD | `lotiado_pixel` (Pixel 6, Android 35) |
 
-O Java do sistema é o 8 — **sempre** exporte o JDK 17 na sessão. Se a pasta `dev-tools` não existir (outra máquina), reinstale: baixe o JDK 17 zip (Adoptium) e o `commandlinetools-win` (Google), monte `android-sdk/cmdline-tools/latest`, rode `sdkmanager --licenses` e instale os pacotes da tabela, depois `avdmanager create avd -n lotiado_pixel -k "system-images;android-35;google_apis;x86_64" -d pixel_6`.
+O Java do sistema costuma ser o 8 — **sempre** exporte o JDK 17 na sessão, não dependa do `java` do PATH padrão. Se `dev-tools` ainda não existir nesta máquina, instale do zero:
+
+```bash
+mkdir -p "$USERPROFILE/dev-tools" && cd "$USERPROFILE/dev-tools"
+curl -sL -o jdk17.zip "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse?project=jdk"
+curl -sL -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip"
+# Extrair (ex. via PowerShell Expand-Archive): jdk17.zip -> dev-tools/jdk17 (a pasta jdk-17.x dentro do zip vira "jdk17");
+# cmdline-tools.zip -> dev-tools/android-sdk/cmdline-tools/latest (a pasta "cmdline-tools" dentro do zip é renomeada para "latest")
+export JAVA_HOME="$USERPROFILE/dev-tools/jdk17"
+export ANDROID_HOME="$USERPROFILE/dev-tools/android-sdk"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+yes | sdkmanager.bat --licenses
+sdkmanager.bat "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-35;google_apis;x86_64"
+echo "no" | avdmanager.bat create avd -n lotiado_pixel -k "system-images;android-35;google_apis;x86_64" -d pixel_6
+```
+
+No Git Bash, os executáveis do `cmdline-tools/bin` são `.bat` — chame `sdkmanager.bat`/`avdmanager.bat` explicitamente (sem a extensão, o Bash não acha o comando no PATH).
 
 ## Variáveis de ambiente (por sessão de Bash)
 
 ```bash
-export JAVA_HOME=/c/Users/User/dev-tools/jdk17
-export ANDROID_HOME=/c/Users/User/dev-tools/android-sdk
+export JAVA_HOME="$USERPROFILE/dev-tools/jdk17"
+export ANDROID_HOME="$USERPROFILE/dev-tools/android-sdk"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
 ## Subir tudo
 
 ```bash
-# 1. Infra + banco (ver README/Makefile). Nesta máquina o Postgres do LotIAdo está na porta 55499
-#    (5432 é de outro projeto). Migrations com o dono do schema:
+# 1. Infra: docker compose up -d (ver README/Makefile). Porta do Postgres é 5432 por padrão
+#    (POSTGRES_PORT no .env se precisar mudar — ex. outro projeto já usando 5432 na máquina).
+#    Migrations com o dono do schema:
 cd backend
-export MIGRATIONS_DATABASE_URL=postgresql+asyncpg://lotiado:lotiado@localhost:55499/lotiado
-alembic upgrade head
+docker compose up -d   # a partir da raiz do repo
+alembic upgrade head   # usa MIGRATIONS_DATABASE_URL/DATABASE_URL do backend/.env
 
 # 2. API — 0.0.0.0 para o emulador alcançar; em nativo NÃO precisa de CORS
-export DATABASE_URL=postgresql+asyncpg://lotiado_app:lotiado_app@localhost:55499/lotiado
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 
 # 3. Emulador (espera o boot)
@@ -79,6 +95,7 @@ Armadilhas vistas:
 - Toque no campo, espere ~1–2 s, e só então `input text`.
 - O botão flutuante "Tools" do Expo Go aparece nos prints; feche/ignore ou recorte.
 - Login de teste: `mapa@test.com` / `senha123` (tenant `mapa-demo`).
+- **Tela preta sólida ao abrir o app (status bar ok, conteúdo RN preto)**: visto com `-gpu swiftshader_indirect` numa GPU NVIDIA via WHPX — trocar para `-gpu host` resolveu. Se persistir mesmo com `-gpu host`, é só demora: a 1ª compilação de shader/fonte custom (`@expo-google-fonts/*`) no emulador frio pode levar **15–20 s** depois do splash nativo sumir — espere mais antes de `screencap`, não assuma que travou.
 
 ## Mapa: precisa de development build (não roda no Expo Go)
 
