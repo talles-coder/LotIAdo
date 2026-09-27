@@ -14,6 +14,7 @@ import {
 } from '../../src/api/reservas';
 import { formatArea, formatBRL } from '../../src/lib/format';
 import { getErrorMessage } from '../../src/lib/errors';
+import { OFFLINE_MESSAGE, useIsOnline } from '../../src/lib/useIsOnline';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
@@ -24,6 +25,7 @@ const CELULA_DESTACADA_NA_PLANTA = 8;
 export default function LoteDetalheScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const isOnline = useIsOnline();
   const query = useQuery({ queryKey: ['lotes', id], queryFn: () => obterLote(id) });
 
   const acoes = query.data ? acoesDisponiveisParaStatus(query.data.status) : null;
@@ -200,10 +202,17 @@ export default function LoteDetalheScreen() {
 
       {query.data && temFooterDeAcao ? (
         <View style={shared.stickyFooter}>
+          {!isOnline && (acoes?.reservar || acoes?.converterVenda || acoes?.cancelar) && (
+            <View style={[styles.infoBanner, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.infoBannerText, { color: colors.mutedForeground }]}>{OFFLINE_MESSAGE}</Text>
+            </View>
+          )}
+
           {acoes?.reservar && (
             <Button
               mode="contained"
               onPress={() => router.push(`/lotes/${id}/reservar`)}
+              disabled={!isOnline}
               contentStyle={styles.actionButtonContent}
               labelStyle={styles.actionButtonLabel}
             >
@@ -221,7 +230,7 @@ export default function LoteDetalheScreen() {
                   textColor={colors.destructive}
                   onPress={() => confirmarCancelamento(reservaAtualQuery.data!.id)}
                   loading={cancelarMutation.isPending}
-                  disabled={converterMutation.isPending || cancelarMutation.isPending}
+                  disabled={converterMutation.isPending || cancelarMutation.isPending || !isOnline}
                   style={styles.footerActionCancelar}
                   contentStyle={styles.footerActionContent}
                   labelStyle={styles.footerActionLabel}
@@ -234,7 +243,7 @@ export default function LoteDetalheScreen() {
                   icon={({ size, color }) => <Check size={size} color={color} />}
                   onPress={() => converterMutation.mutate(reservaAtualQuery.data!.id)}
                   loading={converterMutation.isPending}
-                  disabled={converterMutation.isPending || cancelarMutation.isPending}
+                  disabled={converterMutation.isPending || cancelarMutation.isPending || !isOnline}
                   style={styles.footerActionConverter}
                   contentStyle={styles.footerActionContent}
                   labelStyle={styles.footerActionLabel}

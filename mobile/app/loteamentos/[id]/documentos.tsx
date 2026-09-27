@@ -14,6 +14,7 @@ import {
   type Documento,
 } from '../../../src/api/documentos';
 import { getErrorMessage } from '../../../src/lib/errors';
+import { OFFLINE_MESSAGE, useIsOnline } from '../../../src/lib/useIsOnline';
 import { colors, fonts } from '../../../src/theme/tokens';
 import { shared } from '../../../src/theme/shared';
 
@@ -26,6 +27,7 @@ function formatarTamanho(bytes: number): string {
 export default function DocumentosDoLoteamentoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const isOnline = useIsOnline();
   const [error, setError] = useState<string | null>(null);
 
   const documentosQuery = useQuery({
@@ -83,14 +85,14 @@ export default function DocumentosDoLoteamentoScreen() {
           icon={() => <Upload size={18} color={colors.primary} />}
           onPress={escolherArquivo}
           loading={uploadMutation.isPending}
-          disabled={uploadMutation.isPending}
+          disabled={uploadMutation.isPending || !isOnline}
           style={styles.uploadButton}
         >
           Enviar documento
         </Button>
 
-        <HelperText type="error" visible={error !== null}>
-          {error}
+        <HelperText type="error" visible={error !== null || !isOnline}>
+          {!isOnline ? OFFLINE_MESSAGE : error}
         </HelperText>
 
         {documentosQuery.isLoading ? (
@@ -126,9 +128,9 @@ export default function DocumentosDoLoteamentoScreen() {
                   onPress={() => removerMutation.mutate(item.id)}
                   style={styles.iconButton}
                   hitSlop={8}
-                  disabled={removerMutation.isPending}
+                  disabled={removerMutation.isPending || !isOnline}
                 >
-                  <Trash2 size={18} color={colors.destructive} />
+                  <Trash2 size={18} color={!isOnline ? colors.mutedForeground : colors.destructive} />
                 </Pressable>
               </View>
             )}
