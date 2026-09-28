@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config import Settings
-from app.common.models import Base
 
 # Importados pelo efeito colateral, nesta ordem:
 # 1. app.models — registra todos os domain models no declarative registry

@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  backend:
+    name: Backend — lint + testes
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build imagem Postgres (PostGIS + pgvector)
+        working-directory: infra/postgres
+        run: docker build -t lotiado-postgres-ci .
+
+      # Não usamos `services:` (que exige uma imagem já publicada) porque a
+      # imagem de Postgres do projeto é construída localmente a partir de
+      # infra/postgres/Dockerfile (postgis/postgis + pacote pgvector via apt)
+      # — ver docker-compose.yml. Subir via `docker run` replica exatamente
+      # o mesmo setup usado localmente (mesmos init scripts).
+      - name: Subir Postgres de teste
+        run: |
+          docker run -d --name lotiado-postgres-ci \
+            -e POSTGRES_USER=lotiado -e POSTGRES_PASSWORD=lotiado -e POSTGRES_DB=lotiado \
+            -p 5432:5432 \
+            -v ${{ github.workspace }}/infra/postgres/init:/docker-entrypoint-initdb.d:ro \
+            lotiado-postgres-ci
+
+      - name: Esperar Postgres ficar pronto
+        run: |
+          for i in $(seq 1 30); do
+            docker exec lotiado-postgres-ci pg_isready -U lotiado -d lotiado && exit 0
+            sleep 2
+          done
+          echo "Postgres não ficou pronto a tempo" >&2
+          exit 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Instalar dependências
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Aplicar migrations (sanity check)
+        env:
+          MIGRATIONS_DATABASE_URL: postgresql+asyncpg://lotiado:lotiado@localhost:5432/lotiado
+        run: alembic upgrade head
+
+      - name: Testes
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://lotiado:lotiado@localhost:5432/lotiado_test
+          TEST_APP_DATABASE_URL: postgresql+asyncpg://lotiado_app:lotiado_app@localhost:5432/lotiado_test
+        run: pytest tests/ -v
+
+  mobile:
+    name: Mobile — type-check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Type-check (tsc)
+        run: npm run typecheck

@@ -1,5 +1,7 @@
 # LotIAdo
 
+[![CI](https://github.com/talles-coder/LotIAdo/actions/workflows/ci.yml/badge.svg)](https://github.com/talles-coder/LotIAdo/actions/workflows/ci.yml)
+
 SaaS multitenant para gestão de loteamentos, imóveis e negociações imobiliárias. Monólito modular (FastAPI) + app Expo único (mobile + backoffice web) + PostgreSQL + IA (RAG + agentes).
 
 Projeto de portfólio/aprendizado — ver [docs/](docs/) para a especificação completa (requisitos, arquitetura, decisões técnicas, roadmap por fase) e [CLAUDE.md](CLAUDE.md) para as regras operacionais do repositório.

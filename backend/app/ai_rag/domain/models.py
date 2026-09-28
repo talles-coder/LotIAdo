@@ -1,5 +1,5 @@
 """DocumentChunk domain model."""
-from sqlalchemy import Column, ForeignKey, Integer, String, Text, UUID
+from sqlalchemy import Column, ForeignKey, Integer, Text, UUID
 from sqlalchemy.orm import relationship
 
 from app.common.models import BaseModel

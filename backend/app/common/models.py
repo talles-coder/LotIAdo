@@ -1,5 +1,4 @@
 """Base SQLAlchemy models and utilities."""
-from datetime import datetime
 from uuid import uuid4
 from sqlalchemy import Column, UUID, DateTime, func
 from sqlalchemy.orm import declarative_base

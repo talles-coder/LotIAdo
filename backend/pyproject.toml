@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Conjunto inicial deliberadamente restrito (F = pyflakes, E9 = erros de
+# sintaxe): pega import/variável não usada e código que nem importa, com
+# risco baixo de falso positivo. Ver FASE24-IMPL-01 (SCRUM-119) em
+# docs/backlog/fase-24-cloud-producao.md — ampliar o ruleset (ex.: E/W do
+# pycodestyle) é trabalho futuro, não bloqueante para o gate de CI existir.
+select = ["F", "E9"]
