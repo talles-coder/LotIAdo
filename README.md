@@ -44,7 +44,7 @@ Sobe 4 containers via Docker Compose. Confirme que todos ficaram saudáveis:
 docker compose ps
 ```
 
-Todos devem aparecer como `Up`/`healthy`. Se a porta 5432 (Postgres), 6379 (Redis), 9000 (MinIO) ou 11434 (Ollama) já estiver em uso na sua máquina por outro serviço, ajuste `POSTGRES_PORT`/`REDIS_PORT`/`MINIO_API_PORT`/`OLLAMA_PORT` num arquivo `.env` na raiz do repo (mesmo nome usado pelo `docker-compose.yml`) antes de rodar `make up`.
+Todos devem aparecer como `Up`/`healthy`. Se a porta 5432 (Postgres), 6379 (Redis), 9090 (MinIO) ou 11434 (Ollama) já estiver em uso na sua máquina por outro serviço, ajuste `POSTGRES_PORT`/`REDIS_PORT`/`MINIO_API_PORT`/`OLLAMA_PORT` num arquivo `.env` na raiz do repo (mesmo nome usado pelo `docker-compose.yml`) antes de rodar `make up`.
 
 **Modelos do Ollama** (necessário para os endpoints de RAG, Fase 7+) — `make up` só sobe o container vazio, os modelos não vêm pré-baixados:
 
@@ -53,7 +53,7 @@ docker exec lotiado-ollama ollama pull nomic-embed-text
 docker exec lotiado-ollama ollama pull llama3.2
 ```
 
-**Bucket do MinIO** — já é criado automaticamente pelo serviço `minio-init` do `docker-compose.yml`; não precisa de passo manual. Se quiser conferir, o console web fica em `http://localhost:9001` (login `minioadmin` / `minioadmin`).
+**Bucket do MinIO** — já é criado automaticamente pelo serviço `minio-init` do `docker-compose.yml`; não precisa de passo manual. O armazenamento local roda como [adobe/s3mock](https://github.com/adobe/S3Mock) (API S3 compatível, sem console web) — ver `docs/03-decisoes-tecnicas.md` sobre a troca do MinIO real.
 
 **Tesseract OCR** (necessário para o job de extração de imagem de planta, Fase 8+) — o serviço `worker` do docker-compose (`infra/worker/Dockerfile`) já vem com o binário; só instale localmente (ex. Windows: `winget install UB-Mannheim.TesseractOCR`, adicionando a pasta de instalação ao PATH) se for chamar o pipeline de extração fora do container. O pacote de idioma "por" não vem por padrão nesse instalador — o código já cai para "eng" nesse caso, então não é bloqueante para os passos abaixo.
 

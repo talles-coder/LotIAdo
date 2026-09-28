@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # parte porque a URL assinada e consumida pelo cliente (navegador/app), nao
     # pelo backend: no emulador Android, por exemplo, precisa ser
     # `http://10.0.2.2:9000` em vez de `http://localhost:9000`.
-    minio_endpoint_url: str = "http://localhost:9000"
+    minio_endpoint_url: str = "http://localhost:9090"
     minio_public_endpoint_url: str | None = None
     minio_root_user: str = "minioadmin"
     minio_root_password: str = "minioadmin"
