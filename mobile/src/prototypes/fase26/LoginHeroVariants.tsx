@@ -167,6 +167,74 @@ export function LoginHeroPulse() {
   );
 }
 
+/**
+ * Variação F — lote itinerante: um quadrado verde "preenche" uma célula do grid por vez,
+ * pulando entre células diferentes da malha (não fica parado como em C). Ajuste pedido
+ * pelo usuário (2026-09-28) sobre a C: em vez de pulsar no lugar, o destaque se move.
+ */
+const GRID_CELL = 24;
+const WANDER_CELLS = [
+  { col: 5, row: 1 },
+  { col: 8, row: 2 },
+  { col: 3, row: 3 },
+  { col: 10, row: 1 },
+  { col: 6, row: 4 },
+  { col: 11, row: 3 },
+] as const;
+const WANDER_HOLD_MS = 900;
+const WANDER_FADE_MS = 220;
+
+export function LoginHeroWanderingLot() {
+  const opacity = useSharedValue(0);
+  const left = useSharedValue(WANDER_CELLS[0].col * GRID_CELL);
+  const top = useSharedValue(WANDER_CELLS[0].row * GRID_CELL);
+
+  useEffect(() => {
+    let cancelled = false;
+    let i = 0;
+
+    function step() {
+      if (cancelled) return;
+      const cell = WANDER_CELLS[i % WANDER_CELLS.length];
+      left.value = cell.col * GRID_CELL;
+      top.value = cell.row * GRID_CELL;
+      opacity.value = withSequence(
+        withTiming(0.85, { duration: WANDER_FADE_MS, easing: Easing.out(Easing.quad) }),
+        withDelay(WANDER_HOLD_MS, withTiming(0, { duration: WANDER_FADE_MS, easing: Easing.in(Easing.quad) })),
+      );
+      i++;
+      timer = setTimeout(step, WANDER_FADE_MS * 2 + WANDER_HOLD_MS + 120);
+    }
+
+    let timer = setTimeout(step, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    left: left.value,
+    top: top.value,
+  }));
+
+  return (
+    <HeroFrame>
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" opacity={0.15}>
+        <Defs>
+          <Pattern id="gridF" width={GRID_CELL} height={GRID_CELL} patternUnits="userSpaceOnUse">
+            <Path d="M24 0H0V24" fill="none" stroke={colors.earthForeground} strokeWidth={1} />
+          </Pattern>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#gridF)" />
+      </Svg>
+      <Animated.View style={[styles.wanderLot, style]} />
+    </HeroFrame>
+  );
+}
+
 const styles = StyleSheet.create({
   hero: {
     height: HERO_HEIGHT,
@@ -186,6 +254,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
+  wanderLot: {
+    position: 'absolute',
+    width: GRID_CELL,
+    height: GRID_CELL,
     backgroundColor: colors.accent,
   },
 });

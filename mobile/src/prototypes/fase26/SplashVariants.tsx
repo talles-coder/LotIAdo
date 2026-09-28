@@ -25,10 +25,18 @@ const MARK_SIZE = 72;
 
 const WORD_LETTERS = 'LotIAdo'.split('');
 
-function CascadeLetter({ letter, index }: { letter: string; index: number }) {
+function CascadeLetter({
+  letter,
+  index,
+  startDelay = 220,
+}: {
+  letter: string;
+  index: number;
+  startDelay?: number;
+}) {
   const opacity = useSharedValue(0);
   const translate = useSharedValue(10);
-  const delay = 220 + index * 55;
+  const delay = startDelay + index * 55;
 
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
@@ -166,6 +174,90 @@ export function SplashAssemble({ onFinish }: { onFinish?: () => void }) {
         <Text style={{ color: colors.primary }}>IA</Text>
         do
       </Animated.Text>
+    </View>
+  );
+}
+
+/**
+ * Variação G — assemble (moldura + cruz como na E) + a palavra caindo letra a letra
+ * como na D, mas o quadrado verde não está montado desde o início: ele cai de fora
+ * do quadro por cima do quadrado laranja, com um pequeno "baque" (squash) na chegada.
+ * Ajuste pedido pelo usuário (2026-09-28) sobre a E.
+ */
+export function SplashAssembleDrop({ onFinish }: { onFinish?: () => void }) {
+  const borderScale = useSharedValue(0);
+  const crossOpacity = useSharedValue(0);
+  const accentTranslateY = useSharedValue(-90);
+  const accentSquashY = useSharedValue(1);
+  const accentSquashX = useSharedValue(1);
+
+  useEffect(() => {
+    borderScale.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
+    crossOpacity.value = withDelay(260, withTiming(0.6, { duration: 180 }));
+
+    // queda do quadrado verde: acelera (gravidade) e "baque" (squash) na aterrissagem.
+    accentTranslateY.value = withDelay(
+      480,
+      withSequence(
+        withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }),
+        withTiming(0, { duration: 0 }),
+      ),
+    );
+    accentSquashY.value = withDelay(
+      800,
+      withSequence(
+        withTiming(0.6, { duration: 70, easing: Easing.out(Easing.cubic) }),
+        withSpring(1, { damping: 5, stiffness: 260 }),
+      ),
+    );
+    accentSquashX.value = withDelay(
+      800,
+      withSequence(
+        withTiming(1.35, { duration: 70, easing: Easing.out(Easing.cubic) }),
+        withSpring(1, { damping: 5, stiffness: 260 }),
+      ),
+    );
+
+    const total = 900 + WORD_LETTERS.length * 55 + 500;
+    const timer = setTimeout(() => onFinish?.(), total);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const borderStyle = useAnimatedStyle(() => ({ transform: [{ scale: borderScale.value }] }));
+  const crossStyle = useAnimatedStyle(() => ({ opacity: crossOpacity.value }));
+  const accentStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: accentTranslateY.value },
+      { scaleY: accentSquashY.value },
+      { scaleX: accentSquashX.value },
+    ],
+  }));
+
+  return (
+    <View style={styles.container}>
+      <View style={{ width: MARK_SIZE, height: MARK_SIZE }}>
+        <Animated.View style={[StyleSheet.absoluteFill, borderStyle]}>
+          <Svg width={MARK_SIZE} height={MARK_SIZE} viewBox="0 0 40 40">
+            <Rect x={3} y={3} width={34} height={34} rx={7} fill={colors.primary} />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={[StyleSheet.absoluteFill, crossStyle]}>
+          <Svg width={MARK_SIZE} height={MARK_SIZE} viewBox="0 0 40 40">
+            <Path d="M3 20h34M20 3v34" stroke={colors.primaryForeground} strokeWidth={2} />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={[StyleSheet.absoluteFill, accentStyle]}>
+          <Svg width={MARK_SIZE} height={MARK_SIZE} viewBox="0 0 40 40">
+            <Rect x={22} y={22} width={12} height={12} rx={2} fill={colors.accent} />
+          </Svg>
+        </Animated.View>
+      </View>
+      <View style={styles.wordRow}>
+        {WORD_LETTERS.map((letter, i) => (
+          <CascadeLetter key={i} letter={letter} index={i} startDelay={900} />
+        ))}
+      </View>
     </View>
   );
 }

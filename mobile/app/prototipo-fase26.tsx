@@ -6,8 +6,13 @@ import {
   LoginHeroParallax,
   LoginHeroParticles,
   LoginHeroPulse,
+  LoginHeroWanderingLot,
 } from '../src/prototypes/fase26/LoginHeroVariants';
-import { SplashAssemble, SplashBouncyEntrance } from '../src/prototypes/fase26/SplashVariants';
+import {
+  SplashAssemble,
+  SplashAssembleDrop,
+  SplashBouncyEntrance,
+} from '../src/prototypes/fase26/SplashVariants';
 import { colors, fonts } from '../src/theme/tokens';
 import { shared } from '../src/theme/shared';
 
@@ -22,11 +27,13 @@ const HERO_VARIANTS = [
   { key: 'A', label: 'A — Paralaxe leve', Component: LoginHeroParallax },
   { key: 'B', label: 'B — Partículas discretas', Component: LoginHeroParticles },
   { key: 'C', label: 'C — Pulse sutil no lote', Component: LoginHeroPulse },
+  { key: 'F', label: 'F — Lote itinerante (ajuste da C)', Component: LoginHeroWanderingLot },
 ] as const;
 
 const SPLASH_VARIANTS = [
   { key: 'D', label: 'D — Entrada divertida (tipo iFood)', Component: SplashBouncyEntrance },
   { key: 'E', label: 'E — Montagem com "clique" (tipo Switch)', Component: SplashAssemble },
+  { key: 'G', label: 'G — Assemble + verde caindo (ajuste da E)', Component: SplashAssembleDrop },
 ] as const;
 
 export default function PrototipoFase26() {
