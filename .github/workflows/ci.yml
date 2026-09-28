@@ -12,8 +12,38 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
+
+      # `services:` não aceita `command:`, e a imagem do MinIO exige o
+      # argumento `server /data` (sem ele o container só imprime o help e
+      # sai) — por isso sobe via `docker run`, igual ao Postgres abaixo.
+      - name: Subir MinIO de teste
+        run: |
+          docker run -d --name lotiado-minio-ci \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            -p 9000:9000 \
+            quay.io/minio/minio:latest server /data
+
+      - name: Esperar MinIO ficar pronto e criar bucket
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            sleep 2
+          done
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
+            quay.io/minio/mc:latest mb --ignore-existing local/lotiado
 
       - name: Build imagem Postgres (PostGIS + pgvector)
         working-directory: infra/postgres
