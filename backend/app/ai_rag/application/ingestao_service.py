@@ -32,6 +32,8 @@ from app.config import Settings
 from app.database import async_session
 from app.documentos.domain.models import Documento
 from app.documentos.infrastructure.storage import MinioStorage
+from app.observabilidade.domain.chamada_ia import OrigemChamadaIA
+from app.observabilidade.infrastructure.context import contexto_origem_ia
 
 
 async def _set_tenant(db: AsyncSession, tenant_id: UUID) -> None:
@@ -70,7 +72,8 @@ async def _processar_documento_async(documento_id: str, tenant_id: str) -> None:
 
             chunks = []
             for ordem, chunk_texto in enumerate(chunks_texto):
-                embedding = await ai_rag.llm_provider.embed(chunk_texto)
+                with contexto_origem_ia(OrigemChamadaIA.IMPORTACAO):
+                    embedding = await ai_rag.llm_provider.embed(chunk_texto)
                 chunks.append(
                     DocumentChunk(
                         documento_id=documento.id,
