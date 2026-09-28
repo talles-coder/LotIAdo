@@ -164,3 +164,23 @@ await page.evaluate(() => navigator.connection?.dispatchEvent(new Event('change'
 Sem isso, a UI simplesmente não reage (parece bug na feature, mas é só o teste que não notificou a lib).
 
 iOS não é possível nesta máquina (Windows).
+
+### Capturar GIF de uma animação (sem ferramenta de gravação de tela na sessão)
+
+Mesmo cenário do item anterior, mas para uma **animação** (não uma tela estática) — caso de `FASE26-IMPL-01`. Sem `ffmpeg` nem gravador de tela disponíveis, a receita é: Playwright tira uma rajada de screenshots do elemento (não da página inteira — recorta melhor) em intervalo curto, e o Pillow (já disponível nesta máquina, `python -c "import PIL"`) monta o GIF a partir dos frames:
+
+```js
+// 1) rajada de frames com Playwright — screenshot de um locator específico (ex. testID
+// virando data-testid no RN Web), não da página inteira, pra já vir recortado.
+const target = page.locator('[data-testid="hero-preview"]');
+await target.screenshot({ path: `frames/f000.png` });
+await page.waitForTimeout(80); // repita em loop pela duração da animação
+```
+```python
+# 2) monta o GIF com Pillow a partir dos frames em ordem
+from PIL import Image
+import glob
+frames = [Image.open(p).convert('RGB') for p in sorted(glob.glob('frames/*.png'))]
+frames[0].save('saida.gif', save_all=True, append_images=frames[1:], duration=90, loop=0, optimize=True)
+```
+Pontos de atenção: (1) o primeiro `page.goto` num Metro frio pode levar 2-3 min pra bundlar — use `timeout: 240000` no `page.goto`, o timeout padrão de 30s estoura; (2) screenshot de `locator` (elemento) em vez de `page` já recorta certo, sem precisar de crop depois; (3) ~10-15 frames num intervalo de 60-90ms já é suficiente pra um GIF de revisão assíncrona (não precisa de 30fps).

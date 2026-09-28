@@ -30,6 +30,13 @@ Entrega desta fase: pesquisa cuidadosa de que tipo de animação/partícula cabe
 - **Paralelizável:** Não pode ser finalizada sem FASE26-EST-01.
 - **Conhecimentos novos introduzidos:** captura de GIF de interação em device/emulador para revisão assíncrona.
 
+#### Handoff (SCRUM-252)
+
+- `FASE26-EST-01` foi pulada por decisão do usuário (2026-09-28): sem ticket próprio, D18 fechada direto em (A) `react-native-reanimated` — motivo registrado em `docs/03-decisoes-tecnicas.md#d18`. `react-native-reanimated` 4.5.1 + `react-native-worklets` instalados via `npx expo install`; **reanimated 4 não usa mais `react-native-reanimated/plugin`**, o plugin babel é `react-native-worklets/plugin` — `babel-preset-expo` já detecta e injeta automaticamente, então `mobile/babel.config.js` (criado nesta task, o projeto não tinha nenhum) só precisa do preset, sem plugin manual.
+- Escopo ampliado a pedido do usuário: além da animação no hero do login (grid SVG, não há foto de lotes — ver `docs/design/lovable-mapeamento.md` linha 74, já documentado como metáfora de grade), protótipos novos também para a entrada do logo no splash (`mobile/src/components/SplashAnimation.tsx` real **não foi alterado**), com referência explícita a iFood (entrada divertida) e Nintendo Switch (peças "encaixando" com clique visual, sem som).
+- 5 variações em `mobile/src/prototypes/fase26/`: `LoginHeroVariants.tsx` (A paralaxe, B partículas, C pulse) e `SplashVariants.tsx` (D bounce cascata, E assemble/punch). Tela de revisão isolada em `mobile/app/prototipo-fase26.tsx` (rota manual `/prototipo-fase26`, não linkada em nenhuma navegação real).
+- GIFs gerados sem gravador de tela/ffmpeg na máquina: Playwright headless captura rajada de screenshots do elemento (`data-testid`), Pillow monta o GIF a partir dos frames — receita nova documentada em `docs/guia-rodar-android-nativo.md#capturar-gif-de-uma-animação-sem-ferramenta-de-gravação-de-tela-na-sessão`. Arquivos em `docs/design/screenshots/scrum-252-fase26-{A,B,C,D,E}-*.gif` (só web capturado; nativo Android não foi gravado nesta rodada — variações são puramente CSS/reanimated, comportamento visual equivalente esperado).
+
 ## Épico E26.3 — Implementação aprovada
 
 ### FASE26-IMPL-02 — Implementação da animação aprovada na tela de login real
