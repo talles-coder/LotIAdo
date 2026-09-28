@@ -26,6 +26,15 @@ Entrega desta fase: logging estruturado de todas as chamadas de IA (latência, t
 - **Paralelizável:** Sim, com FASE10-IMPL-02.
 - **Conhecimentos novos introduzidos:** logging estruturado correlacionado, instrumentação transversal (wrapper/decorador).
 
+#### Handoff (SCRUM-109)
+
+- Formato do log estruturado (logger `app.ia`, uma linha JSON por chamada): `{"timestamp", "level", "logger", "request_id", "origem" ("rag"|"agente"|"importacao"|"desconhecida"), "metodo" ("embed"|"generate"|"chat"), "modelo", "latencia_ms", "tokens_entrada", "tokens_saida", "sucesso", "erro"? }`. `tokens_entrada`/`tokens_saida` só vêm preenchidos em `generate`/`chat` (Ollama expõe `prompt_eval_count`/`eval_count`); `embed` sempre loga `null` nos dois — o endpoint `/api/embeddings` do Ollama não devolve contagem. **Este é o contrato combinado com FASE10-IMPL-02 (SCRUM-110)** — o dashboard consome esses campos.
+- Implementado como wrapper dentro de `OllamaLLMProvider` (não como decorator externo genérico) — só há uma implementação de `LLMProvider` hoje, então instrumentar diretamente ali evita inventar um mecanismo de "hook" só pra token count, que só o provider concreto consegue ler da resposta HTTP crua.
+- Origem (rag/agente/importação) e `request_id` viajam por `contextvars` (`app/observabilidade/infrastructure/context.py`), mesmo padrão já usado por `app.audit` — cada application service envolve sua chamada ao `LLMProvider` em `with contexto_origem_ia(OrigemChamadaIA.X):`. Isso evita mudar a assinatura de `LLMProvider.embed/generate/chat` (que outros 4+ call sites já usam).
+- `RequestIdMiddleware` correlaciona várias chamadas de LLM dentro de uma mesma request HTTP (ex.: uma pergunta ao RAG faz embed+generate; o agente pode fazer várias `chat()` em loop) — **não** correlaciona `/agente/perguntar` com o `/agente/confirmar` subsequente (requests HTTP separadas, cada uma com seu próprio `request_id`; ver `docs/contexto-modulos/observabilidade.md` para o porquê).
+- Consultar os logs localmente: stdout do processo do backend, uma linha JSON por chamada — `python -m uvicorn app.main:app ... | grep '"logger": "app.ia"' | jq` funciona pra inspeção manual/critério de aceite.
+- Arquivos-chave: `backend/app/observabilidade/` (módulo novo — `domain/chamada_ia.py`, `infrastructure/{context,llm_logging,logging_config}.py`, `interface/middleware.py`), `backend/app/ai_rag/infrastructure/llm_provider.py` (instrumentação), `backend/app/main.py` (registro do middleware + `configurar_logging_estruturado()`), os 5 call sites (`busca_service.py`, `pergunta_service.py`, `agente_service.py`, `ingestao_service.py`, `mapeamento_sugestao_service.py`). Mapa completo em `docs/contexto-modulos/observabilidade.md`.
+
 ### FASE10-IMPL-02 — Dashboard/consulta simples de métricas de IA
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 2

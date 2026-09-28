@@ -41,6 +41,8 @@ from app.ai_agents.domain.exceptions import ConfirmacaoNaoEncontradaError
 from app.ai_agents.infrastructure.tool_registry import TOOLS_POR_NOME, specs_para_llm
 from app.audit.domain.acoes import OrigemAuditoria
 from app.audit.infrastructure.context import contexto_origem_auditoria
+from app.observabilidade.domain.chamada_ia import OrigemChamadaIA
+from app.observabilidade.infrastructure.context import contexto_origem_ia
 
 MAX_CHAMADAS_TOOL = 5
 
@@ -143,7 +145,8 @@ class AgenteService:
         return grafo.compile(checkpointer=_CHECKPOINTER)
 
     async def _decidir(self, state: AgenteState) -> AgenteState:
-        resposta = await ai_rag.llm_provider.chat(state["mensagens"], tools=specs_para_llm())
+        with contexto_origem_ia(OrigemChamadaIA.AGENTE):
+            resposta = await ai_rag.llm_provider.chat(state["mensagens"], tools=specs_para_llm())
         mensagem_assistente: dict = {"role": "assistant", "content": resposta.conteudo or ""}
         if resposta.tool_calls:
             mensagem_assistente["tool_calls"] = [

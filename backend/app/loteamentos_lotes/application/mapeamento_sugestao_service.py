@@ -12,6 +12,8 @@ from pydantic import BaseModel, ValidationError
 
 import app.ai_rag as ai_rag
 from app.loteamentos_lotes.application.lote_import_service import CAMPOS_MAPEAVEIS
+from app.observabilidade.domain.chamada_ia import OrigemChamadaIA
+from app.observabilidade.infrastructure.context import contexto_origem_ia
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,8 @@ class MapeamentoSugestaoService:
         erro_anterior: str | None = None
 
         for _ in range(MAX_TENTATIVAS):
-            texto = await ai_rag.llm_provider.generate(_prompt_com_erro(prompt, erro_anterior))
+            with contexto_origem_ia(OrigemChamadaIA.IMPORTACAO):
+                texto = await ai_rag.llm_provider.generate(_prompt_com_erro(prompt, erro_anterior))
             try:
                 dados = json.loads(_extrair_json(texto))
                 sugestao = _SugestaoDeMapeamento.model_validate(dados)

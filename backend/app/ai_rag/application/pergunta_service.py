@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.ai_rag as ai_rag
 from app.ai_rag.application.busca_service import TOP_K_PADRAO, BuscaService, ResultadoBusca
+from app.observabilidade.domain.chamada_ia import OrigemChamadaIA
+from app.observabilidade.infrastructure.context import contexto_origem_ia
 
 SCORE_MINIMO_RELEVANTE = 0.5
 RESPOSTA_SEM_CONTEXTO = "Não encontrei informação sobre isso nos documentos disponíveis."
@@ -48,7 +50,8 @@ class PerguntaService:
             return RespostaGerada(resposta=RESPOSTA_SEM_CONTEXTO, fontes=[])
 
         prompt = self._montar_prompt(pergunta, relevantes)
-        resposta = await ai_rag.llm_provider.generate(prompt)
+        with contexto_origem_ia(OrigemChamadaIA.RAG):
+            resposta = await ai_rag.llm_provider.generate(prompt)
 
         fontes = [
             FonteCitada(documento_id=resultado.documento_id, documento_nome=resultado.documento_nome, trecho=resultado.texto)

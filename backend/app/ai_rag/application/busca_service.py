@@ -8,6 +8,8 @@ import app.ai_rag as ai_rag
 from app.ai_rag.domain.exceptions import LoteamentoDaBuscaNaoEncontradoError, LoteDaBuscaNaoEncontradoError
 from app.ai_rag.infrastructure.repository import buscar_chunks_similares
 from app.loteamentos_lotes.infrastructure.repository import get_lote_by_id, get_loteamento_by_id
+from app.observabilidade.domain.chamada_ia import OrigemChamadaIA
+from app.observabilidade.infrastructure.context import contexto_origem_ia
 
 TOP_K_PADRAO = 5
 
@@ -41,7 +43,8 @@ class BuscaService:
         if lote_id is not None and await get_lote_by_id(self.db, tenant_id, lote_id) is None:
             raise LoteDaBuscaNaoEncontradoError()
 
-        embedding = await ai_rag.llm_provider.embed(pergunta)
+        with contexto_origem_ia(OrigemChamadaIA.RAG):
+            embedding = await ai_rag.llm_provider.embed(pergunta)
         chunks_com_score = await buscar_chunks_similares(
             self.db, tenant_id, embedding, top_k, loteamento_id=loteamento_id, lote_id=lote_id
         )
