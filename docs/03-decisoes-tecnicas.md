@@ -243,14 +243,14 @@ Levantamento de código (2026-09-27) confirmou: hoje não existe Zod/Yup/nenhuma
 
 **Decidido (2026-09-27)**: Maestro é o ponto de partida por ser mais rápido de configurar (sem build nativo dedicado); `FASE23-EST-02` valida se ele atende o fluxo crítico da Fase 23 (login → criar cliente → criar reserva) — se alguma limitação real aparecer (ex.: interação que o Maestro não consegue automatizar de forma confiável), a fase cai para Detox em vez de forçar o Maestro a resolver algo fora do seu ponto forte.
 
-## D18 — Biblioteca de animação/partículas para microinterações — 🔓 Em aberto (deliberadamente — resolução por teste prático)
+## D18 — Biblioteca de animação/partículas para microinterações — ✅ Decidido: (A) `react-native-reanimated`
 
 **Opções:**
 - (A) `react-native-reanimated` (animação declarativa na UI thread).
 - (B) Lottie (`lottie-react-native`, animação vetorial exportada do After Effects/Bodymovin).
 - (C) `react-native-skia` (motor de desenho 2D, mais flexível pra partícula customizada, curva de aprendizado maior).
 
-**Critério de decisão confirmado (2026-09-27), mesmo padrão de D15**: testar as 3 (não só 2) e escolher a que funcionar melhor (sem erro/travamento) e ficar mais bonita — curva de aprendizado de nenhuma delas é motivo pra eliminar antes de testar. `FASE26-EST-01` implementa a mesma animação de teste nas 3, nas duas plataformas (mobile + Expo for Web), e a decisão é por resultado prático.
+**Decidido (2026-09-28), fechamento empírico simplificado**: o critério original (`FASE26-EST-01`) previa testar as 3 nas duas plataformas antes de decidir. Na prática de `FASE26-IMPL-01`, optou-se por pular o comparativo formal de 6 execuções e ir direto com (A) `react-native-reanimated` — decisão confirmada pelo usuário (2026-09-28) — pelos seguintes motivos objetivos: já roda sobre Expo for Web sem shim adicional (mesma API em mobile/web, sem duplicar variação de animação por plataforma como aconteceria com Skia); não depende de asset externo exportado de outra ferramenta (Lottie exigiria criar/exportar arquivos `.json` do After Effects/Bodymovin, fora do escopo de protótipo rápido); e as variações propostas em `FASE26-IMPL-01` (paralaxe, partículas discretas, pulse, entrada "montada" do logo) são todas alcançáveis com transforms/opacity declarativos, sem precisar do motor de desenho customizado que justificaria Skia. `FASE26-EST-01` fica sem ticket próprio — se uma necessidade real de partícula complexa (ex. centenas de partículas físicas) aparecer depois, o comparativo formal com Skia pode ser revisitado então.
 
 ### Nomenclatura de migrations Alembic — decidido: revision ID com timestamp
 
