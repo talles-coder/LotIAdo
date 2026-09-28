@@ -99,6 +99,13 @@ Entrega desta fase: logging estruturado de todas as chamadas de IA (latência, t
 - **Paralelizável:** Não pode ser finalizada sem FASE10-IMPL-03, mas a estrutura do script pode ser adiantada.
 - **Conhecimentos novos introduzidos:** execução automatizada de avaliação de IA, comparação de configurações (modelo/prompt).
 
+#### Handoff (SCRUM-114)
+
+- **`ragas` não foi instalado no backend** — `pip install --dry-run ragas` mostrou que ele força upgrade de `langgraph` (0.2.60 → 1.2.x) e `langchain-text-splitters`, quebrando `app.ai_agents` (API de `StateGraph`/`MemorySaver` mudou entre versões) e `app.ai_rag.infrastructure.chunking`. `backend/eval/faithfulness.py` reimplementa a métrica de faithfulness (LLM-as-juiz via `ai_rag.llm_provider.generate()`, mesmo modelo do app) sem a dependência — decisão registrada em D7 (`docs/03-decisoes-tecnicas.md`). `promptfoo` (`backend/eval/promptfooconfig.yaml`) continua sendo o CLI Node de verdade, sem esse problema (roda fora do venv Python).
+- **Critério de aceite validado com dados reais, não só no papel:** rodei `scripts/avaliar_golden_set.py` várias vezes seguidas contra o mesmo golden-set — 9-10/12 casos passaram de forma estável (faithfulness médio entre 0.7 e 1.0; os casos que falham intermitentemente são reais limitações de tool-calling do `llama3.2` local — chama a tool certa mas com parâmetro errado, ou não chama tool nenhuma —, não bug: confirmado chamando as tools direto, que funcionam perfeitamente com os parâmetros corretos). Depois apliquei uma regressão proposital no prompt do RAG (`pergunta_service.py::_montar_prompt`, instrução pra "inventar" quando faltar contexto, revertida antes do commit) e o faithfulness médio caiu de ~1.0 para **0.16**, com o juiz apontando exatamente quais afirmações foram inventadas — a métrica reage a uma regressão de verdade.
+- Cada execução grava `eval/reports/<timestamp>.json` (git-ignorado) e imprime um resumo no terminal; sai com código 1 se algum caso falhar (`contem_todos`), útil pra rodar em CI/pre-merge.
+- Arquivos-chave: `backend/eval/{faithfulness.py, promptfooconfig.yaml}`, `backend/scripts/avaliar_golden_set.py`. Mapa completo em `docs/contexto-modulos/eval.md`.
+
 ## Divisão de trabalho e sincronização
 
 - **Dev 1:** FASE10-EST-01/02 → FASE10-IMPL-01 (logging) → FASE10-IMPL-03 (golden-set).

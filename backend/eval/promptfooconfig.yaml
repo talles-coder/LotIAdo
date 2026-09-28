@@ -1,0 +1,64 @@
+# Comparação de modelos/prompts via promptfoo (FASE10-IMPL-04/SCRUM-114).
+#
+# Ferramenta separada de `scripts/avaliar_golden_set.py` de propósito: promptfoo
+# é um CLI Node (`npx promptfoo eval`), roda fora do processo/venv Python do
+# backend — zero risco de conflito de dependência (ver eval/faithfulness.py
+# sobre por que `ragas` não foi instalado direto no backend). Uso apenas
+# quando há mais de uma configuração (modelo/prompt) pra comparar lado a lado;
+# o script principal já cobre a avaliação "há uma config, ela regrediu?".
+#
+# Requer Ollama local rodando com os dois modelos já puxados
+# (`ollama pull llama3.2`, `ollama pull <outro-modelo>`), e o pacote
+# `promptfoo` (`npm install -g promptfoo` ou `npx promptfoo@latest eval`).
+#
+# Rodar (a partir de `backend/eval/`): `npx promptfoo@latest eval`
+#
+# O contexto abaixo é o mesmo memorial usado pelo golden-set/seed
+# (`scripts/seed_golden_set.py::MEMORIAL_TEXTO`) — mantenha os dois em sincronia
+# se o texto do memorial mudar.
+
+description: "Comparação de modelos Ollama sobre perguntas do golden-set do LotIAdo"
+
+providers:
+  - id: ollama:chat:llama3.2
+    label: llama3.2 (modelo padrão do app, ver Settings.ollama_generation_model)
+  # Segunda config de comparação — troque pelo modelo que quiser avaliar lado a lado:
+  - id: ollama:chat:qwen2.5:3b
+    label: qwen2.5:3b (comparação)
+
+prompts:
+  - |
+    Responda à pergunta usando apenas as informações do contexto abaixo, em português.
+    Se o contexto não tiver a resposta, diga que não encontrou a informação em vez de inventar.
+
+    Contexto:
+    O Loteamento Golden Eval fica no município de Avaliação, GO, com área total de 50.000 m²
+    distribuída em 42 lotes.
+
+    O prazo de entrega da infraestrutura (rede elétrica, água tratada e pavimentação asfáltica)
+    é de 12 meses a partir da assinatura do contrato.
+
+    A área verde central conta com praça e playground, a menos de 100 metros dos lotes da Quadra 1.
+
+    Pergunta: {{pergunta}}
+
+    Resposta:
+
+tests:
+  - vars:
+      pergunta: "Qual é o prazo de entrega da infraestrutura do Loteamento Golden Eval?"
+    assert:
+      - type: icontains
+        value: "12 meses"
+
+  - vars:
+      pergunta: "Qual a área total do Loteamento Golden Eval?"
+    assert:
+      - type: icontains
+        value: "50.000"
+
+  - vars:
+      pergunta: "Qual é a cor oficial da sede administrativa do Loteamento Golden Eval?"
+    assert:
+      - type: icontains
+        value: "não encontr"
