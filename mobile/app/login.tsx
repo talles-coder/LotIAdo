@@ -8,6 +8,7 @@ import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { login } from '../src/api/auth';
 import { setSession } from '../src/auth/session';
 import { Logo } from '../src/components/Logo';
+import { LoginHeroLotHighlight } from '../src/components/LoginHeroLotHighlight';
 import { useIsDesktop } from '../src/lib/useIsDesktop';
 import { colors, fonts } from '../src/theme/tokens';
 
@@ -50,6 +51,7 @@ export default function LoginScreen() {
           </Defs>
           <Rect width="100%" height="100%" fill="url(#grid)" />
         </Svg>
+        <LoginHeroLotHighlight />
         <Logo size="lg" onDark />
         <Text style={styles.tagline}>Seus loteamentos, na palma da mão.</Text>
       </View>
