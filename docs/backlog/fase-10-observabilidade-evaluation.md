@@ -80,6 +80,13 @@ Entrega desta fase: logging estruturado de todas as chamadas de IA (latência, t
 - **Paralelizável:** Sim, com FASE10-IMPL-04.
 - **Conhecimentos novos introduzidos:** desenho de dataset de avaliação.
 
+#### Handoff (SCRUM-113)
+
+- "Tenant de teste" é criado do zero por `scripts/seed_golden_set.py` (idempotente), não reaproveita o tenant `demo` — `demo` é construído manualmente pela app ao longo do tempo, sem dados versionados/determinísticos; o golden-set precisa de IDs estáveis entre corridas. Todos os IDs (tenant, loteamento, lotes, feições, documento) são `uuid5` determinísticos a partir de um nome fixo (`eval/ids.py`) — nenhum UUID gravado em `golden_set.yaml` nem em nenhum outro lugar.
+- Descoberta que mudou o desenho do golden-set: **nenhuma tool do agente resolve nome→id** (já valia desde SCRUM-103/FASE9-IMPL-01, mas só ficou óbvio rodando perguntas reais) — `buscar_lotes`/`lotes_de_esquina` precisam de `loteamento_id: UUID`, `consultar_lote`/`distancia_entre_lotes`/etc. precisam de `lote_id: UUID`, nenhuma tool aceita a `identificacao` humana ("GE-01") nem o nome do loteamento. Perguntas de agente no golden-set usam placeholders (`{loteamento_id}`, `{lote_ge_01}`, `{lote_ge_04}`, `{lote_inexistente}`) resolvidos por `scripts/avaliar_golden_set.py` a partir de `eval/ids.py` — testam a capacidade real (tool call a partir de um id já conhecido), não uma resolução por nome que não existe. Um caso (`agente-area-verde-limitacao-conhecida`) documenta esse gap deliberadamente em vez de escondê-lo.
+- Critério de aceite (≥10 perguntas) coberto com folga: 12 casos (5 RAG + 7 agente), incluindo as duas perguntas de exemplo do briefing adaptadas ao tenant de teste (`agente-lotes-de-esquina`, `agente-preco-maximo`).
+- Arquivos-chave: `backend/eval/{ids.py, golden_set.yaml}`, `backend/scripts/seed_golden_set.py`. Mapa completo em `docs/contexto-modulos/eval.md`.
+
 ### FASE10-IMPL-04 — Script de avaliação automatizada (Ragas + promptfoo) rodável sob demanda
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 2

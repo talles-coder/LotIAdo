@@ -1,0 +1,123 @@
+# Golden-set de avaliação do RAG (Fase 7) e do agente (Fase 9) — FASE10-IMPL-03/SCRUM-113.
+#
+# Roda contra o tenant determinístico criado por `python -m scripts.seed_golden_set`
+# (ver `eval/ids.py`) via `python -m scripts.avaliar_golden_set`. Nenhum UUID
+# literal aparece aqui — os campos `pergunta` usam placeholders `{loteamento_id}`/
+# `{lote_ge_01}`/`{lote_ge_04}`/`{lote_inexistente}`, substituídos pelo script a
+# partir de `eval/ids.py` antes de enviar ao RAG/agente.
+#
+# Por que perguntas de agente citam um ID e não só "Loteamento Golden Eval":
+# nenhuma tool do agente (ver `app/ai_agents/infrastructure/tool_registry.py`,
+# handoff de SCRUM-103/FASE9-IMPL-01) resolve nome→id — elas recebem
+# `loteamento_id`/`lote_id` como UUID direto. Um golden-set que fingisse que
+# resolução por nome funciona não pegaria regressão nenhuma (já começaria
+# falhando); o caso `agente-area-verde-limitacao-conhecida` abaixo documenta
+# esse gap explicitamente, os demais testam a capacidade real (tool call a
+# partir de um id já conhecido, que é como o app usa hoje via SCRUM-104: o
+# frontend/conversa traz o id, não o agente advinha).
+#
+# Campos por caso:
+#   id                 — slug único, usado no relatório.
+#   tipo               — "rag" (POST /rag/perguntar) ou "agente" (POST /agente/perguntar).
+#   pergunta           — texto enviado (após substituição de placeholders).
+#   criterio_aceitacao — descrição em linguagem natural do que conta como resposta correta
+#                         (para revisão humana — o script não interpreta este campo).
+#   contem_todos       — lista de substrings (case-insensitive) que TODAS devem aparecer
+#                         na resposta para o caso passar automaticamente. Lista vazia = o
+#                         caso só é avaliado pela métrica de faithfulness (rag) ou por
+#                         revisão manual do `criterio_aceitacao` (agente).
+
+casos:
+  # --- RAG (Fase 7) ---------------------------------------------------------
+  - id: rag-prazo-entrega
+    tipo: rag
+    pergunta: "Qual é o prazo de entrega da infraestrutura do Loteamento Golden Eval?"
+    criterio_aceitacao: "Resposta cita 12 meses, sustentada pelo memorial descritivo indexado."
+    contem_todos: ["12 meses"]
+
+  - id: rag-area-total
+    tipo: rag
+    pergunta: "Qual a área total do Loteamento Golden Eval?"
+    criterio_aceitacao: "Resposta cita 50.000 m²."
+    contem_todos: ["50.000"]
+
+  - id: rag-numero-lotes
+    tipo: rag
+    pergunta: "Em quantos lotes está dividido o Loteamento Golden Eval?"
+    criterio_aceitacao: "Resposta cita 42 lotes."
+    contem_todos: ["42"]
+
+  - id: rag-infraestrutura
+    tipo: rag
+    pergunta: "Quais infraestruturas o Loteamento Golden Eval vai ter?"
+    criterio_aceitacao: "Resposta menciona pavimentação asfáltica (entre outras do memorial)."
+    contem_todos: ["asfált"]
+
+  - id: rag-sem-contexto
+    tipo: rag
+    pergunta: "Qual é a cor oficial da sede administrativa do Loteamento Golden Eval?"
+    criterio_aceitacao: "Informação não existe no memorial — o RAG deve dizer que não encontrou, nunca inventar uma cor."
+    contem_todos: ["não", "encontr"]
+
+  # --- Agente (Fase 9) --------------------------------------------------------
+  - id: agente-lotes-de-esquina
+    tipo: agente
+    pergunta: "Quais lotes do loteamento {loteamento_id} são de esquina e têm mais de 200m²?"
+    criterio_aceitacao: >
+      Pergunta de exemplo do briefing ("lotes disponíveis > 200m² em esquina"), adaptada ao
+      tenant de teste. Só GE-01 (250m², toca Rua A e Rua B) atende; tool esperada:
+      `lotes_de_esquina`.
+    contem_todos: ["GE-01"]
+
+  - id: agente-preco-maximo
+    tipo: agente
+    pergunta: "Quais lotes disponíveis do loteamento {loteamento_id} custam até R$ 250.000?"
+    criterio_aceitacao: >
+      Pergunta de exemplo do briefing ("lotes até R$250 mil"), adaptada ao tenant de teste —
+      GE-01 (180 mil), GE-02 (95 mil) e GE-03 (230 mil) atendem; GE-04 é vendido (excluído).
+      Tool esperada: `buscar_lotes` com `preco_max`. Checagem automática só pelo primeiro
+      (GE-01) — exigir os 3 IDs na mesma resposta é frágil contra fraseado do LLM; os outros
+      dois ficam pro `criterio_aceitacao` (revisão manual).
+    contem_todos: ["GE-01"]
+
+  - id: agente-area-verde-limitacao-conhecida
+    tipo: agente
+    pergunta: "Quais lotes do Loteamento Golden Eval ficam próximos da área verde?"
+    criterio_aceitacao: >
+      LIMITAÇÃO CONHECIDA (documentada em SCRUM-103/FASE9-IMPL-01): nenhuma tool resolve nome
+      ("Loteamento Golden Eval", "área verde") para id — só `lotes_proximos_de(feicao_id,
+      raio_m)` existe, e o agente não inventa o id. Pergunta deliberadamente SEM nenhum id
+      (ao contrário dos outros casos de agente), pra provar que o agente não alucina um.
+      Resultado esperado HOJE é o agente dizer que precisa do identificador, não uma lista de
+      lotes. Revisitar se uma tool de resolução por nome for adicionada.
+    contem_todos: []
+
+  - id: agente-busca-documentos
+    tipo: agente
+    pergunta: "Qual é o prazo de entrega mencionado nos documentos disponíveis?"
+    criterio_aceitacao: >
+      Sem citar loteamento/lote — só há um documento indexado no tenant de teste, então
+      `buscar_documentos` (sem `loteamento_id`/`lote_id`, ambos opcionais) já basta. Tool
+      esperada: `buscar_documentos` (RAG via tool). Resposta deve citar 12 meses.
+    contem_todos: ["12 meses"]
+
+  - id: agente-disponibilidade-lote-vendido
+    tipo: agente
+    pergunta: "O lote {lote_ge_04} está disponível?"
+    criterio_aceitacao: "Esse lote (GE-04) está vendido — a resposta deve dizer que não está disponível."
+    contem_todos: ["vendido"]
+
+  - id: agente-lote-inexistente-nao-inventa
+    tipo: agente
+    pergunta: "Qual a área do lote {lote_inexistente}?"
+    criterio_aceitacao: >
+      Id sintaticamente válido mas que não existe no tenant — guarda de regressão contra
+      alucinação (o `SYSTEM_PROMPT` do agente instrui explicitamente a nunca inventar quando
+      uma tool não encontra o que foi pedido).
+    contem_todos: ["não", "encontr"]
+
+  - id: agente-distancia-entre-lotes
+    tipo: agente
+    pergunta: "Qual a distância entre os lotes {lote_ge_01} e {lote_ge_04}?"
+    criterio_aceitacao: "Tool esperada: `distancia_entre_lotes`. Resposta deve conter um valor numérico em metros."
+    contem_todos: ["metro"]
