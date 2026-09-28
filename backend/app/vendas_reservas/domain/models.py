@@ -1,7 +1,7 @@
 """ReservaVenda domain model."""
 from enum import Enum
 
-from sqlalchemy import Column, ForeignKey, String, UUID
+from sqlalchemy import Column, ForeignKey, UUID
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 

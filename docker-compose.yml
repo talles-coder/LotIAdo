@@ -50,21 +50,22 @@ services:
       retries: 5
       start_period: 30s
 
+  # adobe/s3mock no lugar do MinIO real: a imagem quay.io/minio/minio (e
+  # minio/minio no Docker Hub) passou a exigir login para pull anônimo em
+  # 2026 — quebra tanto CI quanto `docker compose up` num clone novo. Ver
+  # docs/03-decisoes-tecnicas.md. Sem volume nomeado (s3mock não persiste
+  # em disco por padrão; ok para o escopo do projeto — dados de teste, não
+  # produção). Não tem console web (a diferença de MinIO); administre pelo
+  # `mc`/API S3 direto se precisar inspecionar objetos manualmente.
   minio:
-    image: quay.io/minio/minio:latest
+    image: adobe/s3mock:latest
     container_name: lotiado-minio
     restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    volumes:
-      - minio_data:/data
+      - "${MINIO_API_PORT:-9090}:9090"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      # A imagem (buildpacks, sem curl) só tem wget.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -88,20 +89,18 @@ services:
       DATABASE_URL: postgresql+asyncpg://lotiado_app:lotiado_app@postgres:5432/${POSTGRES_DB:-lotiado}
       REDIS_URL: redis://redis:6379/0
       OLLAMA_BASE_URL: http://ollama:11434
-      MINIO_ENDPOINT_URL: http://minio:9000
+      MINIO_ENDPOINT_URL: http://minio:9090
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-lotiado}
 
   minio-init:
-    image: quay.io/minio/mc:latest
+    image: curlimages/curl:latest
     container_name: lotiado-minio-init
     depends_on:
       minio:
         condition: service_healthy
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-lotiado}
     entrypoint: ["/bin/sh", "/init/create-bucket.sh"]
     volumes:
@@ -112,4 +111,3 @@ volumes:
   postgres_data:
   redis_data:
   ollama_data:
-  minio_data:
