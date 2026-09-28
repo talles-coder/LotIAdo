@@ -9,9 +9,15 @@ from rq import Queue, Worker
 
 from app.ai_rag.infrastructure.queue import NOME_FILA
 from app.config import Settings
+from app.observabilidade.infrastructure.logging_config import configurar_logging_estruturado
 
 
 def main() -> None:
+    # Processo separado da API — `app.main` nunca roda aqui, então o log
+    # estruturado das chamadas de IA feitas durante `processar_documento`
+    # (embed de cada chunk, origem IMPORTACAO) precisa ser ligado de novo
+    # (ver FASE10-IMPL-01/SCRUM-109).
+    configurar_logging_estruturado()
     settings = Settings()
     conexao = redis.from_url(settings.redis_url)
     worker = Worker([Queue(NOME_FILA, connection=conexao)], connection=conexao)
