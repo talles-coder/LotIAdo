@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Home, LogOut, Map, UserCog, UserPlus, Users } from 'lucide-react-native';
+import { Activity, Home, LogOut, Map, UserCog, UserPlus, Users } from 'lucide-react-native';
 
 import { obterUsuarioAtual } from '../api/auth';
 import { clearSession, useSession } from '../auth/session';
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/clientes/novo', label: 'Novo cliente', icon: UserPlus },
   { href: '/corretores', label: 'Corretores', icon: Users },
   { href: '/usuarios', label: 'Usuários', icon: UserCog },
+  { href: '/backoffice', label: 'Métricas de IA', icon: Activity },
 ] as const;
 
 const CONTENT_MAX_WIDTH = 1120;
