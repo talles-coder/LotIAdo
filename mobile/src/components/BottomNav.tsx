@@ -9,14 +9,15 @@ const NAV = [
   { href: '/home', label: 'Início', icon: Home, enabled: true },
   { href: '/loteamentos', label: 'Loteamentos', icon: Map, enabled: true },
   { href: '/clientes/novo', label: 'Cliente', icon: UserPlus, enabled: true },
-  { href: '/backoffice', label: 'Backoffice', icon: Monitor, enabled: false },
+  { href: '/backoffice', label: 'Backoffice', icon: Monitor, enabled: true },
 ] as const;
 
 /**
  * Nav inferior fixo (Início/Loteamentos/Cliente/Backoffice), igual ao `MobileShell` do
- * repo de referência do Lovable — ver docs/design/lovable-mapeamento.md. "Backoffice"
- * ainda não tem tela (Fase 5): fica visível mas desabilitado em vez de linkar pra uma
- * rota que não existe. "Cliente" (SCRUM-65) já linka para o cadastro de cliente.
+ * repo de referência do Lovable — ver docs/design/lovable-mapeamento.md. "Cliente"
+ * (SCRUM-65) linka para o cadastro de cliente; "Backoffice" (SCRUM-110) linka para o
+ * dashboard de métricas de IA — primeira tela de backoffice, `/backoffice` é o próprio
+ * dashboard em vez de um hub genérico (nada mais para agrupar ainda).
  */
 export function BottomNav() {
   const pathname = usePathname();

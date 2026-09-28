@@ -1233,6 +1233,35 @@
 			]
 		},
 		{
+			"name": "Observabilidade",
+			"item": [
+				{
+					"name": "Métricas de IA",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/observabilidade/metricas",
+							"host": ["{{base_url}}"],
+							"path": ["observabilidade", "metricas"]
+						},
+						"description": "Dashboard de métricas de IA (FASE10-IMPL-02): agrega o log estruturado de todas as chamadas de `LLMProvider` (FASE10-IMPL-01) em latência média, volume de chamadas e taxa de erro, total e por origem (`rag`/`agente`/`importacao`). Só `admin`/`gestor` (permissão `observabilidade:visualizar`). Não é escopado por tenant — reflete o uso de IA da instância do backend inteira. Resposta: `{total_chamadas, chamadas_com_erro, taxa_erro, latencia_media_ms, por_origem: [{origem, total_chamadas, chamadas_com_erro, latencia_media_ms}]}`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Geo (consultas espaciais)",
 			"item": [
 				{

@@ -45,6 +45,16 @@ embed+generate; o agente decide em loop, várias `chat()`) — **não** correlac
 
 ## Pegadinhas / não-óbvio
 
+- `configurar_logging_estruturado()` também escreve em `backend/logs/app-ia.jsonl`
+  (`RotatingFileHandler`, lido por `MetricasIAService`/SCRUM-110), não só
+  stdout. Rodar `pytest tests/test_observabilidade_llm_logging.py` localmente
+  **também grava linhas reais nesse arquivo** (`medir_chamada_llm` é chamado
+  de verdade nesses testes, fora de qualquer `contexto_origem_ia`) — aparecem
+  como `"origem": "desconhecida"` no dashboard. Inofensivo (arquivo é local,
+  git-ignorado, não é dado de negócio) mas explica entradas "desconhecida"
+  depois de rodar a suíte de testes. `test_observabilidade_metricas.py` evita
+  isso testando `MetricasIAService` com um `caminho_log` próprio (`tmp_path`),
+  nunca o arquivo real.
 - `ingestao_service.py` roda no worker RQ (processo separado, `asyncio.run()`
   próprio) — nunca há `RequestIdMiddleware` ativo lá, então cada chunk embedado
   cai no fallback (`request_id` gerado ali mesmo em `medir_chamada_llm`), um
