@@ -3,17 +3,22 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native-paper';
-import { ArrowLeft, ArrowUp, FileText, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, ArrowUp, Check, ShieldAlert, Sparkles, X } from 'lucide-react-native';
 
-import { perguntar, type FonteResposta } from '../src/api/rag';
+import { confirmarAcao, perguntarAgente, type ConfirmacaoAcaoPendente } from '../src/api/agente';
 import { getErrorMessage } from '../src/lib/errors';
 import { OFFLINE_MESSAGE, useIsOnline } from '../src/lib/useIsOnline';
 import { colors, fonts, radius } from '../src/theme/tokens';
 
+type AcaoPendente =
+  | { tipo: 'pergunta'; texto: string }
+  | { tipo: 'confirmar'; confirmacaoId: string; aprovado: boolean; mensagemId: string };
+
 type Mensagem =
   | { id: string; papel: 'usuario'; texto: string }
-  | { id: string; papel: 'assistente'; texto: string; fontes: FonteResposta[] }
-  | { id: string; papel: 'erro'; texto: string; perguntaOriginal: string };
+  | { id: string; papel: 'assistente'; texto: string }
+  | { id: string; papel: 'confirmacao'; confirmacao: ConfirmacaoAcaoPendente; status: 'pendente' | 'aprovada' | 'recusada' }
+  | { id: string; papel: 'erro'; texto: string; acao: AcaoPendente };
 
 const SUGESTAO = 'Quais lotes de esquina abaixo de 100 mil?';
 
@@ -25,20 +30,42 @@ function Avatar() {
   );
 }
 
+function formatarArgumentos(argumentos: Record<string, unknown>): { chave: string; valor: string }[] {
+  return Object.entries(argumentos).map(([chave, valor]) => ({
+    chave: chave.replace(/_/g, ' '),
+    valor: String(valor),
+  }));
+}
+
 export default function AssistenteScreen() {
   const isOnline = useIsOnline();
   const [texto, setTexto] = useState('');
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
-  const mutation = useMutation({
-    mutationFn: (pergunta: string) => perguntar({ pergunta }),
-    onSuccess: (data) => {
+  const temConfirmacaoPendente = mensagens.some((msg) => msg.papel === 'confirmacao' && msg.status === 'pendente');
+
+  function processarResultado(resultado: { resposta: string | null; confirmacao: ConfirmacaoAcaoPendente | null }) {
+    if (resultado.confirmacao) {
       setMensagens((atual) => [
         ...atual,
-        { id: `${Date.now()}-assistente`, papel: 'assistente', texto: data.resposta, fontes: data.fontes },
+        { id: `${Date.now()}-confirmacao`, papel: 'confirmacao', confirmacao: resultado.confirmacao!, status: 'pendente' },
       ]);
-    },
+      return;
+    }
+    setMensagens((atual) => [
+      ...atual,
+      {
+        id: `${Date.now()}-assistente`,
+        papel: 'assistente',
+        texto: resultado.resposta ?? 'Não consegui gerar uma resposta para essa pergunta.',
+      },
+    ]);
+  }
+
+  const perguntaMutation = useMutation({
+    mutationFn: (pergunta: string) => perguntarAgente(pergunta),
+    onSuccess: processarResultado,
     onError: (err, pergunta) => {
       setMensagens((atual) => [
         ...atual,
@@ -46,7 +73,33 @@ export default function AssistenteScreen() {
           id: `${Date.now()}-erro`,
           papel: 'erro',
           texto: getErrorMessage(err, 'Não foi possível obter uma resposta.'),
-          perguntaOriginal: pergunta,
+          acao: { tipo: 'pergunta', texto: pergunta },
+        },
+      ]);
+    },
+  });
+
+  const confirmarMutation = useMutation({
+    mutationFn: ({ confirmacaoId, aprovado }: { confirmacaoId: string; aprovado: boolean; mensagemId: string }) =>
+      confirmarAcao(confirmacaoId, aprovado),
+    onSuccess: (resultado, { aprovado, mensagemId }) => {
+      setMensagens((atual) =>
+        atual.map((msg) =>
+          msg.id === mensagemId && msg.papel === 'confirmacao'
+            ? { ...msg, status: aprovado ? 'aprovada' : 'recusada' }
+            : msg,
+        ),
+      );
+      processarResultado(resultado);
+    },
+    onError: (err, { confirmacaoId, aprovado, mensagemId }) => {
+      setMensagens((atual) => [
+        ...atual,
+        {
+          id: `${Date.now()}-erro`,
+          papel: 'erro',
+          texto: getErrorMessage(err, 'Não foi possível processar a confirmação.'),
+          acao: { tipo: 'confirmar', confirmacaoId, aprovado, mensagemId },
         },
       ]);
     },
@@ -54,11 +107,26 @@ export default function AssistenteScreen() {
 
   function enviar(pergunta: string) {
     const limpa = pergunta.trim();
-    if (limpa === '' || mutation.isPending) return;
+    if (limpa === '' || perguntaMutation.isPending || temConfirmacaoPendente) return;
     setMensagens((atual) => [...atual, { id: `${Date.now()}-usuario`, papel: 'usuario', texto: limpa }]);
     setTexto('');
-    mutation.mutate(limpa);
+    perguntaMutation.mutate(limpa);
   }
+
+  function decidir(mensagemId: string, confirmacaoId: string, aprovado: boolean) {
+    if (confirmarMutation.isPending) return;
+    confirmarMutation.mutate({ confirmacaoId, aprovado, mensagemId });
+  }
+
+  function repetirAcao(acao: AcaoPendente) {
+    if (acao.tipo === 'pergunta') {
+      perguntaMutation.mutate(acao.texto);
+    } else {
+      confirmarMutation.mutate({ confirmacaoId: acao.confirmacaoId, aprovado: acao.aprovado, mensagemId: acao.mensagemId });
+    }
+  }
+
+  const carregando = perguntaMutation.isPending || confirmarMutation.isPending;
 
   return (
     <KeyboardAvoidingView
@@ -89,7 +157,7 @@ export default function AssistenteScreen() {
             </View>
             <Text style={styles.welcomeTitle}>Pergunte ao LotIAdo</Text>
             <Text style={styles.welcomeSubtitle}>
-              Faça uma pergunta sobre os loteamentos, lotes e documentos cadastrados.
+              Faça uma pergunta ou peça uma ação sobre os loteamentos, lotes, clientes e vendas cadastrados.
             </Text>
             <Pressable style={styles.suggestion} onPress={() => enviar(SUGESTAO)}>
               <Text style={styles.suggestionText}>"{SUGESTAO}"</Text>
@@ -116,9 +184,60 @@ export default function AssistenteScreen() {
                   <View style={styles.bolhaErro}>
                     <Text style={styles.textoErro}>{msg.texto}</Text>
                   </View>
-                  <Pressable onPress={() => enviar(msg.perguntaOriginal)} hitSlop={6}>
+                  <Pressable onPress={() => repetirAcao(msg.acao)} hitSlop={6}>
                     <Text style={styles.retryText}>Tentar novamente</Text>
                   </Pressable>
+                </View>
+              </View>
+            );
+          }
+
+          if (msg.papel === 'confirmacao') {
+            const { confirmacao, status } = msg;
+            return (
+              <View key={msg.id} style={styles.rowAssistente}>
+                <Avatar />
+                <View style={styles.colunaAssistente}>
+                  <View style={styles.confirmacaoCard}>
+                    <View style={styles.confirmacaoHeader}>
+                      <ShieldAlert size={16} color={colors.primary} />
+                      <Text style={styles.confirmacaoTitulo}>Confirmação necessária</Text>
+                    </View>
+                    <Text style={styles.confirmacaoDescricao}>{confirmacao.descricao}</Text>
+                    <View style={styles.confirmacaoArgumentos}>
+                      {formatarArgumentos(confirmacao.argumentos).map(({ chave, valor }) => (
+                        <Text key={chave} style={styles.confirmacaoArgumento}>
+                          <Text style={styles.confirmacaoArgumentoChave}>{chave}: </Text>
+                          {valor}
+                        </Text>
+                      ))}
+                    </View>
+
+                    {status === 'pendente' ? (
+                      <View style={styles.confirmacaoBotoes}>
+                        <Pressable
+                          style={styles.botaoRecusar}
+                          onPress={() => decidir(msg.id, confirmacao.confirmacao_id, false)}
+                          disabled={confirmarMutation.isPending}
+                        >
+                          <X size={16} color={colors.destructive} />
+                          <Text style={styles.botaoRecusarTexto}>Recusar</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.botaoAceitar}
+                          onPress={() => decidir(msg.id, confirmacao.confirmacao_id, true)}
+                          disabled={confirmarMutation.isPending}
+                        >
+                          <Check size={16} color={colors.accentForeground} />
+                          <Text style={styles.botaoAceitarTexto}>Aceitar</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Text style={status === 'aprovada' ? styles.confirmacaoStatusAprovada : styles.confirmacaoStatusRecusada}>
+                        {status === 'aprovada' ? 'Ação aprovada' : 'Ação recusada'}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
             );
@@ -131,27 +250,12 @@ export default function AssistenteScreen() {
                 <View style={styles.bolhaAssistente}>
                   <Text style={styles.textoAssistente}>{msg.texto}</Text>
                 </View>
-                {msg.fontes.length > 0 ? (
-                  <View style={styles.sourcesSection}>
-                    {msg.fontes.map((fonte, index) => (
-                      <View key={`${fonte.documento_id}-${index}`} style={styles.sourceCard}>
-                        <FileText size={13} color={colors.mutedForeground} />
-                        <View style={styles.sourceTextWrap}>
-                          <Text style={styles.sourceNome}>{fonte.documento_nome}</Text>
-                          <Text style={styles.sourceTrecho} numberOfLines={2}>
-                            {fonte.trecho}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
               </View>
             </View>
           );
         })}
 
-        {mutation.isPending ? (
+        {carregando ? (
           <View style={styles.rowAssistente}>
             <Avatar />
             <View style={[styles.bolhaAssistente, styles.bolhaCarregando]}>
@@ -163,6 +267,9 @@ export default function AssistenteScreen() {
 
       <View style={styles.composer}>
         {!isOnline ? <Text style={styles.offlineText}>{OFFLINE_MESSAGE}</Text> : null}
+        {temConfirmacaoPendente ? (
+          <Text style={styles.offlineText}>Responda à confirmação acima antes de continuar.</Text>
+        ) : null}
         <View style={styles.composerRow}>
           <RNTextInput
             value={texto}
@@ -171,12 +278,16 @@ export default function AssistenteScreen() {
             placeholderTextColor={colors.mutedForeground}
             style={styles.composerInput}
             multiline
-            editable={isOnline}
+            editable={isOnline && !temConfirmacaoPendente}
           />
           <Pressable
-            style={[styles.sendButton, (texto.trim() === '' || mutation.isPending || !isOnline) && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              (texto.trim() === '' || perguntaMutation.isPending || !isOnline || temConfirmacaoPendente) &&
+                styles.sendButtonDisabled,
+            ]}
             onPress={() => enviar(texto)}
-            disabled={texto.trim() === '' || mutation.isPending || !isOnline}
+            disabled={texto.trim() === '' || perguntaMutation.isPending || !isOnline || temConfirmacaoPendente}
             hitSlop={6}
           >
             <ArrowUp size={20} color={colors.primaryForeground} />
@@ -348,31 +459,89 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginLeft: 4,
   },
-  sourcesSection: {
-    gap: 6,
-  },
-  sourceCard: {
-    flexDirection: 'row',
-    gap: 8,
+  confirmacaoCard: {
+    alignSelf: 'flex-start',
+    width: '100%',
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: 10,
+    borderColor: colors.primarySoft,
+    borderRadius: radius.lg,
+    padding: 12,
+    gap: 8,
   },
-  sourceTextWrap: {
-    flex: 1,
+  confirmacaoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  sourceNome: {
+  confirmacaoTitulo: {
     fontFamily: fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: 13,
+    color: colors.primary,
+  },
+  confirmacaoDescricao: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
     color: colors.foreground,
   },
-  sourceTrecho: {
+  confirmacaoArgumentos: {
+    gap: 2,
+  },
+  confirmacaoArgumento: {
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.mutedForeground,
-    marginTop: 1,
+  },
+  confirmacaoArgumentoChave: {
+    fontFamily: fonts.bodySemiBold,
+    color: colors.mutedForeground,
+  },
+  confirmacaoBotoes: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  botaoRecusar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: radius.md,
+    paddingVertical: 9,
+  },
+  botaoRecusarTexto: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.destructive,
+  },
+  botaoAceitar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingVertical: 9,
+  },
+  botaoAceitarTexto: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.accentForeground,
+  },
+  confirmacaoStatusAprovada: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.accent,
+  },
+  confirmacaoStatusRecusada: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.destructive,
   },
   composer: {
     borderTopWidth: 1,
