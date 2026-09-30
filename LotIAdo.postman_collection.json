@@ -40,6 +40,10 @@
 		{
 			"key": "membership_id",
 			"value": ""
+		},
+		{
+			"key": "feicao_id",
+			"value": ""
 		}
 	],
 	"item": [
@@ -858,6 +862,87 @@
 							"path": ["lotes", "{{lote_id}}"]
 						},
 						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Geo (consultas espaciais)",
+			"item": [
+				{
+					"name": "Distância entre lotes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/geo/distancia?lote_a={{lote_id}}&lote_b={{lote_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["geo", "distancia"],
+							"query": [{"key": "lote_a", "value": "{{lote_id}}"}, {"key": "lote_b", "value": "{{lote_id}}"}]
+						},
+						"description": "Distância mínima em metros entre dois lotes do tenant (0 se vizinhos). Troque `lote_b` por outro lote. 404 se o lote não existe; 422 se algum não tem geometria."
+					},
+					"response": []
+				},
+				{
+					"name": "Lotes de esquina",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/geo/loteamentos/{{loteamento_id}}/lotes-de-esquina?status=disponivel&area_m2_min=200",
+							"host": ["{{base_url}}"],
+							"path": ["geo", "loteamentos", "{{loteamento_id}}", "lotes-de-esquina"],
+							"query": [{"key": "status", "value": "disponivel"}, {"key": "area_m2_min", "value": "200"}]
+						},
+						"description": "Lotes que tocam ao menos duas ruas (feições tipo `rua`) do loteamento. Filtros opcionais: `status` e `area_m2_min` (área >=)."
+					},
+					"response": []
+				},
+				{
+					"name": "Lotes próximos de uma feição",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"url": {
+							"raw": "{{base_url}}/geo/feicoes/{{feicao_id}}/lotes-proximos?raio_m=100&status=disponivel",
+							"host": ["{{base_url}}"],
+							"path": ["geo", "feicoes", "{{feicao_id}}", "lotes-proximos"],
+							"query": [{"key": "raio_m", "value": "100"}, {"key": "status", "value": "disponivel"}]
+						},
+						"description": "Lotes a até `raio_m` metros de uma feição de referência (ex.: área verde). Filtros opcionais: `status` e `area_m2_min`. 404 se a feição não existe."
+					},
+					"response": []
+				},
+				{
+					"name": "Lotes dentro de uma área",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+						},
+						"body": {"mode": "raw", "raw": "{\n  \"area_geojson\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [[[-46.6335, -23.5503], [-46.6321, -23.5503], [-46.6321, -23.5512], [-46.6335, -23.5512], [-46.6335, -23.5503]]]\n  },\n  \"status\": \"disponivel\"\n}"},
+						"url": {
+							"raw": "{{base_url}}/geo/lotes/dentro-de",
+							"host": ["{{base_url}}"],
+							"path": ["geo", "lotes", "dentro-de"]
+						},
+						"description": "Lotes totalmente contidos em uma área GeoJSON (Polygon/MultiPolygon, [lng, lat]). Filtros opcionais no corpo: `loteamento_id`, `status`, `area_m2_min`. 422 se a área for inválida."
 					},
 					"response": []
 				}
