@@ -10,7 +10,7 @@ Entrega desta fase: rotas web (dentro do app Expo) para as três tarefas que nã
 - **Tipo:** Estudo
 - **Dev:** Dev 1 e Dev 2
 - **Objetivo:** entender como o Expo compila o mesmo código React Native para o navegador, e onde a paridade com o nativo quebra.
-- **Conceitos a entender:** `expo start --web` e o processo de build web do Expo; quais componentes/APIs nativos não têm equivalente automático na web (ex.: `expo-secure-store`, `react-native-maps`) versus os que funcionam sem alteração (a maioria dos componentes de layout/formulário); convenção de arquivos por plataforma do Metro/Expo (`Componente.web.tsx` sobrepõe `Componente.tsx`/`Componente.native.tsx` quando o alvo é web); diferenças de navegação (Expo Router gera URLs reais na web) e de interação (hover, teclado, tamanho de tela maior).
+- **Conceitos a entender:** `expo start --web` e o processo de build web do Expo; quais componentes/APIs nativos não têm equivalente automático na web (ex.: `expo-secure-store`, `@maplibre/maplibre-react-native`) versus os que funcionam sem alteração (a maioria dos componentes de layout/formulário); convenção de arquivos por plataforma do Metro/Expo (`Componente.web.tsx` sobrepõe `Componente.tsx`/`Componente.native.tsx` quando o alvo é web); diferenças de navegação (Expo Router gera URLs reais na web) e de interação (hover, teclado, tamanho de tela maior).
 - **Material recomendado:** documentação oficial do Expo sobre suporte a Web; documentação do Expo Router sobre comportamento específico na web.
 - **Exercício prático:** pegar o app da Fase 3 (login + lista + detalhe) e rodá-lo com `expo start --web`; identificar o que quebra (ex.: `expo-secure-store` lançando erro) e corrigir criando uma versão `.web.tsx` do módulo de storage (FASE3-IMPL-01 já isolou essa interface propositalmente para este momento).
 - **Critério de conclusão:** o app da Fase 3 roda no navegador com login funcional (usando `localStorage` na implementação web do storage), sem alterar as telas em si.
@@ -46,13 +46,13 @@ Entrega desta fase: rotas web (dentro do app Expo) para as três tarefas que nã
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 2
 - **Objetivo:** usuário consegue desenhar/corrigir manualmente a geometria de um lote sobre um mapa no navegador, incluindo o passo de calibração de plantas não georreferenciadas (ver risco em [01-analise-requisitos.md](../01-analise-requisitos.md)), reaproveitando o componente de mapa da Fase 4.
-- **Descrição:** criar `LoteamentoMap.web.tsx` (decisão D8 em [03-decisoes-tecnicas.md](../03-decisoes-tecnicas.md)) implementando a mesma interface de props do componente nativo (FASE4-IMPL-03), usando um wrapper que reproduz a API do `react-native-maps` sobre o Google Maps JS (ex.: `@teovilla/react-native-web-maps`) — se o wrapper se mostrar instável, cair para uma implementação própria com `react-leaflet` (plano B registrado em D8); adicionar sobre esse mapa uma camada de desenho de polígono (biblioteca de desenho do Google Maps, ou do Leaflet no plano B) que salva via `PUT /lotes/{id}/geometria`; para plantas/imagens não georreferenciadas, tela auxiliar onde o usuário marca 2–3 pontos de referência conhecidos (endereço/coordenada) antes de posicionar o desenho sobre o mapa real.
+- **Descrição:** criar `LoteamentoMap.web.tsx` (decisão D8 em [03-decisoes-tecnicas.md](../03-decisoes-tecnicas.md)) implementando a mesma interface de props do componente nativo (FASE4-IMPL-03), usando `maplibre-gl` com o mesmo estilo de mapa do nativo (decisões D8/D10); adicionar sobre esse mapa uma camada de desenho de polígono (ex.: `maplibre-gl-draw`/`terra-draw`) que salva via `PUT /lotes/{id}/geometria`; para plantas/imagens não georreferenciadas, tela auxiliar onde o usuário marca 2–3 pontos de referência conhecidos (endereço/coordenada) antes de posicionar o desenho sobre o mapa real.
 - **Pré-requisitos:** nenhum estudo novo além de FASE4-EST-01 (conceitos de geometria) e FASE5-EST-01.
 - **Dependências:** FASE4-IMPL-01, FASE4-IMPL-03 (interface do componente `LoteamentoMap`).
 - **Resultado esperado:** é possível corrigir manualmente a geometria de qualquer lote pelo navegador, com o mesmo componente de mapa (via arquivo `.web.tsx`) usado para visualização no mobile.
 - **Critérios de aceite:** polígono desenhado na tela é persistido corretamente no PostGIS (SRID 4326) e aparece de forma consistente no mapa mobile (Fase 4); o componente `LoteamentoMap` mantém a mesma interface de props nas duas plataformas.
 - **Paralelizável:** Sim, com FASE5-IMPL-02.
-- **Conhecimentos novos introduzidos:** wrapper de mapa para web sobre Google Maps (ou Leaflet como plano B), biblioteca de desenho de polígono, fluxo de calibração/georreferenciamento manual.
+- **Conhecimentos novos introduzidos:** MapLibre GL JS na web, biblioteca de desenho de polígono, fluxo de calibração/georreferenciamento manual.
 
 ## Épico E5.3 — Gestão de documentos
 

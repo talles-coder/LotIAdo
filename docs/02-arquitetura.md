@@ -46,8 +46,8 @@ Uma única base de código (`mobile/`), consumida em dois alvos de build do Expo
 - **Web (backoffice mínimo):** mesmas telas de domínio herdadas do mobile onde fizer sentido, mais rotas específicas para o que é inviável em tela pequena: import de CSV, revisão/edição de polígono, gestão de documentos. Não é um segundo produto — escopo restrito às tarefas administrativas do briefing.
 - **Onde as duas superfícies divergem**, usar arquivos por plataforma (`Componente.native.tsx` / `Componente.web.tsx`) atrás de uma interface única, em vez de `if (Platform.OS === 'web')` espalhado pelo código:
   - **Armazenamento de sessão:** `expo-secure-store` no nativo; `localStorage`/cookie no web — abstraído atrás de um módulo `storage` único desde a Fase 3.
-  - **Mapa:** `react-native-maps` (provider Google Maps) no nativo; no web, um wrapper que também usa a API JavaScript do Google Maps mantendo a mesma interface de `MapView`/`Polygon` (ex.: `@teovilla/react-native-web-maps` ou equivalente) — ver decisão D8. Geometrias sempre vêm do backend (PostGIS); o mapa é só visualização (ou edição, no caso do editor de polígono na web).
-  - **Editor/desenho de polígono:** só existe na implementação web do componente de mapa (biblioteca de desenho sobre o Google Maps), já que essa tarefa é assumidamente de backoffice.
+  - **Mapa:** MapLibre com tiles do OpenStreetMap: `@maplibre/maplibre-react-native` no nativo e `maplibre-gl` no web, ambos atrás do componente `LoteamentoMap` (mesma interface de props) — ver decisões D8 e D10. Geometrias sempre vêm do backend (PostGIS); o mapa é só visualização (ou edição, no caso do editor de polígono na web).
+  - **Editor/desenho de polígono:** só existe na implementação web do componente de mapa (biblioteca de desenho sobre o MapLibre GL JS), já que essa tarefa é assumidamente de backoffice.
 - Consome a mesma API REST do backend (JSON, autenticação via JWT) em ambas as superfícies — o backend não tem nenhuma noção de "backoffice", só serve a mesma API para um cliente que roda em duas plataformas.
 
 ### Backend — monólito modular (FastAPI)
@@ -73,7 +73,7 @@ Módulos:
 
 ### PostgreSQL + PostGIS + pgvector
 - Banco único. Toda tabela de domínio tem `tenant_id` e política RLS correspondente.
-- PostGIS é a **fonte de verdade geográfica** — não o Google Maps, que é só visualização. SRID único (WGS84/4326) em todo o sistema.
+- PostGIS é a **fonte de verdade geográfica** — não o mapa (MapLibre/OSM), que é só visualização. SRID único (WGS84/4326) em todo o sistema.
 - pgvector guarda embeddings dos chunks de documentos, com metadados de escopo (`tenant_id` obrigatório, `loteamento_id`/`lote_id` opcionais) para filtragem em qualquer granularidade.
 
 ### Redis

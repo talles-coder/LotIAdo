@@ -2,7 +2,9 @@
 import json
 
 import pytest
+from geoalchemy2.shape import from_shape
 from httpx import AsyncClient
+from shapely.geometry import Polygon
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +13,7 @@ from app.audit.domain.models import AuditLog
 from app.config import Settings
 from app.identity.application.security import create_access_token, hash_password
 from app.identity.domain.models import User, UserTenantMembership
+from app.loteamentos_lotes.domain.models import Lote
 from app.tenancy.domain.models import Tenant
 
 
@@ -174,6 +177,28 @@ async def test_listar_lotes_isola_por_tenant(client: AsyncClient, db_session: As
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+@pytest.mark.asyncio
+async def test_lote_expoe_geometria_como_geojson(client: AsyncClient, db_session: AsyncSession):
+    """Lote com geometria é serializado como GeoJSON Polygon; lote sem geometria retorna null."""
+    token = await _criar_usuario_com_tenant(db_session, "tenant-lote-geojson")
+    loteamento_id = await _criar_loteamento(client, token)
+    sem_geometria = await _criar_lote(client, token, loteamento_id, "Sem geometria")
+    com_geometria = await _criar_lote(client, token, loteamento_id, "Com geometria")
+
+    lote = await db_session.get(Lote, com_geometria["id"])
+    lote.geometria = from_shape(Polygon([(0, 0), (0.001, 0), (0.001, 0.001), (0, 0.001)]), srid=4326)
+    await db_session.commit()
+
+    response = await client.get(f"/loteamentos/{loteamento_id}/lotes", headers=_auth_headers(token))
+
+    assert response.status_code == 200
+    por_id = {item["id"]: item for item in response.json()}
+    assert por_id[sem_geometria["id"]]["geometria"] is None
+    geometria = por_id[com_geometria["id"]]["geometria"]
+    assert geometria["type"] == "Polygon"
+    assert geometria["coordinates"][0][0] == [0.0, 0.0]
 
 
 @pytest.mark.asyncio

@@ -44,13 +44,13 @@ Entrega desta fase: lotes com geometria real no PostGIS, mapa funcional no mobil
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 1
 - **Objetivo:** corretor visualiza o loteamento no mapa, com lotes coloridos por status, e pode tocar em um lote para ver detalhe.
-- **Descrição:** tela de mapa usando `react-native-maps` (provider Google Maps) renderizando os polígonos retornados pela API (GeoJSON); cor por status; toque no polígono navega para a tela de detalhe (Fase 3). Isolar o mapa em um componente próprio (ex.: `LoteamentoMap`) com uma interface simples de props (lista de polígonos, callback de seleção) — na Fase 5 esse mesmo componente ganha uma implementação `.web.tsx` (decisão D8 em [03-decisoes-tecnicas.md](../03-decisoes-tecnicas.md)), então evitar lógica de mapa espalhada fora dele já economiza retrabalho.
+- **Descrição:** tela de mapa usando `@maplibre/maplibre-react-native` (tiles OpenStreetMap, decisão D10) renderizando os polígonos retornados pela API (GeoJSON); cor por status; toque no polígono navega para a tela de detalhe (Fase 3). Isolar o mapa em um componente próprio (ex.: `LoteamentoMap`) com uma interface simples de props (lista de polígonos, callback de seleção) — na Fase 5 esse mesmo componente ganha uma implementação `.web.tsx` (decisão D8 em [03-decisoes-tecnicas.md](../03-decisoes-tecnicas.md)), então evitar lógica de mapa espalhada fora dele já economiza retrabalho.
 - **Pré-requisitos:** nenhum estudo novo (reaproveita FASE4-EST-01 e FASE3-EST-01).
 - **Dependências:** FASE4-IMPL-01, FASE3-IMPL-02.
 - **Resultado esperado:** mapa interativo funcional no app.
 - **Critérios de aceite:** mapa carrega os polígonos de um loteamento de teste; toque em um polígono abre o detalhe correto.
 - **Paralelizável:** Sim, com FASE4-IMPL-04 (backoffice), que é uma superfície diferente.
-- **Conhecimentos novos introduzidos:** renderização de GeoJSON/polígonos em `react-native-maps`, API do Google Maps.
+- **Conhecimentos novos introduzidos:** renderização de GeoJSON/polígonos em MapLibre (ShapeSource/FillLayer), estilo de mapa raster.
 
 ### FASE4-IMPL-04 — Importação de CSV manual (mapeamento humano de colunas)
 - **Tipo:** Implementação

@@ -35,7 +35,7 @@ pytest tests/test_auth.py -v
 
 ## Evidências
 
-(Apenas se relevante — screenshots, logs, exemplos)
+(Tela nova/alterada: **screenshot obrigatório**, tirado com o repo rodando localmente, embutido via raw.githubusercontent.com. Demais casos: logs, exemplos)
 
 **Request/Response:**
 ```json
