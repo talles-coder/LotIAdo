@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     invitation_expire_hours: int = 168
 
+    # Origens permitidas para o app Expo Web (navegador). Nativo não usa CORS.
+    cors_origins: list[str] = ["http://localhost:8081", "http://localhost:19006"]
+
     class Config:
         env_file = ".env"
         case_sensitive = False

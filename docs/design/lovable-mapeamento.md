@@ -85,3 +85,12 @@ Biblioteca `lucide` (o repo web usa `lucide-react`). No app: `lucide-react-nativ
 ## Regra permanente
 
 **Todo trabalho de estilo/UI daqui pra frente (mobile ou backoffice web) segue os tokens e padrões deste documento** — não inventar cor, fonte, raio ou componente novo fora daqui. Se algo não estiver mapeado (uma tela nova, por exemplo), a extensão da paleta/padrões deve manter a mesma lógica (cream/terracota/verde, `earth` pra blocos sólidos, status sempre cor+texto+dot) em vez de introduzir um estilo novo. Mudança de direção visual passa por aqui primeiro (atualiza este arquivo), nunca só no código.
+
+## Layout web (backoffice, FASE5-IMPL-01)
+
+O repo de referência do Lovable só tem layout mobile; para o navegador em tela larga (≥ 900 px, `useIsDesktop`) o mesmo app troca a moldura, **sem inventar tokens novos**:
+- **Sidebar** `earth` (240 px) com `Logo` `onDark`, itens Início / Loteamentos / Novo cliente / Corretores / Usuários (ativo em pill `primary`), e **barra superior** `card` com avatar (iniciais), nome e "Sair" — `WebShell.web.tsx`. Substitui a `BottomNav` e o header da home (o item "Backoffice" some: no web o app inteiro é o backoffice).
+- **Conteúdo** centralizado, largura máx. 1120 px; listas de cards (loteamentos, lotes, atalhos da home) em **2 colunas**.
+- **Login** em tela dividida: hero `earth` com a grade + formulário centralizado (máx. 440 px).
+- Abaixo de 900 px (celular/janela estreita) o layout mobile continua igual. Nativo nunca usa o shell (`WebShell.tsx` é passthrough).
+- Telas de tabela/formulário largas das demais tasks da Fase 5 (import CSV, documentos) entram dentro dessa moldura.
