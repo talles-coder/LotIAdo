@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Home, Map, Monitor, UserPlus } from 'lucide-react-native';
 
+import { useIsDesktop } from '../lib/useIsDesktop';
 import { colors, fonts } from '../theme/tokens';
 
 const NAV = [
@@ -19,6 +20,10 @@ const NAV = [
  */
 export function BottomNav() {
   const pathname = usePathname();
+  const desktop = useIsDesktop();
+
+  // No navegador em tela larga a navegação é a sidebar do WebShell.
+  if (desktop) return null;
 
   return (
     <View style={styles.nav}>

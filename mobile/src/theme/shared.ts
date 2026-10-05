@@ -15,6 +15,23 @@ export const shared = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
+  /** Grade de 2 colunas no navegador em tela larga (ver WebShell): View simples com `grid`/`gridItem`. */
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  gridItem: {
+    width: '49%',
+  },
+  /** Mesma grade em FlatList (`numColumns` + `columnWrapperStyle`); a célula é a linha, então o item usa flex. */
+  flatGridRow: {
+    gap: 12,
+  },
+  flatGridItem: {
+    flex: 1,
+    maxWidth: '49.5%',
+  },
   /**
    * Barra de ação fixa no rodapé (`footer` do `MobileShell` no repo de referência do
    * Lovable) — substitui o `BottomNav` sempre que a tela ganha uma ação principal.
