@@ -6,6 +6,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ActivityIndicator, Button, HelperText } from 'react-native-paper';
 import { ArrowLeft, MapPin } from 'lucide-react-native';
 
+import { enviarDocumento, obterDocumento, solicitarExtracaoImagem } from '../../../src/api/documentos';
 import { atualizarGeometriaLote, obterLote, type GeoJsonPolygon } from '../../../src/api/loteamentos';
 import { getErrorMessage } from '../../../src/lib/errors';
 import { calibrarTransformacao, type PontoReferencia } from '../../../src/lib/georeferencing';
@@ -14,14 +15,49 @@ import { shared } from '../../../src/theme/shared';
 import { CalibragemImagem } from '../../../src/components/CalibragemImagem';
 import { PoligonoEditorMapa, type ImagemOverlay } from '../../../src/components/PoligonoEditorMapa';
 
+const STATUS_EXTRACAO_EM_ANDAMENTO = new Set(['pendente', 'processando']);
+
 /** Passo auxiliar de calibração: marcar 2–3 pontos de referência conhecidos de uma planta não
- * georreferenciada antes de posicionar o desenho sobre o mapa real (docs/01-analise-requisitos.md, seção 8). */
-function useCalibragem() {
+ * georreferenciada antes de posicionar o desenho sobre o mapa real (docs/01-analise-requisitos.md, seção 8).
+ *
+ * Também dispara a sugestão de extração da IA (FASE8-IMPL-02/SCRUM-100): ao escolher a imagem, ela é
+ * enviada como documento e o backend roda OCR + detecção de contornos em segundo plano (fila RQ). O
+ * resultado só preenche a camada de sugestão do `CalibragemImagem` — nada é aplicado automaticamente.
+ */
+function useCalibragem(loteId: string) {
   const [imagemUri, setImagemUri] = useState<string | null>(null);
   const [tamanhoImagem, setTamanhoImagem] = useState<{ width: number; height: number } | null>(null);
   const [pontos, setPontos] = useState<PontoReferencia[]>([]);
   const [pontoPendente, setPontoPendente] = useState<[number, number] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [documentoId, setDocumentoId] = useState<string | null>(null);
+  const [contornoSelecionado, setContornoSelecionado] = useState<number | null>(null);
+
+  const sugestaoMutation = useMutation({
+    mutationFn: async (asset: DocumentPicker.DocumentPickerAsset) => {
+      const documento = await enviarDocumento(asset, { tipo: 'planta', loteId });
+      await solicitarExtracaoImagem(documento.id);
+      return documento.id;
+    },
+    onSuccess: setDocumentoId,
+    // Falha ao pedir a sugestão (ex.: rede) não bloqueia a calibração manual — só não há camada de IA.
+  });
+
+  const documentoQuery = useQuery({
+    queryKey: ['documentos', documentoId, 'extracao-imagem'],
+    queryFn: () => obterDocumento(documentoId as string),
+    enabled: documentoId !== null,
+    refetchInterval: (query) =>
+      STATUS_EXTRACAO_EM_ANDAMENTO.has(query.state.data?.status_extracao_imagem ?? '') ? 1500 : false,
+  });
+
+  function escolherImagem(asset: DocumentPicker.DocumentPickerAsset) {
+    setImagemUri(asset.uri);
+    setTamanhoImagem(null);
+    setDocumentoId(null);
+    setContornoSelecionado(null);
+    sugestaoMutation.mutate(asset);
+  }
 
   function adicionarPonto(lng: string, lat: string) {
     if (!pontoPendente) return;
@@ -54,9 +90,29 @@ function useCalibragem() {
     }
   }
 
+  /** Converte o contorno sugerido escolhido (pixel) em geometria real, via a mesma calibração —
+   * é isso que faz "editar uma sugestão" ser mais rápido que desenhar o polígono do zero. */
+  function obterPoligonoSugerido(): GeoJsonPolygon | null {
+    const contorno =
+      contornoSelecionado !== null
+        ? documentoQuery.data?.resultado_extracao_imagem?.contornos[contornoSelecionado]
+        : undefined;
+    if (!contorno || pontos.length < 2) return null;
+    try {
+      const transformacao = calibrarTransformacao(pontos);
+      const anel = contorno.pontos.map((pixel) => transformacao.aplicar(pixel));
+      anel.push(anel[0]);
+      return { type: 'Polygon', coordinates: [anel] };
+    } catch {
+      return null;
+    }
+  }
+
+  const statusExtracao = documentoQuery.data?.status_extracao_imagem ?? null;
+
   return {
     imagemUri,
-    setImagemUri,
+    escolherImagem,
     tamanhoImagem,
     setTamanhoImagem,
     pontos,
@@ -65,6 +121,11 @@ function useCalibragem() {
     adicionarPonto,
     erro,
     calibrar,
+    obterPoligonoSugerido,
+    sugestao: documentoQuery.data?.resultado_extracao_imagem ?? null,
+    sugestaoCarregando: sugestaoMutation.isPending || STATUS_EXTRACAO_EM_ANDAMENTO.has(statusExtracao ?? ''),
+    contornoSelecionado,
+    setContornoSelecionado,
   };
 }
 
@@ -73,9 +134,10 @@ export default function GeometriaDoLoteScreen() {
   const queryClient = useQueryClient();
   const [modo, setModo] = useState<'editar' | 'calibrar'>('editar');
   const [imagemOverlay, setImagemOverlay] = useState<ImagemOverlay | null>(null);
+  const [poligonoSugerido, setPoligonoSugerido] = useState<GeoJsonPolygon | null>(null);
   const [geometria, setGeometria] = useState<GeoJsonPolygon | null>(null);
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
-  const calibragem = useCalibragem();
+  const calibragem = useCalibragem(id);
 
   const loteQuery = useQuery({ queryKey: ['lotes', id], queryFn: () => obterLote(id) });
 
@@ -91,14 +153,14 @@ export default function GeometriaDoLoteScreen() {
   async function escolherImagemDaPlanta() {
     const picked = await DocumentPicker.getDocumentAsync({ type: 'image/*', copyToCacheDirectory: true });
     if (picked.canceled || !picked.assets[0]) return;
-    calibragem.setImagemUri(picked.assets[0].uri);
-    calibragem.setTamanhoImagem(null); // medido a partir do `<img onLoad>` em CalibragemImagem.web.tsx
+    calibragem.escolherImagem(picked.assets[0]); // envia a imagem e já pede a sugestão da IA (SCRUM-100)
   }
 
   function aplicarCalibragem() {
     const overlay = calibragem.calibrar();
     if (overlay) {
       setImagemOverlay(overlay);
+      setPoligonoSugerido(calibragem.obterPoligonoSugerido());
       setModo('editar');
     }
   }
@@ -154,6 +216,10 @@ export default function GeometriaDoLoteScreen() {
               pontoPendente={calibragem.pontoPendente}
               onMarcarPonto={calibragem.setPontoPendente}
               onConfirmarPonto={calibragem.adicionarPonto}
+              sugestao={calibragem.sugestao}
+              sugestaoCarregando={calibragem.sugestaoCarregando}
+              contornoSelecionado={calibragem.contornoSelecionado}
+              onSelecionarContorno={calibragem.setContornoSelecionado}
             />
           )}
 
@@ -176,7 +242,7 @@ export default function GeometriaDoLoteScreen() {
       ) : (
         <>
           <PoligonoEditorMapa
-            poligonoInicial={loteQuery.data.geometria}
+            poligonoInicial={poligonoSugerido ?? loteQuery.data.geometria}
             imagemOverlay={imagemOverlay}
             onGeometriaChange={setGeometria}
           />

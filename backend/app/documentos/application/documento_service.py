@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.documentos.domain.exceptions import (
+    DocumentoNaoEhImagemError,
     DocumentoNaoEncontradoError,
     LoteamentoDoDocumentoNaoEncontradoError,
     LoteDoDocumentoNaoEncontradoError,
@@ -107,3 +108,16 @@ class DocumentoService:
 
         await delete_chunks_by_documento(self.db, tenant_id, documento_id)
         return documento
+
+    async def solicitar_extracao_imagem(self, tenant_id: UUID, documento_id: UUID) -> Documento:
+        """Marca o documento para a sugestão de extração (OCR + contornos, FASE8-IMPL-02).
+
+        Quem efetivamente enfileira o job é a rota (`app/documentos/infrastructure/queue.py`) —
+        este método só valida e reseta o estado, mesma divisão de responsabilidade do upload.
+        """
+        documento = await self.obter(tenant_id, documento_id)
+        if not documento.content_type.startswith("image/"):
+            raise DocumentoNaoEhImagemError()
+        documento.status_extracao_imagem = "pendente"
+        documento.resultado_extracao_imagem = None
+        return await save_documento(self.db, documento)

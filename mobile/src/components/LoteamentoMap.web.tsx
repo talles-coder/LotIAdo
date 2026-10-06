@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Map,
   NavigationControl,
@@ -11,7 +11,8 @@ import {
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { GeoJsonPolygon, LoteStatus } from '../api/loteamentos';
-import { colors } from '../theme/tokens';
+import { alternarCamadaBase, MAPA_ESTILO, type CamadaMapaBase } from '../lib/mapStyle';
+import { colors, fonts } from '../theme/tokens';
 
 type StyleSpecification = NonNullable<MapOptions['style']>;
 
@@ -25,21 +26,6 @@ interface LoteamentoMapProps {
   poligonos: PoligonoMapa[];
   onSelect: (id: string) => void;
 }
-
-/** Mesmos tiles públicos do OSM usados no nativo (decisão D10 em docs/03-decisoes-tecnicas.md). */
-const MAP_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-};
 
 const STATUS_COLOR_EXPR = [
   'match',
@@ -79,13 +65,14 @@ export function LoteamentoMap({ poligonos, onSelect }: LoteamentoMapProps) {
   const mapRef = useRef<Map | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const [camadaBase, setCamadaBase] = useState<CamadaMapaBase>('ruas');
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const map = new Map({
       container: containerRef.current,
-      style: MAP_STYLE,
+      style: MAPA_ESTILO as unknown as StyleSpecification,
       bounds: toBounds(poligonos),
       fitBoundsOptions: { padding: 48 },
     });
@@ -135,9 +122,18 @@ export function LoteamentoMap({ poligonos, onSelect }: LoteamentoMapProps) {
     }
   }, [poligonos]);
 
+  function alternar() {
+    const proxima = camadaBase === 'ruas' ? 'satelite' : 'ruas';
+    setCamadaBase(proxima);
+    if (mapRef.current) alternarCamadaBase(mapRef.current, proxima);
+  }
+
   return (
     <View style={styles.map}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <Pressable style={styles.camadaBotao} onPress={alternar}>
+        <Text style={styles.camadaBotaoTexto}>{camadaBase === 'ruas' ? 'Satélite' : 'Ruas'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -145,5 +141,21 @@ export function LoteamentoMap({ poligonos, onSelect }: LoteamentoMapProps) {
 const styles = StyleSheet.create({
   map: {
     flex: 1,
+  },
+  camadaBotao: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  camadaBotaoTexto: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.foreground,
   },
 });
