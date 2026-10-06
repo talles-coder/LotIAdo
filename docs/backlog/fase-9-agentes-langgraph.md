@@ -28,6 +28,13 @@ Entrega desta fase: agente conversacional que responde perguntas em linguagem na
 - **Paralelizável:** Sim, com FASE9-IMPL-02 (o grafo pode ser desenvolvido com tools mockadas em paralelo).
 - **Conhecimentos novos introduzidos:** design de tools para agente (schema de entrada, formatação de saída para LLM).
 
+#### Handoff (SCRUM-103)
+- 10 tools implementadas em `app/ai_agents/application/tools.py` (schemas em `app/ai_agents/domain/schemas.py`): `consultar_lote`, `buscar_lotes`, `consultar_disponibilidade`, `lotes_de_esquina`, `lotes_proximos_de`, `lotes_dentro_de`, `distancia_entre_lotes`, `consultar_clientes`, `consultar_corretores`, `consultar_vendas`, `buscar_documentos`, `consultar_condicoes_comerciais`. Contrato fixado (não documentado antes): `async def tool(db, tenant_id, entrada: XInput) -> XOutput`, e toda exception de "não encontrado"/"inválido" vira `encontrado=False` + `mensagem` no output em vez de propagar — decisão necessária porque nada em `docs/` fixava isso antes desta task.
+- `VendaService` citado na task não existe — é `ReservaService`; só `obter`/`obter_atual_por_lote` viraram tool de consulta (as demais mudam estado e ficam para FASE9-IMPL-03, human-in-the-loop).
+- `LoteService.listar`/`GeoQueryService` não filtram por preço — `buscar_lotes` filtra em memória sobre o resultado.
+- Testes em `backend/tests/test_ai_agents_tools.py` (12, um+ por tool) — padrão: `db_session` direto, sem HTTP, sem mock de DB (ver `docs/contexto-modulos/servicos-dominio.md`).
+- Mapa completo dos serviços usados (`LoteService`, `GeoQueryService`, `ClienteService`, `CorretorService`, `ReservaService`, `BuscaService`) ficou registrado em `docs/contexto-modulos/servicos-dominio.md` — consultar antes de reexplorar esses módulos em FASE9-IMPL-02/03.
+
 ### FASE9-IMPL-02 — Grafo do agente: decisão, tool calling, resposta
 - **Tipo:** Implementação
 - **Dev responsável:** Dev 2
