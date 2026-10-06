@@ -19,6 +19,7 @@ import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 import { StatusBadge } from '../../src/components/StatusBadge';
 import { BottomNav } from '../../src/components/BottomNav';
+import { StalenessNotice } from '../../src/components/StalenessNotice';
 
 const CELULA_DESTACADA_NA_PLANTA = 8;
 
@@ -85,6 +86,8 @@ export default function LoteDetalheScreen() {
           {query.data?.identificacao ?? 'Lote'}
         </Text>
       </View>
+
+      <StalenessNotice updatedAt={query.dataUpdatedAt} />
 
       {query.isLoading ? (
         <View style={styles.center}>

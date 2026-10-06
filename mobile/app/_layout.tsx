@@ -3,20 +3,26 @@ import { View } from 'react-native';
 import { Slot } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold } from '@expo-google-fonts/figtree';
 import { Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 
 import { initSession } from '../src/auth/session';
+import { offlineCacheStorage } from '../src/storage/offlineCache';
+import { setupReactQueryOnlineManager } from '../src/lib/reactQueryOnlineManager';
 import { colors } from '../src/theme/tokens';
 import { paperTheme } from '../src/theme/paperTheme';
 import { SplashAnimation } from '../src/components/SplashAnimation';
 import { WebShell } from '../src/components/WebShell';
 
 SplashScreen.preventAutoHideAsync();
+setupReactQueryOnlineManager();
 
 const queryClient = new QueryClient();
+const persister = createAsyncStoragePersister({ storage: offlineCacheStorage });
 
 export default function RootLayout() {
   const [sessionReady, setSessionReady] = useState(false);
@@ -49,7 +55,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
         <PaperProvider theme={paperTheme}>
           <View style={{ flex: 1, backgroundColor: colors.background }}>
             <WebShell>
@@ -58,7 +64,7 @@ export default function RootLayout() {
             {showLogoAnimation && <SplashAnimation onFinish={handleAnimationFinish} />}
           </View>
         </PaperProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
 }
