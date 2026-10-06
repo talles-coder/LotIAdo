@@ -92,7 +92,10 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <View style={styles.aiBanner}>
+        <Pressable
+          style={({ pressed }) => [styles.aiBanner, pressed && styles.aiBannerPressed]}
+          onPress={() => router.push('/assistente')}
+        >
           <View style={styles.aiIconWrap}>
             <Sparkles size={20} color={colors.accentForeground} />
           </View>
@@ -101,8 +104,7 @@ export default function HomeScreen() {
             <Text style={styles.aiSubtitle}>"Quais lotes de esquina abaixo de 100 mil?"</Text>
           </View>
           <ChevronRight size={18} color={colors.earthForeground} style={{ opacity: 0.7 }} />
-        </View>
-        <Text style={styles.aiComingSoon}>Em breve — assistente de IA (Fase 7)</Text>
+        </Pressable>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Loteamentos recentes</Text>
@@ -272,12 +274,8 @@ const styles = StyleSheet.create({
     opacity: 0.75,
     marginTop: 2,
   },
-  aiComingSoon: {
-    fontFamily: fonts.body,
-    fontSize: 11,
-    color: colors.mutedForeground,
-    marginTop: 6,
-    marginLeft: 4,
+  aiBannerPressed: {
+    opacity: 0.85,
   },
   sectionHeader: {
     flexDirection: 'row',

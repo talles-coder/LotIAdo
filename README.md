@@ -22,6 +22,11 @@ Projeto de portfólio/aprendizado — ver [docs/](docs/) para a especificação 
 # 1. Infra (Postgres, Redis, Ollama, MinIO)
 make up
 
+# 1b. Modelos do Ollama (necessário para os endpoints de RAG, Fase 7+) —
+# `make up` só sobe o container vazio, os modelos não vêm pré-baixados
+docker exec lotiado-ollama ollama pull nomic-embed-text
+docker exec lotiado-ollama ollama pull llama3.2
+
 # 2. Backend
 cd backend
 cp .env.example .env        # ajuste se necessário
