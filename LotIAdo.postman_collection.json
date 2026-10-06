@@ -1069,6 +1069,44 @@
 			]
 		},
 		{
+			"name": "AI RAG",
+			"item": [
+				{
+					"name": "Busca Semântica",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pergunta\": \"Qual o prazo de entrega do loteamento?\",\n  \"loteamento_id\": null,\n  \"lote_id\": null,\n  \"top_k\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rag/buscar",
+							"host": ["{{base_url}}"],
+							"path": ["rag", "buscar"]
+						},
+						"description": "Busca semântica (FASE7-IMPL-03): gera o embedding da pergunta e retorna os `top_k` chunks mais similares do tenant autenticado, filtrando por `tenant_id` explicitamente na query (defesa em profundidade além da RLS) e, se informados, `loteamento_id`/`lote_id`. Resposta: lista ordenada por relevância de `{chunk_id, documento_id, documento_nome, texto, ordem, score}`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Geo (consultas espaciais)",
 			"item": [
 				{

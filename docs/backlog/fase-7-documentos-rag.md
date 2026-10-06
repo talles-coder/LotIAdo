@@ -73,6 +73,7 @@ Entrega desta fase: usuários fazem perguntas em linguagem natural sobre os docu
 - **Critérios de aceite:** teste com dois tenants de teste confirma que a busca de um nunca retorna chunk do outro, mesmo com a mesma pergunta.
 - **Paralelizável:** Sim, com FASE7-IMPL-04 (que consome esta busca, mas pode ser desenhada em paralelo com um contrato combinado).
 - **Conhecimentos novos introduzidos:** filtro de metadados combinado com busca vetorial.
+- **Contrato implementado (para FASE7-IMPL-04, ponto de sincronização 3):** `POST /rag/buscar` — body `{"pergunta": str, "loteamento_id"?: UUID, "lote_id"?: UUID, "top_k"?: int (padrão 5, 1–20)}`; resposta `200` é uma lista ordenada por relevância de `{"chunk_id", "documento_id", "documento_nome", "texto", "ordem", "score"}` (`score` = similaridade de cosseno, `1 - distância`, maior é melhor); `404` se `loteamento_id`/`lote_id` informado não existir no tenant. Sem paginação de página do documento — `chunking.py` (FASE7-IMPL-01) não rastreia página de origem, só a ordem do chunk dentro do documento; se isso virar necessário depois, é mudança em `dividir_em_chunks`/`DocumentChunk`, não neste endpoint.
 
 ### FASE7-IMPL-04 — Geração de resposta com citação de fonte
 - **Tipo:** Implementação
