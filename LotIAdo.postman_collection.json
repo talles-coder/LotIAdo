@@ -1009,6 +1009,40 @@
 					"response": []
 				},
 				{
+					"name": "Substituir Documento",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "arquivo",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/documentos/{{documento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["documentos", "{{documento_id}}"]
+						},
+						"description": "Substitui o conteúdo de um documento existente e reindexa (FASE7-IMPL-02): remove os `document_chunks` antigos e reenfileira o pipeline de chunking/embeddings (FASE7-IMPL-01). Status de indexação volta para `pendente`."
+					},
+					"response": []
+				},
+				{
 					"name": "Remover Documento",
 					"request": {
 						"method": "DELETE",
