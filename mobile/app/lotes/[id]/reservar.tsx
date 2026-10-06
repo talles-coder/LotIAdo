@@ -8,12 +8,14 @@ import { ArrowLeft, Check, Plus } from 'lucide-react-native';
 import { listarClientes, type Cliente } from '../../../src/api/clientes';
 import { criarReserva } from '../../../src/api/reservas';
 import { getErrorMessage } from '../../../src/lib/errors';
+import { OFFLINE_MESSAGE, useIsOnline } from '../../../src/lib/useIsOnline';
 import { colors, fonts } from '../../../src/theme/tokens';
 import { shared } from '../../../src/theme/shared';
 
 export default function ReservarLoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const isOnline = useIsOnline();
   const [busca, setBusca] = useState('');
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +109,8 @@ export default function ReservarLoteScreen() {
       )}
 
       <View style={[shared.stickyFooter, styles.footer]}>
-        <HelperText type="error" visible={error !== null} style={styles.footerError}>
-          {error}
+        <HelperText type="error" visible={error !== null || !isOnline} style={styles.footerError}>
+          {!isOnline ? OFFLINE_MESSAGE : error}
         </HelperText>
         <Button
           mode="contained"
@@ -117,7 +119,7 @@ export default function ReservarLoteScreen() {
             mutation.mutate();
           }}
           loading={mutation.isPending}
-          disabled={mutation.isPending || clienteSelecionado === null}
+          disabled={mutation.isPending || clienteSelecionado === null || !isOnline}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
         >

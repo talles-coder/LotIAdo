@@ -8,11 +8,13 @@ import { ArrowLeft } from 'lucide-react-native';
 import { criarCliente } from '../../src/api/clientes';
 import { Field } from '../../src/components/Field';
 import { getErrorMessage } from '../../src/lib/errors';
+import { OFFLINE_MESSAGE, useIsOnline } from '../../src/lib/useIsOnline';
 import { colors, fonts } from '../../src/theme/tokens';
 import { shared } from '../../src/theme/shared';
 
 export default function NovoClienteScreen() {
   const queryClient = useQueryClient();
+  const isOnline = useIsOnline();
   const [nome, setNome] = useState('');
   const [documento, setDocumento] = useState('');
   const [contato, setContato] = useState('');
@@ -55,8 +57,8 @@ export default function NovoClienteScreen() {
           onChangeText={setContato}
         />
 
-        <HelperText type="error" visible={error !== null}>
-          {error}
+        <HelperText type="error" visible={error !== null || !isOnline}>
+          {!isOnline ? OFFLINE_MESSAGE : error}
         </HelperText>
       </ScrollView>
 
@@ -68,7 +70,7 @@ export default function NovoClienteScreen() {
             mutation.mutate();
           }}
           loading={mutation.isPending}
-          disabled={mutation.isPending || !podeSalvar}
+          disabled={mutation.isPending || !podeSalvar || !isOnline}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
         >
