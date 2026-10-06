@@ -4,11 +4,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { Button, HelperText } from 'react-native-paper';
-import { ArrowLeft, CheckCircle2, FileSpreadsheet } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react-native';
 
 import {
   confirmarImportacaoCsv,
   previewImportacaoCsv,
+  sugerirMapeamentoCsv,
   type CampoLote,
   type MapeamentoColunas,
   type ResultadoImportacao,
@@ -24,12 +25,16 @@ const CAMPOS: { campo: CampoLote; label: string; obrigatorio: boolean }[] = [
   { campo: 'preco', label: 'Preço', obrigatorio: false },
 ];
 
+// Abaixo disso, a sugestão da IA não é boa o suficiente para pré-preencher (usuário mapeia à mão).
+const CONFIANCA_MINIMA_SUGESTAO = 0.5;
+
 export default function ImportarCsvScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [arquivo, setArquivo] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [colunas, setColunas] = useState<string[]>([]);
   const [mapeamento, setMapeamento] = useState<MapeamentoColunas>({});
+  const [camposSugeridos, setCamposSugeridos] = useState<Set<CampoLote>>(new Set());
   const [resultado, setResultado] = useState<ResultadoImportacao | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,9 +44,32 @@ export default function ImportarCsvScreen() {
       setArquivo(asset);
       setColunas(cabecalhos);
       setMapeamento({});
+      setCamposSugeridos(new Set());
       setResultado(null);
+      sugestaoMutation.mutate(cabecalhos);
     },
     onError: (err) => setError(getErrorMessage(err, 'Não foi possível ler o CSV.')),
+  });
+
+  // Sugestão da IA (FASE8-IMPL-01/SCRUM-97): só pré-preenche os selects, nunca importa sozinha.
+  // Uma falha aqui (ex.: Ollama fora do ar) não bloqueia o mapeamento manual.
+  const sugestaoMutation = useMutation({
+    mutationFn: (cabecalhos: string[]) => sugerirMapeamentoCsv(id, cabecalhos),
+    onSuccess: (sugestoes) => {
+      const camposComSugestao = new Set<CampoLote>();
+      setMapeamento((atual) => {
+        const proximo = { ...atual };
+        for (const { campo } of CAMPOS) {
+          const sugestao = sugestoes[campo];
+          if (sugestao && sugestao.confianca >= CONFIANCA_MINIMA_SUGESTAO && proximo[campo] === undefined) {
+            proximo[campo] = sugestao.coluna;
+            camposComSugestao.add(campo);
+          }
+        }
+        return proximo;
+      });
+      setCamposSugeridos(camposComSugestao);
+    },
   });
 
   const importMutation = useMutation({
@@ -72,6 +100,12 @@ export default function ImportarCsvScreen() {
       } else {
         proximo[campo] = coluna;
       }
+      return proximo;
+    });
+    setCamposSugeridos((atual) => {
+      if (!atual.has(campo)) return atual;
+      const proximo = new Set(atual);
+      proximo.delete(campo);
       return proximo;
     });
   }
@@ -109,10 +143,18 @@ export default function ImportarCsvScreen() {
             <Text style={styles.hint}>Para cada campo do sistema, escolha a coluna correspondente do CSV.</Text>
             {CAMPOS.map(({ campo, label, obrigatorio }) => (
               <View key={campo} style={styles.campo}>
-                <Text style={styles.campoLabel}>
-                  {label}
-                  {obrigatorio ? ' *' : ''}
-                </Text>
+                <View style={styles.campoLabelRow}>
+                  <Text style={styles.campoLabel}>
+                    {label}
+                    {obrigatorio ? ' *' : ''}
+                  </Text>
+                  {camposSugeridos.has(campo) ? (
+                    <View style={styles.sugestaoBadge}>
+                      <Sparkles size={12} color={colors.primary} />
+                      <Text style={styles.sugestaoBadgeText}>Sugestão da IA — revise</Text>
+                    </View>
+                  ) : null}
+                </View>
                 <View style={styles.chips}>
                   {!obrigatorio ? (
                     <Chip label="Não importar" active={mapeamento[campo] === undefined} onPress={() => escolherColuna(campo, undefined)} />
@@ -255,10 +297,26 @@ const styles = StyleSheet.create({
   campo: {
     gap: 8,
   },
+  campoLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   campoLabel: {
     fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.foreground,
+  },
+  sugestaoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sugestaoBadgeText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.primary,
   },
   chips: {
     flexDirection: 'row',
