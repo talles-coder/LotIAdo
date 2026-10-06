@@ -73,14 +73,21 @@ Ver `docs/02-arquitetura.md` para diagramas e fluxos completos.
 
 ## Backlog & Fases
 
-Arquivo: `docs/backlog/` (um por fase: `fase-0-fundamentos.md`, `fase-1-mvp-dominio.md`, ..., `fase-11-cloud-producao.md`).
+Arquivo: `docs/backlog/` (um por fase: `fase-0-fundamentos.md`, `fase-1-mvp-dominio.md`, ..., `fase-24-cloud-producao.md`).
 
 - **Fase 0–1:** Domínio + API (sem GIS, sem mobile).
 - **Fase 2–3:** Multi-tenancy real + mobile MVP.
 - **Fase 4–5:** GIS + backoffice web (Expo for Web).
 - **Fase 6–8:** Offline cache + IA (RAG).
 - **Fase 9–10:** Agentes LangGraph + observabilidade.
-- **Fase 11:** Cloud/produção (AWS).
+- **Fase 11–17:** Completude comercial (CRM/funil, comunicação, financeiro, portal white-label do cliente, GIS avançado, analytics, IA de domínio avançada) — resultado da análise competitiva em `docs/05-analise-competitiva.md`.
+- **Fase 18–19:** Internacionalização (i18n) + versionamento de API.
+- **Fase 21:** Billing do SaaS & autocadastro de tenant.
+- **Fase 22:** Auditoria e robustez de formulários de cadastro.
+- **Fase 23:** Estrutura de testes (unit/integration/E2E).
+- **Fase 24:** Cloud/produção (AWS).
+- **Fase 25:** Segurança — auditoria e correção de vulnerabilidades.
+- **Fase 26:** Polimento visual & microinterações (última fase — cosmética, com portão de aprovação humana via GIF).
 
 Cada phase é entrega funcional demonstrável.
 
@@ -109,6 +116,7 @@ Ao receber uma tarefa (ex: "implementar login"):
 - Type checker (mypy/pyright)? ✅
 - Nenhum `print()` ou `TODO` pendente? ✅
 - Documentação atualizada se necessário? ✅
+- Task mexeu em tela (mobile ou backoffice web)? Rodou de verdade — web **e** emulador Android nativo, não só type-check/testes (ver skill `run`, `docs/guia-rodar-android-nativo.md`)? ✅
 
 **Antes de PR:**
 - Outra pessoa consegue entender a mudança lendo só a descrição do PR + diff, sem histórico da conversa com Claude? Sim? ✅
@@ -150,6 +158,7 @@ Disponível:
 - `/create-pr` — Revisar branch, criar PR com descrição, checklist, handoff para outro dev.
 - `python-fastapi` (automática) — Padrões de Python/FastAPI quando editar código.
 - `testing` (automática) — Boas práticas de pytest/testes quando criar testes.
+- `run` (automática) — Como rodar o app de verdade (backend + web + emulador Android nativo) para validar uma task antes do PR; ver `docs/guia-rodar-android-nativo.md`.
 
 Invocar as skills quando necessário — elas carregam automaticamente quando apropriado.
 

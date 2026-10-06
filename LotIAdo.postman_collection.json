@@ -44,6 +44,10 @@
 		{
 			"key": "feicao_id",
 			"value": ""
+		},
+		{
+			"key": "documento_id",
+			"value": ""
 		}
 	],
 	"item": [
@@ -884,6 +888,147 @@
 							"path": ["lotes", "{{lote_id}}"]
 						},
 						"description": "Remoção lógica (soft-delete) — não é hard-delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Documentos",
+			"item": [
+				{
+					"name": "Enviar Documento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const body = pm.response.json();",
+									"    pm.collectionVariables.set('documento_id', body.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "arquivo",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "tipo",
+									"type": "text",
+									"value": "memorial"
+								},
+								{
+									"key": "loteamento_id",
+									"type": "text",
+									"value": "{{loteamento_id}}"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/documentos",
+							"host": ["{{base_url}}"],
+							"path": ["documentos"]
+						},
+						"description": "Envia um documento (memorial, contrato, tabela de preços etc.) para o MinIO e persiste os metadados no Postgres. `tipo`, `loteamento_id` e `lote_id` (não incluído neste exemplo) são todos opcionais. Salva o id criado na variável de coleção `documento_id`."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Documentos (filtro por loteamento)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/documentos?loteamento_id={{loteamento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["documentos"],
+							"query": [
+								{
+									"key": "loteamento_id",
+									"value": "{{loteamento_id}}"
+								}
+							]
+						},
+						"description": "Lista os documentos ativos do tenant autenticado. `loteamento_id` e `lote_id` são filtros opcionais (remova o parâmetro da query para listar todos)."
+					},
+					"response": []
+				},
+				{
+					"name": "Obter URL Assinada do Documento",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/documentos/{{documento_id}}/url-assinada",
+							"host": ["{{base_url}}"],
+							"path": ["documentos", "{{documento_id}}", "url-assinada"]
+						},
+						"description": "Gera uma URL assinada (válida por 1h) para download direto do documento no MinIO. Requer rodar 'Enviar Documento' antes (ou definir manualmente a variável documento_id)."
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Documento",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/documentos/{{documento_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["documentos", "{{documento_id}}"]
+						},
+						"description": "Remove logicamente (soft-delete) um documento do tenant autenticado."
 					},
 					"response": []
 				}
