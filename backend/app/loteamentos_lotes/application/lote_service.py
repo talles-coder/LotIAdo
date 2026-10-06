@@ -3,9 +3,13 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
+from geoalchemy2.shape import from_shape
+from shapely.errors import ShapelyError
+from shapely.geometry import Polygon, shape
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.loteamentos_lotes.domain.exceptions import (
+    GeometriaInvalidaError,
     LoteNaoEncontradoError,
     TransicaoDeStatusInvalidaError,
 )
@@ -93,6 +97,18 @@ class LoteService:
         if not transicao_e_permitida(lote.status, novo_status):
             raise TransicaoDeStatusInvalidaError(lote.status, novo_status)
         lote.status = novo_status
+        return await save_lote(self.db, lote)
+
+    async def atualizar_geometria(self, tenant_id: UUID, lote_id: UUID, geometria: dict) -> Lote:
+        """Persist a GeoJSON Polygon (SRID 4326) as the lote's geometria, validating it first."""
+        lote = await self.obter(tenant_id, lote_id)
+        try:
+            geom = shape(geometria)
+        except (ShapelyError, ValueError, AttributeError, TypeError):
+            raise GeometriaInvalidaError("Geometria não é um GeoJSON válido")
+        if not isinstance(geom, Polygon) or not geom.is_valid:
+            raise GeometriaInvalidaError("Geometria deve ser um polígono válido")
+        lote.geometria = from_shape(geom, srid=4326)
         return await save_lote(self.db, lote)
 
     async def remover(self, tenant_id: UUID, lote_id: UUID) -> None:
