@@ -70,6 +70,29 @@ services:
       retries: 5
       start_period: 15s
 
+  worker:
+    build:
+      context: .
+      dockerfile: ./infra/worker/Dockerfile
+    container_name: lotiado-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      # Hostnames de serviço da rede do compose (não `localhost`, usado pelo
+      # backend rodando no host — ver app/config.py) — o worker é o único
+      # processo da aplicação que roda containerizado por enquanto.
+      DATABASE_URL: postgresql+asyncpg://lotiado_app:lotiado_app@postgres:5432/${POSTGRES_DB:-lotiado}
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      MINIO_ENDPOINT_URL: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-lotiado}
+
   minio-init:
     image: quay.io/minio/mc:latest
     container_name: lotiado-minio-init

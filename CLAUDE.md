@@ -136,7 +136,7 @@ Ao receber uma tarefa (ex: "implementar login"):
 
 ## Decisões Abertas
 
-- **D6 — Modelo de embeddings:** Ollama (`nomic-embed-text`) vs. `sentence-transformers`? Decidir empiricamente após FASE7-EST-01 (estudo prático de RAG), comparando qualidade em PT-BR.
+*(nenhuma no momento — ver `docs/03-decisoes-tecnicas.md` para o histórico, incluindo D6, decidida provisoriamente com `nomic-embed-text` via SCRUM-88/FASE7-IMPL-01 antes do estudo empírico FASE7-EST-01 ter sido executado)*
 
 ## Continuidade de Conhecimento
 
@@ -150,6 +150,8 @@ Se uma decisão, padrão ou requisito for necessário para outro dev (ou para vo
 - `CLAUDE.md` (este arquivo) — regras transversais, navegação.
 
 Nunca frases do tipo "como conversamos anteriormente" — registre no lugar apropriado.
+
+**Antes de commitar, registre o que foi aprendido na tarefa:** se durante a implementação você descobriu algo que não estava óbvio pelo código/docs existentes — uma pegadinha de ambiente (ex.: extensão do Postgres faltando no banco de teste), uma decisão que precisou ser tomada na hora (ex.: fechar uma decisão em aberto do `docs/03-decisoes-tecnicas.md` antes do estudo formal), um padrão novo que outras tasks vão repetir (ex.: como testar um módulo que depende de um serviço externo) — registre isso **antes** do commit, no lugar certo da lista acima (docs/código/teste/commit message/CLAUDE.md), não só na conversa. O critério é: outro dev (ou você mesmo, em outra sessão) bateria na mesma dúvida de novo se isso não estivesse escrito em lugar nenhum? Se sim, escreva.
 
 ## Como Usar as Skills
 

@@ -12,6 +12,7 @@ class DocumentoResponse(BaseModel):
     tamanho_bytes: int
     loteamento_id: UUID | None
     lote_id: UUID | None
+    status_indexacao: str
 
     model_config = {"from_attributes": True}
 

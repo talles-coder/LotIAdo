@@ -83,7 +83,7 @@ O usuário optou por já usar Redis com uma fila de jobs real desde que houver a
 
 **Recomendação:** (B). Construir o RAG manualmente com pgvector primeiro (Fase 7) ensina os fundamentos (chunking, embeddings, busca, prompt com contexto); LlamaIndex entra depois como comparação explícita ("o que esse framework me economiza?").
 
-## D6 — Modelo de embeddings — 🔓 Em aberto (deliberadamente)
+## D6 — Modelo de embeddings — ✅ Decidido (provisoriamente): (A) Ollama `nomic-embed-text`
 
 **Opções:**
 - (A) Modelo de embedding servido via Ollama (ex.: `nomic-embed-text`).
@@ -96,7 +96,7 @@ O usuário optou por já usar Redis com uma fila de jobs real desde que houver a
 | Custo | Zero | Zero |
 | Impacto no aprendizado | Médio | Médio |
 
-**Confirmado com o usuário:** decisão intencionalmente adiada para depois do estudo prático (FASE7-EST-01) — comparar empiricamente qualidade de recuperação em português nos dois, e só então registrar o resultado como uma decisão adicional neste documento (ex.: "D6 — decidido: Ollama nomic-embed-text").
+**Decidido:** `nomic-embed-text` via Ollama (768 dimensões), escolhido para desbloquear a implementação de FASE7-IMPL-01 (SCRUM-88) antes do estudo empírico formal (FASE7-EST-01) ter sido de fato executado — a comparação com `sentence-transformers` planejada nesse estudo continua valendo como validação posterior; se o resultado apontar `sentence-transformers` como melhor em PT-BR, revisitar esta decisão implica nova migration para `document_chunks.embedding` (a dimensão do vetor está fixada na coluna, ver `20260927130000_create_document_chunks_and_indexacao_status.py`).
 
 ## D7 — Observabilidade e avaliação de IA — ✅ Decidido: (B) Ragas/promptfoo
 
