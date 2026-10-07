@@ -90,9 +90,9 @@ async def test_agente_chama_tool_e_formata_resposta_final(db_session: AsyncSessi
     monkeypatch.setattr(ai_rag, "llm_provider", mock_llm)
 
     service = AgenteService(db_session)
-    resposta = await service.perguntar(tenant.id, "quais lotes disponíveis com mais de 200m² são de esquina?")
+    resultado = await service.perguntar(tenant.id, "quais lotes disponíveis com mais de 200m² são de esquina?")
 
-    assert resposta == "Encontrei 1 lote de esquina disponível com mais de 200m²: L-Esquina."
+    assert resultado.resposta == "Encontrei 1 lote de esquina disponível com mais de 200m²: L-Esquina."
     assert mock_llm.chat.call_count == 2
     segunda_chamada_mensagens = mock_llm.chat.call_args_list[1].args[0]
     mensagem_tool = next(m for m in segunda_chamada_mensagens if m["role"] == "tool")
@@ -116,9 +116,9 @@ async def test_agente_nao_inventa_quando_tool_nao_encontra_nada(db_session: Asyn
     monkeypatch.setattr(ai_rag, "llm_provider", mock_llm)
 
     service = AgenteService(db_session)
-    resposta = await service.perguntar(tenant.id, "me fale sobre o lote XYZ")
+    resultado = await service.perguntar(tenant.id, "me fale sobre o lote XYZ")
 
-    assert resposta == "Não encontrei esse lote no sistema."
+    assert resultado.resposta == "Não encontrei esse lote no sistema."
     segunda_chamada_mensagens = mock_llm.chat.call_args_list[1].args[0]
     mensagem_tool = next(m for m in segunda_chamada_mensagens if m["role"] == "tool")
     assert '"encontrado":false' in mensagem_tool["content"].replace(" ", "")
@@ -135,9 +135,9 @@ async def test_agente_responde_direto_sem_precisar_de_tool(db_session: AsyncSess
     monkeypatch.setattr(ai_rag, "llm_provider", mock_llm)
 
     service = AgenteService(db_session)
-    resposta = await service.perguntar(tenant.id, "oi")
+    resultado = await service.perguntar(tenant.id, "oi")
 
-    assert resposta == "Olá! Como posso ajudar?"
+    assert resultado.resposta == "Olá! Como posso ajudar?"
     mock_llm.chat.assert_called_once()
 
 
@@ -152,9 +152,9 @@ async def test_agente_usa_resposta_padrao_quando_modelo_nao_gera_texto(db_sessio
     monkeypatch.setattr(ai_rag, "llm_provider", mock_llm)
 
     service = AgenteService(db_session)
-    resposta = await service.perguntar(tenant.id, "???")
+    resultado = await service.perguntar(tenant.id, "???")
 
-    assert resposta == RESPOSTA_PADRAO_SEM_TEXTO
+    assert resultado.resposta == RESPOSTA_PADRAO_SEM_TEXTO
 
 
 @pytest.mark.asyncio

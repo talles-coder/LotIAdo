@@ -1,20 +1,32 @@
-"""Tools de consulta do agente de IA (FASE9-IMPL-01).
+"""Tools do agente de IA: consulta (FASE9-IMPL-01) e ação (FASE9-IMPL-03).
 
 Cada tool é uma função fina que chama um serviço de aplicação já existente e
 formata o resultado para o LLM — nunca gera SQL nem acessa repositórios
 diretamente. Exceções de "não encontrado"/"inválido" dos serviços são
 capturadas e convertidas em `encontrado=False` + `mensagem`, para o agente
 informar a ausência do dado em vez de propagar um erro.
+
+As tools de **ação** (`cancelar_reserva`, `alterar_preco_lote`,
+`alterar_responsavel_lote`) mudam estado real (mesmos serviços usados pelas
+rotas HTTP normais, com a mesma auditoria automática de FASE1-IMPL-04) — o
+que impede sua execução direta pelo agente não é nada nesta função, e sim o
+`ToolSpec.acao=True` no `tool_registry`, aplicado em `AgenteService`.
 """
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai_agents.domain.schemas import (
+    AlterarPrecoLoteInput,
+    AlterarPrecoLoteOutput,
+    AlterarResponsavelLoteInput,
+    AlterarResponsavelLoteOutput,
     BuscarDocumentosInput,
     BuscarDocumentosOutput,
     BuscarLotesInput,
     BuscarLotesOutput,
+    CancelarReservaInput,
+    CancelarReservaOutput,
     ChunkResumo,
     ClienteResumo,
     ConsultarClientesInput,
@@ -52,7 +64,7 @@ from app.loteamentos_lotes.domain.exceptions import LoteNaoEncontradoError
 from app.loteamentos_lotes.domain.models import Lote
 from app.loteamentos_lotes.domain.state_machine import LoteStatus
 from app.vendas_reservas.application.reserva_service import ReservaService
-from app.vendas_reservas.domain.exceptions import ReservaNaoEncontradaError
+from app.vendas_reservas.domain.exceptions import ReservaNaoEncontradaError, ReservaNaoEstaAtivaError
 
 
 def _lote_resumo(lote: Lote) -> LoteResumo:
@@ -245,3 +257,38 @@ async def consultar_condicoes_comerciais(
         area_m2=lote.area_m2,
         caracteristicas=lote.caracteristicas or {},
     )
+
+
+async def cancelar_reserva(db: AsyncSession, tenant_id: UUID, entrada: CancelarReservaInput) -> CancelarReservaOutput:
+    """Cancela uma reserva ativa, devolvendo o lote para disponível. Ação sensível: exige confirmação humana."""
+    try:
+        reserva = await ReservaService(db).cancelar(tenant_id, entrada.reserva_id)
+    except ReservaNaoEncontradaError:
+        return CancelarReservaOutput(encontrado=False, mensagem="Reserva não encontrada.")
+    except ReservaNaoEstaAtivaError:
+        return CancelarReservaOutput(encontrado=False, mensagem="Reserva não está ativa (já foi cancelada ou convertida em venda).")
+    return CancelarReservaOutput(encontrado=True, reserva=ReservaResumo.model_validate(reserva))
+
+
+async def alterar_preco_lote(db: AsyncSession, tenant_id: UUID, entrada: AlterarPrecoLoteInput) -> AlterarPrecoLoteOutput:
+    """Altera o preço de um lote. Ação sensível: exige confirmação humana."""
+    try:
+        lote = await LoteService(db).atualizar(tenant_id, entrada.lote_id, preco=entrada.preco)
+    except LoteNaoEncontradoError:
+        return AlterarPrecoLoteOutput(encontrado=False, mensagem="Lote não encontrado.")
+    return AlterarPrecoLoteOutput(encontrado=True, lote=_lote_resumo(lote))
+
+
+async def alterar_responsavel_lote(
+    db: AsyncSession, tenant_id: UUID, entrada: AlterarResponsavelLoteInput
+) -> AlterarResponsavelLoteOutput:
+    """Altera o corretor responsável por um lote. Ação sensível: exige confirmação humana."""
+    try:
+        await CorretorService(db).obter(tenant_id, entrada.corretor_id)
+    except CorretorNaoEncontradoError:
+        return AlterarResponsavelLoteOutput(encontrado=False, mensagem="Corretor não encontrado.")
+    try:
+        lote = await LoteService(db).atualizar(tenant_id, entrada.lote_id, corretor_id=entrada.corretor_id)
+    except LoteNaoEncontradoError:
+        return AlterarResponsavelLoteOutput(encontrado=False, mensagem="Lote não encontrado.")
+    return AlterarResponsavelLoteOutput(encontrado=True, lote=_lote_resumo(lote))

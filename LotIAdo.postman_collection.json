@@ -1193,7 +1193,40 @@
 							"host": ["{{base_url}}"],
 							"path": ["agente", "perguntar"]
 						},
-						"description": "Grafo do agente (FASE9-IMPL-02): o LLM decide (tool calling via `LLMProvider.chat`) qual(is) tool(s) de FASE9-IMPL-01 chamar sobre os dados do tenant autenticado (lotes, geo, clientes, corretores, vendas, condições comerciais, busca RAG), executa e formata a resposta final em linguagem natural. Se uma tool não encontrar o que foi pedido, o agente informa a ausência em vez de inventar. Resposta: `{resposta}`."
+						"description": "Grafo do agente (FASE9-IMPL-02): o LLM decide (tool calling via `LLMProvider.chat`) qual(is) tool(s) de FASE9-IMPL-01 chamar sobre os dados do tenant autenticado (lotes, geo, clientes, corretores, vendas, condições comerciais, busca RAG), executa e formata a resposta final em linguagem natural. Se uma tool não encontrar o que foi pedido, o agente informa a ausência em vez de inventar. Se o pedido envolver uma tool de ação (FASE9-IMPL-03: cancelar reserva, alterar preço, alterar responsável), o grafo pausa e a resposta vem com `confirmacao` preenchida em vez de `resposta` — use `POST /agente/confirmar` para aprovar/recusar. Resposta: `{resposta}` ou `{confirmacao: {confirmacao_id, tool, descricao, argumentos}}`."
+					},
+					"response": []
+				},
+				{
+					"name": "Confirmar Ação do Agente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"confirmacao_id\": \"00000000-0000-0000-0000-000000000000\",\n  \"aprovado\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/agente/confirmar",
+							"host": ["{{base_url}}"],
+							"path": ["agente", "confirmar"]
+						},
+						"description": "Human-in-the-loop (FASE9-IMPL-03): aprova (`aprovado: true`) ou recusa (`false`) a ação sensível proposta por `POST /agente/perguntar` (o `confirmacao_id` recebido lá). Só quando aprovada a tool de ação executa de fato, com auditoria automática marcada com origem \"agente\". Resposta: `{resposta}` (ou nova `confirmacao`, se o agente encadear outra ação)."
 					},
 					"response": []
 				}
