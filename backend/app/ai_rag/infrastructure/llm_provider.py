@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import httpx
 
 from app.config import Settings
+from app.observabilidade.infrastructure.llm_logging import medir_chamada_llm
 
 
 @dataclass
@@ -57,31 +58,40 @@ class OllamaLLMProvider(LLMProvider):
         self.settings = settings
 
     async def embed(self, texto: str) -> list[float]:
-        async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=60.0) as client:
-            response = await client.post(
-                "/api/embeddings",
-                json={"model": self.settings.ollama_embedding_model, "prompt": texto},
-            )
-            response.raise_for_status()
-            return response.json()["embedding"]
+        with medir_chamada_llm(metodo="embed", modelo=self.settings.ollama_embedding_model):
+            async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=60.0) as client:
+                response = await client.post(
+                    "/api/embeddings",
+                    json={"model": self.settings.ollama_embedding_model, "prompt": texto},
+                )
+                response.raise_for_status()
+                return response.json()["embedding"]
 
     async def generate(self, prompt: str) -> str:
-        async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=120.0) as client:
-            response = await client.post(
-                "/api/generate",
-                json={"model": self.settings.ollama_generation_model, "prompt": prompt, "stream": False},
-            )
-            response.raise_for_status()
-            return response.json()["response"]
+        with medir_chamada_llm(metodo="generate", modelo=self.settings.ollama_generation_model) as resultado:
+            async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=120.0) as client:
+                response = await client.post(
+                    "/api/generate",
+                    json={"model": self.settings.ollama_generation_model, "prompt": prompt, "stream": False},
+                )
+                response.raise_for_status()
+                dados = response.json()
+                resultado["tokens_entrada"] = dados.get("prompt_eval_count")
+                resultado["tokens_saida"] = dados.get("eval_count")
+                return dados["response"]
 
     async def chat(self, mensagens: list[dict], tools: list[dict] | None = None) -> ChatResposta:
         payload: dict = {"model": self.settings.ollama_generation_model, "messages": mensagens, "stream": False}
         if tools:
             payload["tools"] = tools
-        async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=120.0) as client:
-            response = await client.post("/api/chat", json=payload)
-            response.raise_for_status()
-            mensagem = response.json()["message"]
+        with medir_chamada_llm(metodo="chat", modelo=self.settings.ollama_generation_model) as resultado:
+            async with httpx.AsyncClient(base_url=self.settings.ollama_base_url, timeout=120.0) as client:
+                response = await client.post("/api/chat", json=payload)
+                response.raise_for_status()
+                dados = response.json()
+                resultado["tokens_entrada"] = dados.get("prompt_eval_count")
+                resultado["tokens_saida"] = dados.get("eval_count")
+                mensagem = dados["message"]
         tool_calls = [
             ToolCall(id=str(chamada.get("id", indice)), nome=chamada["function"]["name"], argumentos=chamada["function"]["arguments"])
             for indice, chamada in enumerate(mensagem.get("tool_calls") or [])

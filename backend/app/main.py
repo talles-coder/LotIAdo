@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.audit.interface.middleware import AuditContextMiddleware
 from app.config import Settings
+from app.observabilidade.infrastructure.logging_config import configurar_logging_estruturado
+from app.observabilidade.interface.middleware import RequestIdMiddleware
 from app.ai_agents.interface.routers import router as ai_agents_router
 from app.ai_rag.interface.routers import router as ai_rag_router
 from app.clientes.interface.routers import router as clientes_router
@@ -14,6 +16,7 @@ from app.loteamentos_lotes.interface.routers import router as loteamentos_lotes_
 from app.vendas_reservas.interface.routers import router as vendas_reservas_router
 
 settings = Settings()
+configurar_logging_estruturado()
 
 app = FastAPI(
     title="LotIAdo",
@@ -25,6 +28,10 @@ app = FastAPI(
 # auditoria automática (app.audit.infrastructure.tracking) funcione sem
 # nenhuma rota precisar declarar nada.
 app.add_middleware(AuditContextMiddleware)
+# Atribui um request_id por request, para correlacionar no log estruturado de
+# IA (app.observabilidade) as várias chamadas de LLMProvider de uma mesma
+# interação (ex.: RAG busca+gera, ou o agente decidindo em loop).
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
