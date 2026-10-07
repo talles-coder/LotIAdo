@@ -5,3 +5,5 @@ __pycache__/
 *.pyo
 .pytest_cache/
 backend/logs/
+backend/eval/reports/*.json
+node_modules/
