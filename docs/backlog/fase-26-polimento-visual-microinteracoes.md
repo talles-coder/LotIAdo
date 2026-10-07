@@ -44,6 +44,13 @@ Entrega desta fase: pesquisa cuidadosa de que tipo de animação/partícula cabe
 - **Paralelizável:** Não pode ser finalizada sem FASE26-IMPL-01 e aprovação explícita do usuário.
 - **Conhecimentos novos introduzidos:** nenhum além do já coberto em FASE26-EST-01.
 
+#### Handoff (SCRUM-253)
+
+- Usuário aprovou **F** (login) e **G** (splash) — ver comentário de aprovação no PR #47 (SCRUM-252, fechado sem merge, só protótipo). Esta task não empilha em cima da branch do protótipo: como o PR de protótipo nunca é mesclado, `feat/SCRUM-253-animacao-login-splash-aprovada` foi criada a partir da mesma base que SCRUM-252 usou (ponta de `feat/SCRUM-114-script-avaliacao-automatizada`), não da branch do protótipo — reinstala `react-native-reanimated`/`babel.config.js`/fecha D18 de novo (mesmo diff pequeno, já validado na 252).
+- **Login** (`mobile/app/login.tsx`): variação F extraída para componente reutilizável `mobile/src/components/LoginHeroLotHighlight.tsx` (não ficou inline na tela) — um quadrado verde do tamanho de uma célula do grid (24×24, mesma malha do padrão SVG já existente no hero) pula entre 6 posições alinhadas à malha a cada ~900ms.
+- **Splash** (`mobile/src/components/SplashAnimation.tsx`, reescrito): moldura+cruz do mark montam (estilo Switch), palavra "LotIAdo" cai em cascata letra a letra (estilo iFood), só depois o quadrado verde cai de fora do quadro e "bate" (squash) em cima do laranja — antes disso o Logo usava `Animated` (API nativa do RN) num fade+scale simples; agora usa `react-native-reanimated`, então essa tela passa a depender da mesma lib que o login. API do componente (`onFinish`) não mudou, `mobile/app/_layout.tsx` não precisou de alteração.
+- GIF do comportamento final rodando na tela real (não no protótipo isolado) em `docs/design/screenshots/scrum-253-login-hero-real.gif` e `docs/design/screenshots/scrum-253-splash-real.gif`.
+
 ## Divisão de trabalho e sincronização
 
 - **Dev 1:** FASE26-EST-01 → FASE26-IMPL-01 (protótipos) → FASE26-IMPL-02 (implementação aprovada).
