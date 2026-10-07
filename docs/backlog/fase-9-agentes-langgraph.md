@@ -47,6 +47,18 @@ Entrega desta fase: agente conversacional que responde perguntas em linguagem na
 - **Paralelizável:** Sim, com FASE9-IMPL-01 (integração final depende das duas, mas o desenvolvimento pode ser paralelo com um contrato de tool combinado antes).
 - **Conhecimentos novos introduzidos:** orquestração de agente com LangGraph, tool calling real com um modelo local via Ollama.
 
+#### Handoff (SCRUM-104)
+- `LLMProvider` (`app/ai_rag/infrastructure/llm_provider.py`) ganhou um terceiro método abstrato, `chat(mensagens, tools=None) -> ChatResposta`, via `POST /api/chat` do Ollama (tool calling nativo, não prompt-engineering) — decisão necessária porque a interface só tinha `embed`/`generate`. `ChatResposta`/`ToolCall` moram no mesmo arquivo. O agente reaproveita o singleton `ai_rag.llm_provider` (mesmo padrão de mock em teste: `monkeypatch.setattr(ai_rag, "llm_provider", mock)`).
+- Grafo (`app/ai_agents/application/agente_service.py`, `AgenteService.perguntar`) é um laço `decidir -> executar_tool -> decidir` até o modelo responder sem propor tool (ou `MAX_CHAMADAS_TOOL=5`). Tools são resolvidas via `app/ai_agents/infrastructure/tool_registry.py` (novo arquivo) a partir dos schemas Pydantic de SCRUM-103 — `spec.input_model.model_json_schema()` vira o `parameters` do function-calling.
+- Endpoint `POST /agente/perguntar`. Critério de aceite (as duas perguntas de exemplo) validado com o LLM mockado — o agente não gera SQL nem lida com "resolver nome para ID" (ex.: "área verde" → `feicao_id`) sozinho; isso pressupõe que a pergunta real (ou o histórico de conversa da Fase 9.4) já traga o identificador, já que nenhuma tool de SCRUM-103 faz esse lookup por nome.
+- Dependência nova: `langgraph==0.2.60` (`requirements.txt`), que forçou bump de `httpx` de `0.25.1` para `0.28.1` (langgraph-sdk exige `httpx>=0.25.2`) — sem mudança de comportamento observada nos usos existentes de `httpx.AsyncClient`.
+- **Gotcha de ambiente (não específica desta task, mas achada nela):** `backend/tests/test_rls.py` usa `TEST_APP_DATABASE_URL` (papel `lotiado_app`) com default `localhost:5432`; como o Postgres local costuma estar remapeado (ex.: `55499`, ver handoff SCRUM-71 nesse mesmo padrão), rodar a suíte sem exportar as duas envs corretas faz os testes de RLS/tenant-isolation falharem ou demorarem muito (connection refused). Rodar com:
+  ```
+  TEST_DATABASE_URL=postgresql+asyncpg://lotiado:lotiado@localhost:<porta>/lotiado_test
+  TEST_APP_DATABASE_URL=postgresql+asyncpg://lotiado_app:lotiado_app@localhost:<porta>/lotiado_test
+  ```
+- Testes: `backend/tests/test_ai_agents_agente.py` (5 casos) — grafo com tool, "não encontrado" não vira invenção, resposta direta sem tool, resposta padrão quando modelo não gera texto, e o endpoint HTTP fim-a-fim.
+
 ## Épico E9.3 — Confirmação humana para ações sensíveis
 
 ### FASE9-IMPL-03 — Nó de confirmação humana antes de ações destrutivas/sensíveis

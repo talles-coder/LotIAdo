@@ -1162,6 +1162,44 @@
 			]
 		},
 		{
+			"name": "AI Agente",
+			"item": [
+				{
+					"name": "Perguntar ao Agente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pergunta\": \"quais lotes disponíveis com mais de 200m² são de esquina?\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/agente/perguntar",
+							"host": ["{{base_url}}"],
+							"path": ["agente", "perguntar"]
+						},
+						"description": "Grafo do agente (FASE9-IMPL-02): o LLM decide (tool calling via `LLMProvider.chat`) qual(is) tool(s) de FASE9-IMPL-01 chamar sobre os dados do tenant autenticado (lotes, geo, clientes, corretores, vendas, condições comerciais, busca RAG), executa e formata a resposta final em linguagem natural. Se uma tool não encontrar o que foi pedido, o agente informa a ausência em vez de inventar. Resposta: `{resposta}`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Geo (consultas espaciais)",
 			"item": [
 				{

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.audit.interface.middleware import AuditContextMiddleware
 from app.config import Settings
+from app.ai_agents.interface.routers import router as ai_agents_router
 from app.ai_rag.interface.routers import router as ai_rag_router
 from app.clientes.interface.routers import router as clientes_router
 from app.corretores.interface.routers import router as corretores_router
@@ -39,6 +40,7 @@ app.include_router(documentos_router)
 app.include_router(geo_router)
 app.include_router(vendas_reservas_router)
 app.include_router(ai_rag_router)
+app.include_router(ai_agents_router)
 
 
 @app.get("/health")
