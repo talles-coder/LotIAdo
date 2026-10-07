@@ -96,6 +96,14 @@ Entrega desta fase: agente conversacional que responde perguntas em linguagem na
 - **Paralelizável:** Não pode ser finalizada sem FASE9-IMPL-03, mas o layout de chat pode ser adiantado com dado mockado.
 - **Conhecimentos novos introduzidos:** nenhum além do já coberto.
 
+#### Handoff (SCRUM-106)
+
+- `POST /agente/perguntar` inicia uma thread **nova a cada chamada** (`uuid4()` em `AgenteService.perguntar`) — o backend não mantém histórico de conversa entre perguntas distintas. O "histórico de mensagens" da tela de chat é puramente client-side (só exibição); cada envio de pergunta é independente do ponto de vista do grafo. Só a confirmação (`confirmacao_id` = `thread_id`) resume a mesma thread.
+- `PerguntarAgenteResponse` usa `response_model_exclude_none=True` — `resposta`/`confirmacao` vêm **ausentes** (não `null`) quando `None`; o client (`mobile/src/api/agente.ts`) normaliza isso para `null` explícito antes de repassar ao componente.
+- Tela evoluída em `mobile/app/assistente.tsx` (mesma rota que já existia da Fase 7): agora chama `/agente/*` em vez de `/rag/perguntar`, e ganhou um 4º tipo de mensagem (`confirmacao`) com card de aceitar/recusar; composer fica bloqueado enquanto há confirmação pendente. A resposta do agente é só texto (sem `fontes` — isso era específico do endpoint RAG antigo).
+- Validado ponta a ponta (web, Playwright headless): pergunta simples e fluxo completo de ação sensível (pedido → card → recusar → resposta de acompanhamento). Ver nota de ambiente: nesta máquina o container `lotiado-postgres` estava com porta remapeada (55499→5432) divergindo do `backend/.env` versionado — não é algo desta task, mas quem for rodar o backend do zero aqui pode bater nisso.
+- Arquivos-chave: `mobile/src/api/agente.ts` (novo), `mobile/app/assistente.tsx` (reescrito).
+
 ## Divisão de trabalho e sincronização
 
 - **Dev 1:** FASE9-EST-01 → FASE9-IMPL-01 (tools) → FASE9-IMPL-03 (confirmação humana).
