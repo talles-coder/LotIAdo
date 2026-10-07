@@ -38,6 +38,15 @@ Entrega desta fase: o sistema (já funcional localmente após as fases anteriore
 - **Paralelizável:** Sim, com FASE24-IMPL-02.
 - **Conhecimentos novos introduzidos:** CI real rodando a suíte de testes completa do projeto.
 
+#### Handoff (SCRUM-119)
+
+- **Numeração Jira vs. docs:** o Jira já criou uma "Fase 20" própria para CI/CD + infra mínima AWS (SCRUM-115 a SCRUM-121), separada da Fase 24 daqui — mas o conteúdo de cada task é idêntico ao que já estava planejado aqui (`FASE24-EST-01` = SCRUM-115/116, `FASE24-IMPL-01` = SCRUM-119, etc.). Implementei com base neste arquivo (fonte da verdade). Renumerar/desdobrar `docs/backlog/` em uma Fase 20 dedicada é uma decisão de equipe que não tomei sozinho — fica como próximo passo se quiserem alinhar Jira e docs.
+- **Postgres de teste em CI:** GitHub Actions `services:` só aceita imagens já publicadas, e a imagem do projeto (`infra/postgres/Dockerfile`, PostGIS + pgvector via apt) é local — o workflow builda essa imagem e sobe via `docker run` replicando exatamente os init scripts do `docker-compose.yml` (mesmos papéis/extensões), em vez de duplicar essa lógica em outro formato.
+- **RLS não precisa de `alembic upgrade head` no banco de teste:** `tests/test_rls.py` já ativa a policy manualmente (`_ativar_rls`) porque o schema de teste vem de `Base.metadata.create_all`, não das migrations. O `alembic upgrade head` no workflow roda contra o banco "normal" (`lotiado`) só como sanity check de que as migrations aplicam limpo — não é dependência dos testes.
+- **Lint introduzido do zero:** não havia nenhuma ferramenta de lint configurada no backend antes desta task. Adicionei `ruff` (`backend/requirements-dev.txt` + `backend/pyproject.toml`) com um ruleset deliberadamente restrito (`F` + `E9` — pyflakes e erros de sintaxe) para o gate começar verde; ampliar as regras é trabalho futuro. Isso já pegou 5 imports não usados pré-existentes, corrigidos nesta mesma task (senão o primeiro PR já nasceria com CI vermelho).
+- **Mobile:** não havia ESLint configurado; o "lint/type-check" do mobile ficou só como type-check (`npm run typecheck` → `tsc --noEmit`), que já roda limpo no código atual.
+- **Arquivos-chave:** `.github/workflows/ci.yml`, `backend/pyproject.toml`, `backend/requirements-dev.txt`, `mobile/package.json` (script `typecheck`).
+
 ## Épico E24.3 — Deploy em AWS
 
 ### FASE24-IMPL-02 — Infraestrutura mínima em AWS (RDS + S3 + backend em container)

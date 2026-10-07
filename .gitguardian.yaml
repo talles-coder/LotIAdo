@@ -20,3 +20,5 @@ secret:
       match: senha-ignorada
     - name: fixture de teste — qualquer
       match: qualquer
+    - name: fixture de teste — POSTGRES_PASSWORD do CI
+      match: POSTGRES_PASSWORD=lotiado
