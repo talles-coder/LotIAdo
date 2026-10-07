@@ -30,7 +30,7 @@ PERMISSOES_SEED = (
 )
 PAPEIS_SEED = ("admin", "gestor", "corretor")
 
-PERMISSOES_SEED_ADMIN_GESTOR = ("usuarios:gerenciar",)
+PERMISSOES_SEED_ADMIN_GESTOR = ("usuarios:gerenciar", "observabilidade:visualizar")
 PAPEIS_SEED_ADMIN_GESTOR = ("admin", "gestor")
 
 

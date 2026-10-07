@@ -47,6 +47,15 @@ Entrega desta fase: logging estruturado de todas as chamadas de IA (latência, t
 - **Paralelizável:** Sim, com FASE10-IMPL-01 (pode ser desenvolvida contra logs de exemplo).
 - **Conhecimentos novos introduzidos:** agregação simples de logs estruturados para exibição.
 
+#### Handoff (SCRUM-110)
+
+- FASE10-IMPL-01 só escrevia no stdout — não dava pra reler depois de um restart. Adicionei um `RotatingFileHandler` em `configurar_logging_estruturado()` (`backend/logs/app-ia.jsonl`, git-ignorado, 5 MB/3 backups) ao lado do `StreamHandler` já existente; `MetricasIAService` lê só o arquivo atual (não os backups rotacionados — volume de portfólio não deveria rotacionar na prática). Também percebi que o worker RQ (`app/worker.py`) nunca chamava `configurar_logging_estruturado()` (só `app.main` chamava) — sem isso as chamadas de `IMPORTACAO` (chunking) não ficavam logadas; corrigido nesse mesmo trabalho, no branch/PR de SCRUM-109 (commit separado, antes de existir qualquer commit de SCRUM-110).
+- `GET /observabilidade/metricas` (novo router `app/observabilidade/interface/routers.py`) — `admin`/`gestor` apenas, via nova permissão `observabilidade:visualizar` (migration `20260928120000`, mesmo padrão de `usuarios:gerenciar`). **Não é escopado por tenant** — reflete o uso de IA da instância do backend inteira, não dados de um tenant específico (decisão documentada no docstring do endpoint); aceitável no volume de portfólio, mas é a primeira coisa a revisar se isso for além de demonstrador.
+- Tela nova `mobile/app/backoffice/index.tsx` — primeira tela real de "Backoffice": troquei o item `enabled: false` do `BottomNav` pra `true` e adicionei "Métricas de IA" ao `NAV` do `WebShell.web.tsx` (sidebar desktop). `/backoffice` é a própria tela de métricas (não um hub genérico — não havia nada mais pra agrupar ainda).
+- Pegadinha real que mordeu durante o dev: usar `query.data!` (non-null assertion do TypeScript) para pular o loading state quebrou em runtime (`query.isLoading` e `query.data === undefined` coexistiram brevemente num re-mount da rota) — `tsc` não pega isso porque é só um assert de compilação. Trocado por checar `!metricas` de verdade antes de renderizar a seção que depende dos dados.
+- Validado ponta a ponta rodando local (backend real + Ollama): gerei tráfego real via RAG + agente, conferi `GET /observabilidade/metricas` batendo com os totais, e capturei prints da tela (web desktop sidebar, web mobile/bottom-nav) — ver Evidências do PR.
+- Arquivos-chave: `backend/app/observabilidade/{domain/metricas.py, application/metricas_service.py, interface/{routers,schemas}.py}`, `backend/alembic/versions/20260928120000_*.py`, `mobile/app/backoffice/index.tsx`, `mobile/src/api/observabilidade.ts`, `mobile/src/components/{BottomNav,WebShell.web}.tsx`.
+
 ## Épico E10.2 — Avaliação de qualidade (RAG e agente)
 
 ### FASE10-EST-02-D1 / FASE10-EST-02-D2 — Estudo: avaliação de RAG e agentes (Ragas/promptfoo)

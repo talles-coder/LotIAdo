@@ -5,6 +5,7 @@ from app.audit.interface.middleware import AuditContextMiddleware
 from app.config import Settings
 from app.observabilidade.infrastructure.logging_config import configurar_logging_estruturado
 from app.observabilidade.interface.middleware import RequestIdMiddleware
+from app.observabilidade.interface.routers import router as observabilidade_router
 from app.ai_agents.interface.routers import router as ai_agents_router
 from app.ai_rag.interface.routers import router as ai_rag_router
 from app.clientes.interface.routers import router as clientes_router
@@ -48,6 +49,7 @@ app.include_router(geo_router)
 app.include_router(vendas_reservas_router)
 app.include_router(ai_rag_router)
 app.include_router(ai_agents_router)
+app.include_router(observabilidade_router)
 
 
 @app.get("/health")
